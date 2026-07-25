@@ -208,7 +208,7 @@ function test(label, fn) {
   const els = {};
   const $ = (id) => (els[id] ||= mkEl());
   let tracks = 0;
-  const ctx = vm.createContext({ Math, $, updTracks: () => tracks++,
+  const ctx = vm.createContext({ Math, $, updTracks: () => tracks++, GAME_UNITS: "ex",
     uEx: () => 12, gEx: () => 34,
     api: () => ({ set_setting: async () => ({ ok: true }),
       suggest_floors: async () => ({ unique: 12, gear: 34, keep_pct: 40,
@@ -232,6 +232,7 @@ function test(label, fn) {
     els.league = mkEl(); els.league.value = "Fate of the Vaal";
     const ctx = vm.createContext({
       Math, $: (id) => (els[id] ||= mkEl()), eco: null, ecoCat: null, ecoUnit: "ex", chaosEx: 0,
+      GAME_UNITS: "ex", esc: (x) => String(x),
       setDivRate() {}, renderChips() {}, renderEco() {},
       api: () => ({ economy_start: async () => ({ ok: true }), economy_poll: poll,
         chaos_ex: async () => ({ ex: 0 }) }),
