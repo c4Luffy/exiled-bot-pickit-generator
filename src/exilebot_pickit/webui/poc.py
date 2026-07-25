@@ -138,7 +138,7 @@ def main():
     except Exception:
         pass
     window = webview.create_window(
-        "ExileBot 2 Pickit Generator",
+        "Exiled Bot Pickit Generator",
         _res_path("app.html") if getattr(sys, "_MEIPASS", None)
         else os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.html"),
         js_api=api,
@@ -204,7 +204,7 @@ def _run_webview(window, api):
                 "   https://developer.microsoft.com/microsoft-edge/webview2/\n\n"
                 "3. The app folder isn't writable — move the .exe to a\n"
                 "   normal folder like Documents and run it from there.",
-                "ExileBot 2 Pickit Generator", 0x10)
+                "Exiled Bot Pickit Generator", 0x10)
         except Exception:
             pass
         raise

@@ -33,7 +33,7 @@ from exilebot_pickit.api import client as _client
 from exilebot_pickit.version import VERSION as _VERSION
 
 REMOTE_DATA_URL = ("https://raw.githubusercontent.com/"
-                   "c4Luffy/poe2-pickit-generator/main/game_data.json")
+                   "c4Luffy/exiled-bot-pickit-generator/main/game_data.json")
 _FETCH_MIN_INTERVAL = 6 * 3600   # don't hammer GitHub on rapid relaunches
 
 _CACHE_BASENAME = "game_data_cache.json"

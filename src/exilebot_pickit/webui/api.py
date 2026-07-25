@@ -168,12 +168,43 @@ class AppApi:
         except Exception:
             pass
 
+    # ── Game (PoE1 / PoE2) ────────────────────────────────────────────────────
+
+    def _game(self):
+        """The active GameSpec, from cfg['active_game'] (defaults to PoE 2)."""
+        return gen.get_game(self.cfg.get("active_game"))
+
+    def set_game(self, game_id):
+        """Switch the active game. Each game keeps its OWN league, floors, output
+        file, history and profiles — switching swaps the whole per-game section
+        in and out (see ui.config.switch_game), so the two never overwrite each
+        other."""
+        from exilebot_pickit.ui import config as _c
+        _c.switch_game(self.cfg, game_id)
+        save_config(self.cfg)
+        g = self._game()
+        # Cached UI state that belonged to the previous game must not bleed over.
+        self._last_lines = []
+        return {"ok": True, "game": g.id, "short": g.short, "label": g.label,
+                "unit": g.unit, "unit_short": g.unit_short,
+                "economy_only": g.economy_only}
+
+    def _games_list(self):
+        return [{"id": g.id, "short": g.short, "label": g.label,
+                 "economy_only": g.economy_only} for g in gen.GAMES.values()]
+
     # ── App/config ────────────────────────────────────────────────────────────
 
     def app_info(self):
         c = self.cfg
+        _g = self._game()
         return {
             "version": VERSION, "output_dir": OUTPUT_DIR,
+            # Active game + the roster, so the sidebar can render the PoE1/PoE2
+            # switch and hide the rare-gear pages when a game is economy-only.
+            "active_game": _g.id, "unit": _g.unit, "unit_short": _g.unit_short,
+            "economy_only": _g.economy_only, "games": self._games_list(),
+            "default_league": _g.default_league,
             "league": c.get("league") or "",
             # First-run wizard. "Have you ever actually generated?" is the only honest
             # test of a new user: league is auto-saved the moment the list loads (v4.25.0)
@@ -240,7 +271,7 @@ class AppApi:
         # wholesale (Currency only) — put them back on for every other preset.
         want_uniques = not p.get("uniques_off", False)
         ce = dict(self.cfg.get("category_enabled", {}))
-        for c in gen.ALL_CATEGORIES:
+        for c in self._game().all_categories:
             if c[0].startswith("unique_"):
                 ce[c[0]] = want_uniques
         self.cfg["category_enabled"] = ce
@@ -254,7 +285,7 @@ class AppApi:
             # current leagues only — finished ones come suffixed "(old)"
             # from the client and just clutter the dropdown
             return [{"name": n, "display": d}
-                    for n, _, d in gen.fetch_live_leagues()
+                    for n, _, d in gen.fetch_live_leagues(self._game())
                     if not d.endswith("(old)")]
         except Exception as e:
             return {"error": str(e)}
@@ -265,8 +296,13 @@ class AppApi:
         """All categories with their items, live/cached values, icons, price
         changes and on/off state."""
         try:
+            g = self._game()
+            # PoE1 must not have PoE2's name fixes / skip list applied to its
+            # own item names — pass empty tables for an economy-only game.
+            corr = gen.ITEM_NAME_CORRECTIONS if not g.economy_only else {}
+            skp = gen.ITEM_NAME_SKIP if not g.economy_only else set()
             stale = set()
-            payloads = gen.fetch_all_payloads(league, gen.ALL_CATEGORIES, stale_out=stale)
+            payloads = gen.fetch_all_payloads(league, g.all_categories, game=g, stale_out=stale)
             cur = payloads.get("currency")
             div_rate, _, rate = asm.compute_divine_rate(cur) if isinstance(cur, dict) else (1.0, False, 0.0)
             states = self.cfg.get("item_states", {})
@@ -289,7 +325,7 @@ class AppApi:
                         icon_idx.setdefault(ln["name"], ln["icon"])
             out = []
             priced = set()      # names shown in priced categories (dedupe)
-            for key, _t, label, is_unique in gen.ALL_CATEGORIES:
+            for key, _t, label, is_unique in g.all_categories:
                 if key == "waystones":
                     # poe.ninja doesn't price waystones — show the three
                     # pickup rules as toggleable rows instead of an empty list
@@ -315,12 +351,20 @@ class AppApi:
                     """% change: poe.ninja 7-day sparkline for uniques, else
                     vs the price snapshot from the last generate. prev_cat is
                     bound per-iteration via the default arg (ruff B023)."""
+                    c = None
                     if spark and spark.get("totalChange") is not None:
-                        return round(float(spark["totalChange"]), 1)
-                    old = prev_cat.get(nm)
-                    if isinstance(old, (int, float)) and old > 0 and ev > 0:
-                        return round((ev - old) / old * 100, 1)
-                    return None
+                        c = round(float(spark["totalChange"]), 1)
+                    else:
+                        old = prev_cat.get(nm)
+                        if isinstance(old, (int, float)) and old > 0 and ev > 0:
+                            c = round((ev - old) / old * 100, 1)
+                    # poe.ninja's totalChange on low-confidence / Standard-league
+                    # prices can be thousands of % (an item that was ~nothing and
+                    # is now priced). That's noise, not a real 7-day move — a
+                    # "▲ 2422409%" in the change column. Drop implausible swings.
+                    if c is not None and abs(c) > 500:
+                        return None
+                    return c
 
                 def _spark(spark):
                     """The 7-day shape poe.ninja already sends us, for a row sparkline.
@@ -389,9 +433,9 @@ class AppApi:
                     by_id = {i["id"]: i for i in p.get("items", [])}
                     for line in p.get("lines", []):
                         it = by_id.get(line.get("id"))
-                        if not it or not it.get("name") or it["name"] in gen.ITEM_NAME_SKIP:
+                        if not it or not it.get("name") or it["name"] in skp:
                             continue
-                        nm = gen.ITEM_NAME_CORRECTIONS.get(it["name"], it["name"])
+                        nm = corr.get(it["name"], it["name"])
                         if nm is None or nm in seen:
                             continue
                         seen.add(nm)
@@ -424,7 +468,9 @@ class AppApi:
             # Each group is its own sidebar entry with its own toggles.
             _emj = {"_ap_tablets": "🗿", "_ap_splinters": "🧩",
                     "_ap_wombgifts": "🥚", "_ap_keys": "🗝️", "_ap_exotic": "🧿"}
-            for key, label, rows in self._ap_groups():
+            # Always-pick synthetic groups are PoE2-only content; an economy-only
+            # game (PoE1) shows just its priced categories.
+            for key, label, rows in (self._ap_groups() if not g.economy_only else []):
                 st = self._ap_item_states(states, key)
                 items = [{"name": nm, "base": base, "ex": 0, "sec": sec,
                           "icon": icon_idx.get(nm, ""),
@@ -444,8 +490,8 @@ class AppApi:
                                 "hidden": key == "_ap_keys", "items": items})
 
             enabled_cfg = self.cfg.get("category_enabled", {})
-            cat_en = {c[0]: enabled_cfg.get(c[0], True) for c in gen.ALL_CATEGORIES}
-            for key, _l, _r in self._ap_groups():
+            cat_en = {c[0]: enabled_cfg.get(c[0], True) for c in g.all_categories}
+            for key, _l, _r in (self._ap_groups() if not g.economy_only else []):
                 cat_en[key] = self._ap_cat_enabled(enabled_cfg, key)
             return {"divine_rate": round(div_rate, 1),
                     "cats": out, "stale": sorted(stale),
@@ -1495,7 +1541,7 @@ class AppApi:
                 from exilebot_pickit.version import HIGHLIGHTS
                 notes = HIGHLIGHTS or notes
             return {"show": True, "version": VERSION, "notes": notes,
-                    "url": f"https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v{VERSION}"}
+                    "url": f"https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v{VERSION}"}
         except Exception as e:
             return {"show": False, "error": str(e)}
 
@@ -2024,10 +2070,13 @@ class AppApi:
         except OSError:
             pass
 
+        g = self._game()
         return {"cache": ci, "log": tail, "config_path": CONFIG_PATH,
                 "cache_dir": PRICE_CACHE_DIR,
-                "unique_cats": len(gen.UNIQUE_CATEGORIES),
-                "all_cats": len(gen.ALL_CATEGORIES),
+                # active game surfaced on the Debug page + the counts for it
+                "game": g.id, "game_label": g.label,
+                "unique_cats": len(g.unique_categories),
+                "all_cats": len(g.all_categories),
                 "log_path": LOG_PATH,
                 "errors": {"total": sum(e["count"] for e in by_type),
                            "recent_total": recent_total,
@@ -2035,9 +2084,10 @@ class AppApi:
 
     def api_test(self, league):
         out = []
-        for key, ninja_type, label, is_unique in gen.ALL_CATEGORIES:
+        g = self._game()
+        for key, ninja_type, label, is_unique in g.all_categories:
             try:
-                p = gen.fetch_category(league, key, ninja_type, is_unique)
+                p = gen.fetch_category(league, key, ninja_type, is_unique, g)
                 out.append({"label": label, "ok": True, "rows": len(p.get("lines", []))})
             except Exception as e:
                 out.append({"label": label, "ok": False, "error": str(e)[:120]})
@@ -2297,9 +2347,10 @@ class AppApi:
         'Auto' floor: it adapts to the economy instead of a fixed number."""
         try:
             keep = max(5, min(100, int(keep_pct)))
-            payloads = gen.fetch_all_payloads(league, gen.ALL_CATEGORIES)
+            g = self._game()
+            payloads = gen.fetch_all_payloads(league, g.all_categories, game=g)
             uniq_vals, gear_vals = [], []
-            for key, _t, _l, is_unique in gen.ALL_CATEGORIES:
+            for key, _t, _l, is_unique in g.all_categories:
                 p = payloads.get(key)
                 if not isinstance(p, dict) or key in gen.PICK_ALL_CATEGORIES:
                     continue
@@ -2390,8 +2441,176 @@ class AppApi:
             "rare_strictness_slots": dict(self.cfg.get("rare_strictness_slots", {}) or {}),
         }
 
+    def _generate_poe1(self, league, min_gear, min_unique, t0):
+        """Economy-only generate for PoE 1.
+
+        Self-contained on purpose: it shares the engine (fetch +
+        build_poe1_economy_lines) and the write/backup/history/status tail's
+        SHAPE with the PoE 2 path, but not its code, so the PoE 2 pipeline is
+        never at risk from a PoE 1 change. No rare-gear / craft / chance /
+        fracture / exceptional-base sections exist here.
+        """
+        try:
+            g = self._game()
+            # Auto floor: recompute both floors from live PoE1 prices, same as the
+            # PoE2 path — suggest_floors is game-aware, so it uses PoE1 categories.
+            if self.cfg.get("auto_floor"):
+                sf = self.suggest_floors(league, int(self.cfg.get("auto_floor_pct", 40) or 40))
+                if not sf.get("error"):
+                    min_unique = float(sf["unique"]); min_gear = float(sf["gear"])
+                    self.cfg["min_exalt_unique"] = min_unique
+                    self.cfg["min_exalt_gear"] = self.cfg["min_exalt"] = min_gear
+                    save_config(self.cfg)
+                    self._log(f"✨ Auto floor ({sf['keep_pct']}%): uniques ≥ {min_unique} c · rest ≥ {min_gear} c")
+            enabled_cfg = self.cfg.get("category_enabled", {}) or {}
+            cats = [c for c in g.all_categories if enabled_cfg.get(c[0], True)]
+            snap = {
+                "min_exalt_gear": min_gear, "min_exalt_unique": min_unique,
+                "item_states": self.cfg.get("item_states", {}) or {},
+                "category_enabled": {c[0]: enabled_cfg.get(c[0], True) for c in g.all_categories},
+            }
+            self._log(f"Fetching live PoE1 prices for {league}…")
+            stale: set = set()
+            payloads = gen.fetch_all_payloads(league, cats, game=g, stale_out=stale)
+            cur = payloads.get("currency")
+            if not isinstance(cur, dict):
+                raise RuntimeError("poe.ninja unreachable and no cached prices for this league")
+            div_rate, div_found, _rate = asm.compute_divine_rate(cur)
+
+            out, _active = asm.build_poe1_economy_lines(
+                league, cats, payloads, div_rate, div_found, snap)
+            for key, _t, label, _u in cats:
+                self._log(f"✓ {label}" if isinstance(payloads.get(key), dict)
+                          else f"✗ {label}: no data")
+
+            cov_alerts: list = []
+            for _key, _label in asm.coverage_warnings(payloads, cats, expected_empty=set()):
+                self._log(f"⚠ {_label}: poe.ninja returned no items — the category "
+                          f"may have been renamed. Report it so it can be re-mapped.")
+                cov_alerts.append(_label)
+
+            top_pool = asm.top_items_from_lines(out)
+            top_pool.sort(key=lambda t: -t[1])
+            _seen: set = set()
+            top_pool = [t for t in top_pool if not (t[0] in _seen or _seen.add(t[0]))]
+
+            flat = "\n".join(out).splitlines()
+            validation = gen.validate_pickit(flat)
+            self._last_validation = validation
+
+            os.makedirs(OUTPUT_DIR, exist_ok=True)
+            base = (self.cfg.get("output_base") or g.default_output_base).strip() or g.default_output_base
+            ipd = os.path.join(OUTPUT_DIR, base + ".ipd")
+
+            added, removed = [], []
+            try:
+                if os.path.isfile(ipd):
+                    with open(ipd, encoding="utf-8", errors="replace") as f:
+                        prev_ids = asm.active_rule_ids(f.read().splitlines())
+                    new_ids = asm.active_rule_ids(out)
+                    added = sorted(new_ids - prev_ids)[:8]
+                    removed = sorted(prev_ids - new_ids)[:8]
+            except OSError:
+                pass
+
+            nkeep = int(self.cfg.get("backup_count", 5) or 0)
+            if nkeep > 0 and os.path.isfile(ipd):
+                try:
+                    bdir = os.path.join(OUTPUT_DIR, "backups")
+                    os.makedirs(bdir, exist_ok=True)
+                    stamp = time.strftime("%Y%m%d-%H%M%S")
+                    shutil.copy2(ipd, os.path.join(bdir, f"{base}-{stamp}.ipd"))
+                    old = sorted(f for f in os.listdir(bdir) if _is_backup_name(base, f))
+                    for f in old[:-nkeep]:
+                        os.remove(os.path.join(bdir, f))
+                except OSError:
+                    self._log("✗ Backup rotation failed (continuing)")
+
+            content = "\n".join(out)
+            gen.write_text_atomic(ipd, content)
+            # PoE1 writes only the .ipd (what Exiled Bot reads). No in-game
+            # .filter: build_loot_filter is PoE2-tuned, and poe.ninja names PoE1
+            # tattoos by their MOD TEXT, which is invalid as a filter BaseType —
+            # it produced garbage rows like BaseType == "12% increased Fire Damage".
+            self._log(f"Wrote {os.path.basename(ipd)}")
+
+            copied = ""
+            bot = (self.cfg.get("bot_folder") or "").strip()
+            if self.cfg.get("auto_copy") and bot and os.path.isdir(bot):
+                try:
+                    dst = os.path.join(bot, os.path.basename(ipd))
+                    shutil.copy2(ipd, dst + ".tmp")
+                    os.replace(dst + ".tmp", dst)
+                    copied = bot
+                    self._log(f"✓ Auto-copied to {bot}")
+                except OSError as e:
+                    self._log(f"✗ Auto-copy failed ({e}) — copy the pickit by hand")
+
+            self._last_lines = content.splitlines()
+            active = sum(1 for l in out if l and not l.startswith("//") and asm.is_rule_line(l))
+            commented = sum(1 for l in out if l.startswith("//") and asm.is_rule_line(l))
+
+            self.cfg.update({"league": league, "min_exalt_gear": min_gear,
+                             "min_exalt": min_gear, "min_exalt_unique": min_unique,
+                             "last_gen_version": VERSION})
+            hist = self.cfg.setdefault("history", [])
+            prev_divine = float((hist[-1] if hist else {}).get("divine_rate") or 0)
+            hist.append({"ts": time.strftime("%Y-%m-%d %H:%M"),
+                         "active": active, "commented": commented,
+                         "uf": float(min_unique), "gf": float(min_gear),
+                         "divine_rate": div_rate,
+                         "top_item": top_pool[0][0] if top_pool else "",
+                         "top_value": round(top_pool[0][1], 1) if top_pool else 0,
+                         "duration": f"{time.time() - t0:.1f}s"})
+            del hist[:-50]
+            save_config(self.cfg)
+
+            icon_by: dict = {}
+            try:
+                for _p in payloads.values():
+                    if not isinstance(_p, dict):
+                        continue
+                    for _ln in _p.get("lines", []):
+                        _nm, _ic = _ln.get("name"), _ln.get("icon")
+                        if _nm and _ic and _nm not in icon_by:
+                            icon_by[_nm] = _ic
+                    for _it in _p.get("items", []):
+                        _nm = _it.get("name"); _img = _it.get("image") or ""
+                        if _img.startswith("/"):
+                            _img = "https://web.poecdn.com" + _img
+                        if _nm and _img and _nm not in icon_by:
+                            icon_by[_nm] = _img
+            except Exception:
+                icon_by = {}
+
+            with self._lock:
+                self._status["running"] = False
+                self._status["done"] = {
+                    "ok": True, "path": ipd, "active": active, "commented": commented,
+                    "cats_ok": sum(1 for k, _t, _l, _u in cats if isinstance(payloads.get(k), dict)),
+                    "cats_fail": sum(1 for k, _t, _l, _u in cats if not isinstance(payloads.get(k), dict)),
+                    "stale": len(stale), "divine_rate": round(div_rate, 1),
+                    "prev_divine": round(prev_divine, 1),
+                    "secs": round(time.time() - t0, 1),
+                    "top": [{"name": t[0], "ex": round(t[1], 1),
+                             "cat": (t[2] if len(t) > 2 else ""),
+                             "icon": icon_by.get(t[0], "")} for t in top_pool[:5]],
+                    "val_errors": len(validation.get("errors", [])),
+                    "val_warnings": len(validation.get("warnings", [])),
+                    "copied": copied, "added": added, "removed": removed,
+                    "alerts": [], "coverage_alerts": cov_alerts, "safety": "",
+                }
+        except Exception as e:
+            with self._lock:
+                self._status["running"] = False
+                self._status["done"] = {"ok": False, "error": str(e)}
+
     def _generate(self, league, min_gear, min_unique):
         t0 = time.time()
+        # PoE 1 is economy only — a dedicated pipeline, so the PoE 2 generate
+        # below (and its many hard-won safety fixes) is never disturbed.
+        if self._game().economy_only:
+            return self._generate_poe1(league, min_gear, min_unique, t0)
         try:
             if self.cfg.get("auto_floor"):
                 sf = self.suggest_floors(league, int(self.cfg.get("auto_floor_pct", 40) or 40))
@@ -2721,8 +2940,11 @@ class AppApi:
     def preview(self):
         if self._last_lines:
             return self._last_lines
-        # fall back to the last file on disk so Preview works right after launch
-        base = (self.cfg.get("output_base") or "poe2_pickit").strip() or "poe2_pickit"
+        # fall back to the last file on disk so Preview works right after launch.
+        # Default to the ACTIVE game's output name so PoE1 never falls back to the
+        # PoE2 file (each game writes its own poe1_pickit.ipd / poe2_pickit.ipd).
+        dflt = self._game().default_output_base
+        base = (self.cfg.get("output_base") or dflt).strip() or dflt
         try:
             with open(os.path.join(OUTPUT_DIR, base + ".ipd"),
                       encoding="utf-8", errors="replace") as f:
@@ -3004,9 +3226,14 @@ class AppApi:
         return fields
 
     @staticmethod
-    def _payload_price(payload, candidates, is_unique):
+    def _payload_price(payload, candidates, is_unique, corr=None, skp=None):
         """This item's exalt value in one poe.ninja category payload, or None when
-        that category doesn't price it. Mirrors the two shapes ``economy()`` reads."""
+        that category doesn't price it. Mirrors the two shapes ``economy()`` reads.
+
+        ``corr``/``skp`` override the PoE2 name-fix/skip tables (PoE1 passes empty
+        ones) so PoE2 renames are never applied to PoE1 item names."""
+        corr = gen.ITEM_NAME_CORRECTIONS if corr is None else corr
+        skp = gen.ITEM_NAME_SKIP if skp is None else skp
         r = gen.exalted_rate(payload) or 1.0
         if is_unique:
             for ln in payload.get("lines", []):
@@ -3016,9 +3243,9 @@ class AppApi:
         by_id = {i["id"]: i for i in payload.get("items", []) if i.get("id")}
         for ln in payload.get("lines", []):
             it = by_id.get(ln.get("id"))
-            if not it or not it.get("name") or it["name"] in gen.ITEM_NAME_SKIP:
+            if not it or not it.get("name") or it["name"] in skp:
                 continue
-            if gen.ITEM_NAME_CORRECTIONS.get(it["name"], it["name"]) in candidates:
+            if corr.get(it["name"], it["name"]) in candidates:
                 return float(ln.get("primaryValue") or 0.0) * r
         return None
 
@@ -3030,7 +3257,10 @@ class AppApi:
         of it. If the answer here and the file ever disagreed, the file would be wrong.
         """
         rows, rule = [], None
-        payloads = gen.fetch_all_payloads(league, gen.ALL_CATEGORIES)
+        g = self._game()
+        corr = gen.ITEM_NAME_CORRECTIONS if not g.economy_only else {}
+        skp = gen.ITEM_NAME_SKIP if not g.economy_only else set()
+        payloads = gen.fetch_all_payloads(league, g.all_categories, game=g)
         cur = payloads.get("currency")
         div = asm.compute_divine_rate(cur)[0] if isinstance(cur, dict) else 1.0
         chaos = self._chaos_rate(cur)
@@ -3038,7 +3268,7 @@ class AppApi:
         px = lambda v: self._price_str(v, div, chaos)          # noqa: E731
         variant = (rarity or "").strip().title()
 
-        for key, _t, label, is_uniq in gen.ALL_CATEGORIES:
+        for key, _t, label, is_uniq in g.all_categories:
             p = payloads.get(key)
             if not isinstance(p, dict):
                 continue
@@ -3055,7 +3285,7 @@ class AppApi:
                              if (ln.get("baseType") or ln.get("name")) in cands
                              and ln.get("variant") == variant), None)
             else:
-                price = self._payload_price(p, cands, is_uniq)
+                price = self._payload_price(p, cands, is_uniq, corr, skp)
             if price is None:
                 continue                       # this category doesn't price it
             cat_on = bool(snap["cat_enabled"].get(key, True))
@@ -3430,8 +3660,9 @@ class AppApi:
         return pool[:n]
 
     def _example_unique(self, league):
-        uniq_cats = [c for c in gen.ALL_CATEGORIES if c[3]]
-        payloads = gen.fetch_all_payloads(league, uniq_cats)
+        g = self._game()
+        uniq_cats = [c for c in g.all_categories if c[3]]
+        payloads = gen.fetch_all_payloads(league, uniq_cats, game=g)
         pool = []
         for key, _t, _label, _u in uniq_cats:
             p = payloads.get(key)
@@ -3576,7 +3807,9 @@ class AppApi:
         load (the divine rate otherwise only arrived after opening Economy or generating,
         which is why the slider was stuck on its 100 ex fallback)."""
         try:
-            p = gen.fetch_all_payloads(league, [("currency", "Currency", "Currency", False)])["currency"]
+            g = self._game()
+            p = gen.fetch_all_payloads(
+                league, [("currency", "Currency", "Currency", False)], game=g)["currency"]
             r = gen.exalted_rate(p) or 1.0
             by_id = {i["id"]: i for i in p.get("items", [])}
             chaos = divine = 0.0

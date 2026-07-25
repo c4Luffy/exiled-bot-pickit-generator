@@ -1,10 +1,36 @@
 # Changelog
 
-All notable changes to **ExileBot 2 Pickit Generator**.
+All notable changes to **Exiled Bot Pickit Generator**.
 Versions link to their release, where the `ExileBot2PickitGenerator.exe`
 download lives.
 
 ---
+
+## [v4.42.0] — 2026-07-25 — Path of Exile 1 support: one app for both games
+
+- **A PoE 1 / PoE 2 switch at the top of the sidebar makes this one app for both
+  games.** Pick PoE 1 and it prices Path of Exile 1 live from poe.ninja (currency,
+  fragments, scarabs, fossils, essences, divination cards, uniques and the rest)
+  and writes a pickit in **Exiled Bot's native PoE1 format** — uniques by
+  `[UniqueName]`, everything else by `[Type]` — verified against a real Exiled Bot
+  install's own generated pickit. Currency/market lines are byte-identical to what
+  EB1 writes; uniques use `[UniqueName]` alone (no base/rarity prefix), which is
+  what EB1 expects and what the PoE2 builder does NOT do.
+- **Each game keeps its own state.** League, value floors, output file
+  (`poe1_pickit.ipd` vs `poe2_pickit.ipd`), run history and profiles are stored
+  per game, so switching never overwrites the other. The config migrates any
+  existing (PoE2) settings into their own section with no loss.
+- **PoE 1 is economy-only** — no rare-gear / craft / chance / fracture pages —
+  prices in **Chaos**, and has its own setup guide. It defaults to a league
+  poe.ninja actually prices (Standard), and an empty-league banner explains any
+  league poe.ninja lists but doesn't trade. No in-game `.filter` is written for
+  PoE1 (poe.ninja names PoE1 tattoos by mod text, which isn't a valid filter
+  base type); the `.ipd` is what Exiled Bot reads.
+- **Renamed** to *Exiled Bot Pickit Generator* (repo `exiled-bot-pickit-generator`)
+  now that it serves both games. The `.exe` filename is **unchanged**, so the
+  in-app updater keeps working across the rename.
+- Each game fetches its own poe.ninja API (`/poe1/` vs `/poe2/`) with a
+  game-keyed price cache, so a PoE1 fetch can never be served PoE2 data.
 
 ## [v4.41.29] — 2026-07-24 — The Economy hover card stops covering a row's keep/copy buttons
 
@@ -2265,104 +2291,105 @@ element id was preserved — **no feature was removed**.
 
 ---
 
-[v4.41.29]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.29
-[v4.41.28]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.28
-[v4.41.27]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.27
-[v4.41.19]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.19
-[v4.41.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.3
-[v4.41.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.2
-[v4.41.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.1
-[v4.41.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.0
-[v4.40.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.40.1
-[v4.40.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.40.0
-[v4.39.5]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.39.5
-[v4.39.4]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.39.4
-[v4.39.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.39.3
-[v4.39.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.39.2
-[v4.39.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.39.1
-[v4.39.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.39.0
-[v4.38.4]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.38.4
-[v4.38.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.38.3
-[v4.38.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.38.2
-[v4.38.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.38.1
-[v4.38.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.38.0
-[v4.37.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.37.0
-[v4.36.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.36.0
-[v4.35.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.35.2
-[v4.35.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.35.1
-[v4.35.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.35.0
-[v4.34.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.34.0
-[v4.33.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.33.0
-[v4.32.4]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.32.4
-[v4.32.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.32.3
-[v4.32.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.32.2
-[v4.32.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.32.1
-[v4.32.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.32.0
-[v4.31.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.31.3
-[v4.31.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.31.2
-[v4.31.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.31.1
-[v4.31.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.31.0
-[v4.30.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.30.0
-[v4.29.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.29.3
-[v4.29.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.29.2
-[v4.29.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.29.1
-[v4.29.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.29.0
-[v4.28.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.28.0
-[v4.27.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.27.0
-[v4.26.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.26.1
-[v4.26.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.26.0
-[v4.25.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.25.0
-[v4.24.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.24.0
-[v4.23.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.23.0
-[v4.22.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.22.1
-[v4.22.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.22.0
-[v4.21.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.21.3
-[v4.21.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.21.2
-[v4.21.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.21.1
-[v4.21.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.21.0
-[v4.20.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.20.0
-[v4.19.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.19.1
-[v4.19.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.19.0
-[v4.18.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.18.3
-[v4.18.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.18.2
-[v4.18.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.18.1
-[v4.18.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.18.0
-[v4.17.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.17.3
-[v4.17.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.17.2
-[v4.17.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.17.1
-[v4.17.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.17.0
-[v4.16.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.16.0
-[v4.15.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.15.0
-[v4.14.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.14.0
-[v4.13.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.13.0
-[v4.12.4]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.12.4
-[v4.12.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.12.3
-[v4.12.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.12.2
-[v4.12.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.12.1
-[v4.12.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.12.0
-[v4.11.7]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.11.7
-[v4.11.6]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.11.6
-[v4.11.5]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.11.5
-[v4.11.4]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.11.4
-[v4.11.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.11.3
-[v4.11.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.11.2
-[v4.11.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.11.1
-[v4.11.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.11.0
-[v4.10.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.10.0
-[v4.9.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.9.3
-[v4.9.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.9.2
-[v4.9.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.9.1
-[v4.9.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.9.0
-[v4.8.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.8.0
-[v4.7.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.7.0
-[v4.6.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.6.0
-[v4.5.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.5.0
-[v4.4.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.4.0
-[v4.3.6]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.3.6
-[v4.3.5]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.3.5
-[v4.3.4]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.3.4
-[v4.3.3]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.3.3
-[v4.3.2]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.3.2
-[v4.3.1]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.3.1
-[v4.3.0]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.3.0
-[v4.2.9]: https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.2.9
+[v4.42.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.0
+[v4.41.29]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.29
+[v4.41.28]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.28
+[v4.41.27]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.27
+[v4.41.19]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.19
+[v4.41.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.3
+[v4.41.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.2
+[v4.41.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.1
+[v4.41.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.0
+[v4.40.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.40.1
+[v4.40.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.40.0
+[v4.39.5]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.39.5
+[v4.39.4]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.39.4
+[v4.39.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.39.3
+[v4.39.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.39.2
+[v4.39.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.39.1
+[v4.39.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.39.0
+[v4.38.4]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.38.4
+[v4.38.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.38.3
+[v4.38.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.38.2
+[v4.38.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.38.1
+[v4.38.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.38.0
+[v4.37.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.37.0
+[v4.36.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.36.0
+[v4.35.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.35.2
+[v4.35.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.35.1
+[v4.35.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.35.0
+[v4.34.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.34.0
+[v4.33.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.33.0
+[v4.32.4]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.32.4
+[v4.32.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.32.3
+[v4.32.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.32.2
+[v4.32.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.32.1
+[v4.32.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.32.0
+[v4.31.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.31.3
+[v4.31.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.31.2
+[v4.31.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.31.1
+[v4.31.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.31.0
+[v4.30.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.30.0
+[v4.29.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.29.3
+[v4.29.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.29.2
+[v4.29.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.29.1
+[v4.29.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.29.0
+[v4.28.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.28.0
+[v4.27.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.27.0
+[v4.26.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.26.1
+[v4.26.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.26.0
+[v4.25.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.25.0
+[v4.24.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.24.0
+[v4.23.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.23.0
+[v4.22.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.22.1
+[v4.22.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.22.0
+[v4.21.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.21.3
+[v4.21.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.21.2
+[v4.21.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.21.1
+[v4.21.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.21.0
+[v4.20.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.20.0
+[v4.19.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.19.1
+[v4.19.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.19.0
+[v4.18.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.18.3
+[v4.18.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.18.2
+[v4.18.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.18.1
+[v4.18.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.18.0
+[v4.17.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.17.3
+[v4.17.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.17.2
+[v4.17.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.17.1
+[v4.17.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.17.0
+[v4.16.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.16.0
+[v4.15.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.15.0
+[v4.14.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.14.0
+[v4.13.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.13.0
+[v4.12.4]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.12.4
+[v4.12.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.12.3
+[v4.12.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.12.2
+[v4.12.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.12.1
+[v4.12.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.12.0
+[v4.11.7]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.11.7
+[v4.11.6]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.11.6
+[v4.11.5]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.11.5
+[v4.11.4]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.11.4
+[v4.11.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.11.3
+[v4.11.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.11.2
+[v4.11.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.11.1
+[v4.11.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.11.0
+[v4.10.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.10.0
+[v4.9.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.9.3
+[v4.9.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.9.2
+[v4.9.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.9.1
+[v4.9.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.9.0
+[v4.8.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.8.0
+[v4.7.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.7.0
+[v4.6.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.6.0
+[v4.5.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.5.0
+[v4.4.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.4.0
+[v4.3.6]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.3.6
+[v4.3.5]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.3.5
+[v4.3.4]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.3.4
+[v4.3.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.3.3
+[v4.3.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.3.2
+[v4.3.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.3.1
+[v4.3.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.3.0
+[v4.2.9]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.2.9

@@ -11,7 +11,7 @@ import requests
 
 BASE_URL = "https://poe.ninja/poe2/api/economy"
 INDEX_STATE_URL = "https://poe.ninja/poe2/api/data/index-state"
-USER_AGENT = "poe2-pickit-generator/1.0 (+local)"
+USER_AGENT = "exiled-bot-pickit-generator/1.0 (+local)"
 MIN_EXALT = 10.0
 
 
@@ -167,18 +167,18 @@ _CACHE_LOCK = threading.Lock()
 _CACHE_TTL: float = 900.0  # 15 minutes
 
 
-def _cache_get(league: str, key: str):
+def _cache_get(league: str, key: str, game_id: str = "poe2"):
     with _CACHE_LOCK:
-        entry = _PAYLOAD_CACHE.get((league, key))
+        entry = _PAYLOAD_CACHE.get((game_id, league, key))
         if entry and (time.time() - entry[0]) < _CACHE_TTL:
             return entry[1]
     return None
 
 
-def _cache_set(league: str, key: str, payload: dict):
+def _cache_set(league: str, key: str, payload: dict, game_id: str = "poe2"):
     with _CACHE_LOCK:
-        _PAYLOAD_CACHE[(league, key)] = (time.time(), payload)
-    save_payload_to_disk(league, key, payload)
+        _PAYLOAD_CACHE[(game_id, league, key)] = (time.time(), payload)
+    save_payload_to_disk(league, key, payload, game_id)
 
 
 def clear_cache():
@@ -227,17 +227,19 @@ def set_disk_cache_dir(path: str):
             pass
 
 
-def _disk_cache_file(league: str, key: str) -> str:
-    safe = re.sub(r'[^\w\-]', '_', f"{league}__{key}")
+def _disk_cache_file(league: str, key: str, game_id: str = "poe2") -> str:
+    # game_id prefix keeps PoE1 and PoE2 cache files apart on disk so a PoE1
+    # fetch can never be served a stale PoE2 payload (or the reverse).
+    safe = re.sub(r'[^\w\-]', '_', f"{game_id}__{league}__{key}")
     return os.path.join(_DISK_CACHE_DIR, safe + ".json")
 
 
-def save_payload_to_disk(league: str, key: str, payload: dict):
+def save_payload_to_disk(league: str, key: str, payload: dict, game_id: str = "poe2"):
     """Persist one payload so it can be reused when poe.ninja is unreachable."""
     if not _DISK_CACHE_DIR or not isinstance(payload, dict):
         return
     try:
-        fname = _disk_cache_file(league, key)
+        fname = _disk_cache_file(league, key, game_id)
         # Unique temp per save: a shared "<name>.tmp" let two threads (Economy
         # fetch + a generate, both refreshing after the TTL) interleave writes
         # and atomically promote garbage over a good cache file.
@@ -249,12 +251,12 @@ def save_payload_to_disk(league: str, key: str, payload: dict):
         pass
 
 
-def load_payload_from_disk(league: str, key: str):
+def load_payload_from_disk(league: str, key: str, game_id: str = "poe2"):
     """Return a previously saved payload (and its age in seconds), or (None, None)."""
     if not _DISK_CACHE_DIR:
         return None, None
     try:
-        with open(_disk_cache_file(league, key), encoding="utf-8") as f:
+        with open(_disk_cache_file(league, key, game_id), encoding="utf-8") as f:
             data = json.load(f)
         return data.get("payload"), time.time() - float(data.get("ts", 0))
     except (OSError, ValueError):
@@ -275,8 +277,8 @@ def cache_info() -> dict:
 
 # ── API helpers ───────────────────────────────────────────────────────────────
 
-def fetch_live_leagues() -> list:
-    data = _request_with_retry(INDEX_STATE_URL, {})
+def fetch_live_leagues(game=None) -> list:
+    data = _request_with_retry(game.index_url if game else INDEX_STATE_URL, {})
     leagues = []
     for item in data.get("economyLeagues", []):
         leagues.append((item.get("name", ""), item.get("url", ""), item.get("displayName", item.get("name", ""))))
@@ -285,9 +287,9 @@ def fetch_live_leagues() -> list:
     return [l for l in leagues if l[0] and l[1]]
 
 
-def detect_current_league() -> str:
+def detect_current_league(game=None) -> str:
     try:
-        data = _request_with_retry(INDEX_STATE_URL, {})
+        data = _request_with_retry(game.index_url if game else INDEX_STATE_URL, {})
         active = data.get("economyLeagues", [])
         for item in active:
             name = item.get("name", "")
@@ -300,12 +302,35 @@ def detect_current_league() -> str:
     return "Mercenaries"
 
 
-def fetch_category(league: str, key: str, ninja_type: str, is_unique: bool) -> dict:
+def _normalize_poe1_payload(payload: dict, is_unique: bool) -> dict:
+    """Make a PoE1 payload look like the PoE2 shape the rule builders expect.
+
+    PoE1's stash (unique) endpoint prices each line as ``chaosValue`` and ships
+    no ``primaryValue`` — the field every builder reads. Injecting
+    ``primaryValue = chaosValue`` lets the game-agnostic builders run unchanged
+    (chaos is PoE1's base unit, exactly as exalt is PoE2's). Exchange payloads
+    already carry ``primaryValue``, so they pass straight through.
+    """
+    if not is_unique or not isinstance(payload, dict):
+        return payload
+    for line in payload.get("lines", []):
+        if isinstance(line, dict) and line.get("primaryValue") is None:
+            cv = line.get("chaosValue")
+            if cv is not None:
+                line["primaryValue"] = cv
+    return payload
+
+
+def fetch_category(league: str, key: str, ninja_type: str, is_unique: bool, game=None) -> dict:
     endpoint = "stash/current/item/overview" if is_unique else "exchange/current/overview"
-    return _request_with_retry(f"{BASE_URL}/{endpoint}", {"league": league, "type": ninja_type})
+    base = game.base_url if game else BASE_URL
+    payload = _request_with_retry(f"{base}/{endpoint}", {"league": league, "type": ninja_type})
+    if game is not None and getattr(game, "id", None) == "poe1":
+        payload = _normalize_poe1_payload(payload, is_unique)
+    return payload
 
 
-def fetch_all_payloads(league: str, categories: list, *, max_workers: int = 5,
+def fetch_all_payloads(league: str, categories: list, *, game=None, max_workers: int = 5,
                        use_cache: bool = True, offline_fallback: bool = True,
                        stale_out: set | None = None) -> dict:
     """Fetch all category payloads in parallel.
@@ -317,12 +342,13 @@ def fetch_all_payloads(league: str, categories: list, *, max_workers: int = 5,
     disk is used instead and its key is added to `stale_out` (so callers can warn
     the user that prices may be out of date).
     """
+    gid = game.id if game else "poe2"
     results: dict = {}
     to_fetch = []
 
     for key, ninja_type, label, is_unique in categories:
         if use_cache:
-            cached = _cache_get(league, key)
+            cached = _cache_get(league, key, gid)
             if cached is not None:
                 results[key] = cached
                 continue
@@ -333,7 +359,7 @@ def fetch_all_payloads(league: str, categories: list, *, max_workers: int = 5,
 
     def _fetch_one(item):
         k, ninja_type, _label, is_unique = item
-        return k, fetch_category(league, k, ninja_type, is_unique)
+        return k, fetch_category(league, k, ninja_type, is_unique, game)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [(item[0], executor.submit(_fetch_one, item)) for item in to_fetch]
@@ -341,10 +367,10 @@ def fetch_all_payloads(league: str, categories: list, *, max_workers: int = 5,
             try:
                 _, payload = future.result()
                 if use_cache:
-                    _cache_set(league, key, payload)
+                    _cache_set(league, key, payload, gid)
                 results[key] = payload
             except Exception as e:
-                disk, _age = load_payload_from_disk(league, key) if offline_fallback else (None, None)
+                disk, _age = load_payload_from_disk(league, key, gid) if offline_fallback else (None, None)
                 if disk is not None:
                     results[key] = disk
                     if stale_out is not None:

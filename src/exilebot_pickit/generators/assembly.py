@@ -388,6 +388,130 @@ def fracture_pickit_section(snapshot: dict) -> list[str]:
 
 
 
+# ── PoE 1 economy assembly (economy only — no rare gear) ──────────────────────
+
+def _poe1_enabled_names(is_unique: bool, payload: dict, cat_states: dict) -> set | None:
+    """PoE1 version of enabled_names_for: no PoE2 name corrections applied."""
+    if cat_states and not is_unique:
+        names = {i["name"] for i in payload.get("items", []) if i.get("name")}
+        disabled = {n for n, s in cat_states.items() if not s.get("enabled", True)}
+        return names - disabled
+    return None
+
+
+def build_poe1_stash_lines(payload: dict, min_exalt: float,
+                           disabled: set | None = None,
+                           key_tag: str = "Type") -> list[str]:
+    """Rules for a PoE1 stash-endpoint category, matched by item name.
+
+    ``key_tag`` picks EB1's native condition: real uniques use ``[UniqueName]``
+    (EB1 identifies uniques by name alone — every unique line in a real EB1
+    generated pickit is ``[UniqueName] == "X" # [StashItem] == "true"``, no
+    base/rarity prefix), while non-unique stash items (incubators, gems, beasts,
+    …) use ``[Type]``. Both differ from the PoE2 unique builder, so PoE1 needs
+    its own. These payloads carry the name on the LINE (no ``items`` table), and
+    exalted_rate is 0 for PoE1 so primaryValue (chaos) is used directly.
+    """
+    threshold = min_exalt
+    dis = set(disabled or ())
+    rate = gen.exalted_rate(payload)
+    rows = []
+    seen = set()
+    for line in payload.get("lines", []):
+        name = line.get("name")
+        if not name or name in seen:      # EB1 keys these by name alone
+            continue
+        seen.add(name)
+        pv = float(line.get("primaryValue") or 0.0)
+        ev = pv * rate if rate else pv
+        rule = (f'[{key_tag}] == "{gen._quote_ipd(name)}" '
+                f'# [StashItem] == "true" // ExValue = {ev:.2f}')
+        keep = ev >= threshold and name not in dis
+        rows.append((ev, rule if keep else f"//{rule}"))
+    rows.sort(key=lambda r: r[0], reverse=True)
+    return [rule for _, rule in rows]
+
+
+def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
+                             divine_rate: float, divine_found: bool,
+                             snapshot: dict) -> tuple[list[str], int]:
+    """Assemble a full PoE 1 economy pickit from already-fetched payloads.
+
+    PoE 1 is ECONOMY ONLY: currency, fragments, uniques and the other market
+    categories, each kept or commented out by the value floor. None of the PoE 2
+    rare-gear / craft / chance / fracture sections exist here. Prices are in
+    Chaos (PoE 1's base unit) exactly as PoE 2's are in Exalt — the value math is
+    identical, only the unit label differs.
+
+    Returns ``(lines, active_rule_count)``. Pure: no network, no file I/O.
+    """
+    min_gear = float(snapshot.get("min_exalt_gear", 0.0) or 0.0)
+    min_uniq = float(snapshot.get("min_exalt_unique", 0.0) or 0.0)
+    item_states = snapshot.get("item_states", {}) or {}
+    cat_enabled = snapshot.get("category_enabled", {}) or {}
+
+    lines: list[str] = [
+        "/" * gen._W,
+        "//" + "  EXILEBOT  |  AUTO-GENERATED PICKIT  |  PATH OF EXILE 1".center(gen._W - 4) + "//",
+        "/" * gen._W,
+        f"// League    : {league}",
+        f"// Threshold : {min_gear:.0f} c (currency/items)  |  {min_uniq:.0f} c (uniques)",
+        "// Source    : poe.ninja PoE1 economy API",
+    ]
+    if divine_found:
+        lines.append(f"// Conversion: 1 Divine = {divine_rate:.2f} Chaos")
+    else:
+        lines.append("// Conversion: Divine rate unavailable")
+    # NOT the PoE2 syntax guide — that references PoE2-only categories/flags
+    # ([Salvage], WaystoneTier, PoE2 WeaponCategory) which are wrong for Exiled
+    # Bot 1. A short, EB1-accurate note instead.
+    lines += [
+        "/" * gen._W,
+        "// Exiled Bot pickit (Path of Exile 1) — economy only.",
+        "// Priced items to keep; anything below your floor is commented out.",
+        '// Currency / market items:  [Type] == "Name" # [StashItem] == "true"',
+        '// Uniques:                  [UniqueName] == "Name" # [StashItem] == "true"',
+        "// Values in the // comments are Chaos.",
+        "/" * gen._W, "",
+    ]
+    lines.append(gen.header_major("Economy Items"))
+    lines.append("")
+
+    for key, _ninja_type, label, is_unique in categories:
+        payload = payloads.get(key)
+        lines.append(gen.header_sub(label))
+        lines.append("")
+        if isinstance(payload, Exception) or payload is None:
+            lines.append(f"// Could not fetch {label} — try again when poe.ninja is reachable")
+            lines.append("")
+            continue
+        if not cat_enabled.get(key, True):
+            lines.append(f"// {label} turned off in Economy")
+            lines.append("")
+            continue
+        cat_states = item_states.get(key, {})
+        eff_min = effective_min(snapshot, key, is_unique, min_gear, min_uniq)
+        if is_unique:
+            dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
+            # Stash-endpoint category. Real uniques (unique_* keys) match by
+            # [UniqueName]; other stash items (incubators, gems, beasts…) by
+            # [Type] — both EB1's native forms.
+            tag = "UniqueName" if key.startswith("unique_") else "Type"
+            cat_lines = build_poe1_stash_lines(payload, eff_min, dis, key_tag=tag)
+        else:
+            enabled = _poe1_enabled_names(is_unique, payload, cat_states)
+            cat_lines = gen.build_exchange_lines(payload, divine_rate, pick_all=False,
+                                                 min_exalt=eff_min, enabled_names=enabled,
+                                                 corrections={}, skip=set())
+        if not cat_lines:
+            lines.append(f"// poe.ninja returned no rows for {label} in this league")
+        lines += cat_lines
+        lines.append("")
+
+    active = sum(1 for l in lines if is_rule_line(l) and not l.lstrip().startswith("//"))
+    return lines, active
+
+
 # ── Price-move alerts ─────────────────────────────────────────────────────────
 
 def compute_price_alerts(categories, all_payloads: dict,

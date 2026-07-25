@@ -4,17 +4,29 @@ Guidance for AI assistants (and humans) working in this repository.
 
 ## What this project is
 
-**ExileBot 2 Pickit Generator** — a Windows desktop app that turns live
-[poe.ninja](https://poe.ninja) Path of Exile 2 economy prices into an
-Exiled Bot 2 pickit file (`.ipd`). The user picks a league and value floors,
-presses Generate, and the app writes ~2,000+ pickit rules covering what is
-worth money *today*. It ships as a single PyInstaller `.exe` (no Python, no
-installer) and self-updates its game data from this repo.
+**Exiled Bot Pickit Generator** — a Windows desktop app that turns live
+[poe.ninja](https://poe.ninja) economy prices into an Exiled Bot pickit file
+(`.ipd`). It is **dual-game**: a PoE 1 / PoE 2 switch in the sidebar flips the
+whole app between Path of Exile 1 and Path of Exile 2. The user picks a league
+and value floors, presses Generate, and the app writes ~2,000+ pickit rules
+covering what is worth money *today*. It ships as a single PyInstaller `.exe`
+(no Python, no installer) and self-updates its game data from this repo.
 
 Data flow: **poe.ninja prices → user floors & choices → `.ipd` pickit → the bot.**
 
-The app also emits a matching in-game `.filter` for manual play, but the `.ipd`
-is the file the bot reads.
+Dual-game specifics (see `data/games.py` — the game table — and
+`memory` notes if present): each game keeps its own poe.ninja endpoint
+(`/poe1/` vs `/poe2/`), category list, unit (Chaos vs Exalt), league, floors,
+output file, history and profiles; the config `games` section stores them
+separately and the flat keys mirror the active game. **PoE 1 is economy-only**
+(no rare-gear/craft/chance/fracture/exceptional) and writes uniques in Exiled
+Bot 1's native `[UniqueName]` form (no `[Type]`+`[Rarity]` prefix); PoE 2 keeps
+the full pipeline. The repo is `exiled-bot-pickit-generator`, but the built
+**`.exe` filename stays `ExileBot2PickitGenerator.exe`** — the in-app updater
+depends on it, so it must never change.
+
+For PoE 2 the app also emits a matching in-game `.filter` for manual play, but
+the `.ipd` is the file the bot reads. (PoE 1 writes only the `.ipd`.)
 
 ## Repository layout
 

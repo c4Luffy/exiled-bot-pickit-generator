@@ -17,7 +17,7 @@ import requests
 
 from exilebot_pickit.ui.config import log_exc
 from exilebot_pickit.version import VERSION  # single source of truth
-GITHUB_REPO   = "c4Luffy/poe2-pickit-generator"
+GITHUB_REPO   = "c4Luffy/exiled-bot-pickit-generator"
 VERSION_URL   = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 # Point straight at the newest release so its .exe asset is one click away.
 RELEASES_URL  = f"https://github.com/{GITHUB_REPO}/releases/latest"

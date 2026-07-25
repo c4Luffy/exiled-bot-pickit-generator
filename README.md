@@ -1,17 +1,17 @@
 <p align="center">
-  <img src="docs/logo.png" width="112" alt="ExileBot 2 Pickit Generator mascot">
+  <img src="docs/logo.png" width="112" alt="Exiled Bot Pickit Generator mascot">
 </p>
 
-<h1 align="center">ExileBot 2 Pickit Generator</h1>
+<h1 align="center">Exiled Bot Pickit Generator</h1>
 
 <p align="center">
   <strong>Build a pickit you can understand.</strong><br>
-  Turn live Path of Exile 2 prices into a validated Exiled Bot 2 pickit—or translate an existing <code>.ipd</code> into an in-game loot filter with every unavoidable difference reported.
+  Turn live poe.ninja prices—<strong>Path of Exile 1 or Path of Exile 2</strong>—into a validated Exiled Bot pickit, or translate an existing <code>.ipd</code> into an in-game loot filter with every unavoidable difference reported.
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/poe2-pickit-generator/releases/download/v4.41.26/ExileBot2PickitGenerator.exe"><img alt="Download v4.41.26 for Windows" src="https://img.shields.io/badge/Download-v4.41.26-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
-  <a href="https://github.com/c4Luffy/poe2-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/poe2-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.42.0 for Windows" src="https://img.shields.io/badge/Download-v4.42.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
 <p align="center">
@@ -19,11 +19,11 @@
 </p>
 
 <p align="center">
-  <a href="https://c4luffy.github.io/poe2-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.26">Release notes</a> ·
+  <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.0">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
-  <a href="https://github.com/c4Luffy/poe2-pickit-generator/issues">Issues</a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
 </p>
 
 ![Real ExileBot 2 Pickit Generator v4.38.2 Generate screen](docs/shots/01-generate-v4382.png)
@@ -31,7 +31,7 @@
 <p align="center"><sub>Real running-app capture · Generate · captured on v4.38.2</sub></p>
 
 > [!IMPORTANT]
-> **Using v4.20.0 or v4.21.0? Update manually once.** Close the old app, [download v4.41.26](https://github.com/c4Luffy/poe2-pickit-generator/releases/download/v4.41.26/ExileBot2PickitGenerator.exe), and open it. Your settings, profiles, and Exiled Bot folder stay in place. Later in-app updates work normally.
+> **Using v4.20.0 or v4.21.0? Update manually once.** Close the old app, [download v4.42.0](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.0/ExileBot2PickitGenerator.exe), and open it. Your settings, profiles, and Exiled Bot folder stay in place. Later in-app updates work normally.
 
 ## Start here
 
@@ -116,7 +116,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/poe2-pickit-generator/releases/download/v4.41.26/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.0/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -124,9 +124,16 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.41.29
+## Current release: v4.42.0
 
-### The Economy hover card stops covering a row's keep/copy buttons
+### Path of Exile 1 support — one app for both games
+
+- **A PoE 1 / PoE 2 switch at the top of the sidebar turns this into one app for both games.** Pick PoE 1 and it prices Path of Exile 1 live from poe.ninja — currency, fragments, scarabs, fossils, essences, divination cards, uniques and the rest — and writes a pickit in **Exiled Bot's native PoE1 format**: uniques by `[UniqueName]`, everything else by `[Type]`, verified against a real Exiled Bot install's own generated pickit.
+- **Each game keeps its own everything.** League, value floors, output file (`poe1_pickit.ipd` vs `poe2_pickit.ipd`), run history and profiles are stored per game, so switching never overwrites the other.
+- **PoE 1 is economy-only** — no rare-gear / craft / chance / fracture pages — prices in **Chaos**, defaults to a league that poe.ninja actually prices, and has its own setup guide.
+- **Renamed** to *Exiled Bot Pickit Generator* now that it serves both games. The `.exe` filename is unchanged, so the in-app updater keeps working across the rename.
+
+### v4.41.29 — The Economy hover card stops covering a row's keep/copy buttons
 
 - **The detail card that pops up when you hover an Economy row could sit on top of the keep/skip and copy buttons, so you couldn't click them.** It followed the cursor toward the right edge of the table and overlapped the whole action column — worse on a high-DPI or scaled display, where it covered several rows' buttons at once. The card now caps its right edge at the left edge of that action column, so it never overlaps the keep/copy buttons; it still appears beside the cursor as before, hovered or pinned.
 
@@ -318,7 +325,7 @@ Every tab was audited that cycle. The headline items are behaviour fixes — thi
 
 </details>
 
-[Read the complete v4.41.26 release notes](https://github.com/c4Luffy/poe2-pickit-generator/releases/tag/v4.41.26) · [full changelog](CHANGELOG.md)
+[Read the complete v4.42.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.0) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>
@@ -341,7 +348,7 @@ Every tab was audited that cycle. The headline items are behaviour fixes — thi
 Requirements: Windows 10 or 11 and Python 3.10 or newer.
 
 ```powershell
-git clone https://github.com/c4Luffy/poe2-pickit-generator.git
+git clone https://github.com/c4Luffy/exiled-bot-pickit-generator.git
 cd poe2-pickit-generator
 python -m venv .venv
 .venv\Scripts\Activate.ps1
@@ -353,10 +360,10 @@ python -m exilebot_pickit
 
 ## Help and community
 
-- [Setup and troubleshooting](https://c4luffy.github.io/poe2-pickit-generator/#faq)
+- [Setup and troubleshooting](https://c4luffy.github.io/exiled-bot-pickit-generator/#faq)
 - [Discord community](https://discord.gg/T7DU3Afve6)
-- [Report an issue](https://github.com/c4Luffy/poe2-pickit-generator/issues)
-- [All releases](https://github.com/c4Luffy/poe2-pickit-generator/releases)
+- [Report an issue](https://github.com/c4Luffy/exiled-bot-pickit-generator/issues)
+- [All releases](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases)
 
 ---
 

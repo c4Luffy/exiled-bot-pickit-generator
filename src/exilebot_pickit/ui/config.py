@@ -71,6 +71,16 @@ def _default_poe2_filter_dir() -> str:
 
 
 DEFAULT_CONFIG = {
+    # ── Dual-game (PoE1 / PoE2) ────────────────────────────────────────────────
+    # Which game is active right now. The flat game-specific keys below always
+    # MIRROR this game's saved section (see GAME_KEYS / switch_game); the other
+    # game's values sit untouched in `games[<id>]`. This mirror is what lets the
+    # ~200 existing `cfg["league"]`-style reads keep working with no change.
+    "active_game": "poe2",
+    # {"poe2": {<GAME_KEYS>}, "poe1": {<GAME_KEYS>}} — each game's own league,
+    # floors, output file, history, profiles, item toggles. Filled lazily.
+    "games": {},
+
     "league": "",
     "min_exalt": 0.0,
     "min_exalt_gear": 0.0,
@@ -153,6 +163,104 @@ DEFAULT_CONFIG = {
     # the default theme at use time, so a stale config can't strip styling.
     "filter_theme": "classic",
 }
+
+
+# ── Per-game config sections ──────────────────────────────────────────────────
+# Keys whose value belongs to ONE game. Everything else in DEFAULT_CONFIG is
+# GLOBAL (shared by both games): the UI theme, what's-new state, window geometry,
+# the loot-filter label theme, and the active-game pointer itself.
+#
+# The design: the flat top-level copy of these keys always mirrors the ACTIVE
+# game, and `games[<id>]` holds each game's saved values. save_config folds the
+# flat copy back into the active section before every write; switch_game swaps
+# sections in and out. This keeps PoE1 and PoE2 fully separate — own league,
+# floors, output file, history, profiles — while every existing `cfg[key]` read
+# keeps working unchanged.
+GAME_KEYS = (
+    "league", "min_exalt", "min_exalt_gear", "min_exalt_unique",
+    "output_base", "bot_folder", "auto_copy", "backup_count",
+    "category_enabled", "history", "magic_rare_flasks", "rare_gear_enabled",
+    "rare_strictness", "rare_strictness_slots", "known_leagues",
+    "include_bases", "auto_floor", "auto_floor_pct", "filter_hide_rest",
+    "base_quality", "base_min_level", "item_states", "last_gen_prices",
+    "last_gen_version", "profiles", "active_profile", "active_preset",
+    "copy_filter_to_game", "poe2_filter_dir", "filter_from_pickit",
+)
+
+
+def _game_section_defaults(game_id: str) -> dict:
+    """Fresh per-game settings for a game that has no saved section yet."""
+    sect = {k: copy.deepcopy(DEFAULT_CONFIG[k]) for k in GAME_KEYS}
+    try:
+        from exilebot_pickit.data.games import get_game
+        sect["output_base"] = get_game(game_id).default_output_base
+    except Exception:
+        pass
+    return sect
+
+
+def _games_copy(cfg: dict) -> dict:
+    """A NEW games dict for *cfg*, never the shared object.
+
+    Tests (and any caller) may hand us a shallow ``dict(DEFAULT_CONFIG)`` whose
+    'games' value is the very object DEFAULT_CONFIG holds. Mutating that in place
+    would poison the defaults for every later load (a real bug this guards). So
+    every writer rebuilds cfg['games'] from a fresh top-level copy.
+    """
+    src = cfg.get("games")
+    return dict(src) if isinstance(src, dict) else {}
+
+
+def _store_game_section(cfg: dict, game_id: str):
+    """Fold the flat (live) game-keys down into cfg['games'][game_id]."""
+    games = _games_copy(cfg)
+    games[game_id] = {k: copy.deepcopy(cfg.get(k, DEFAULT_CONFIG[k])) for k in GAME_KEYS}
+    cfg["games"] = games
+
+
+def _apply_game_section(cfg: dict, game_id: str):
+    """Lift cfg['games'][game_id] up into the flat top-level keys."""
+    games = _games_copy(cfg)
+    if not isinstance(games.get(game_id), dict):
+        games[game_id] = _game_section_defaults(game_id)
+    cfg["games"] = games
+    sect = games[game_id]
+    for k in GAME_KEYS:
+        cfg[k] = copy.deepcopy(sect[k]) if k in sect else copy.deepcopy(DEFAULT_CONFIG[k])
+
+
+def _ensure_game_sections(cfg: dict):
+    """Migrate a flat (pre-dual-game) config and normalise the active game.
+
+    A config saved before dual-game support has no `games` section: its flat
+    keys ARE the PoE2 settings, so they are wrapped into games['poe2'] with no
+    loss. Then the active game's section is mirrored back to the flat keys.
+    """
+    games = _games_copy(cfg)
+    if "poe2" not in games:
+        games["poe2"] = {k: copy.deepcopy(cfg.get(k, DEFAULT_CONFIG[k])) for k in GAME_KEYS}
+    cfg["games"] = games
+    ag = (cfg.get("active_game") or "poe2")
+    if ag not in ("poe1", "poe2"):
+        ag = "poe2"
+    cfg["active_game"] = ag
+    _apply_game_section(cfg, ag)
+
+
+def switch_game(cfg: dict, game_id: str) -> dict:
+    """Switch the active game in *cfg* in place, preserving both games' settings.
+
+    Stores the current flat game-keys into the old game's section, points
+    active_game at *game_id*, then lifts that game's section up to the flat keys
+    (creating it from defaults on first use). Caller saves afterwards.
+    """
+    if game_id not in ("poe1", "poe2"):
+        game_id = "poe2"
+    cur = cfg.get("active_game") or "poe2"
+    _store_game_section(cfg, cur)
+    cfg["active_game"] = game_id
+    _apply_game_section(cfg, game_id)
+    return cfg
 
 
 # ── Ready-made presets ────────────────────────────────────────────────────────
@@ -285,6 +393,9 @@ def load_config():
         # and 24 mid tier); user-set values other than 28 are left alone.
         if cfg.get("base_quality") == 28:
             cfg["base_quality"] = 25
+        # Split flat settings into per-game sections (migrates old configs) and
+        # mirror the active game up to the flat keys.
+        _ensure_game_sections(cfg)
         return cfg
     except Exception:
         return _config_load_failed()
@@ -341,6 +452,14 @@ def save_config(cfg) -> bool:
     """
     import time as _time
     with _SAVE_LOCK:
+        # Keep the active game's saved section in step with the flat (live) keys
+        # before persisting, so this game's league/floors/history aren't lost on
+        # the next game switch or launch.
+        try:
+            if isinstance(cfg, dict):
+                _store_game_section(cfg, cfg.get("active_game") or "poe2")
+        except Exception:
+            pass
         # Serialize FIRST, into a string, with a retry: pywebview runs every JS
         # call on its own thread, so another bridge call can mutate cfg while we
         # iterate it — json.dump then raises "dictionary changed size during

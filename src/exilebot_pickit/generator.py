@@ -40,6 +40,9 @@ from exilebot_pickit.data.corrections import (  # noqa: F401
 from exilebot_pickit.data.base_types import (  # noqa: F401
     _BASE_TYPES_BY_CATEGORY,
 )
+from exilebot_pickit.data.games import (  # noqa: F401
+    DEFAULT_GAME, GAMES, POE1, POE2, GameSpec, get_game,
+)
 from exilebot_pickit.api.client import (  # noqa: F401
     ALL_CATEGORIES, BASE_URL, EXCHANGE_CATEGORIES, INDEX_STATE_URL, MIN_EXALT,
     PICK_ALL_CATEGORIES, UNIQUE_CATEGORIES, USER_AGENT,
@@ -902,10 +905,17 @@ def build_exchange_lines(
     always_names: list[str] | None = None,
     force_names: set[str] | None = None,
     ritual_threshold: float | None = None,
+    corrections: dict | None = None,
+    skip: set | None = None,
 ) -> list:
     """``force_names``: priced items whose rule stays ACTIVE regardless of the
     value floor (always-pick items ninja happens to price, e.g. Expedition
-    Logbook). An explicit user disable (enabled_names) still wins."""
+    Logbook). An explicit user disable (enabled_names) still wins.
+
+    ``corrections`` / ``skip`` override the PoE2 name-fix and skip tables — PoE1
+    passes empty ones so it never applies PoE2's renames to PoE1 item names."""
+    corrections = ITEM_NAME_CORRECTIONS if corrections is None else corrections
+    skip = ITEM_NAME_SKIP if skip is None else skip
     force = set(force_names or ())
     items_by_id = {i["id"]: i for i in payload.get("items", [])}
     rate = exalted_rate(payload)
@@ -914,9 +924,9 @@ def build_exchange_lines(
         item = items_by_id.get(line.get("id"))
         if not item or not item.get("name"):
             continue
-        if item["name"] in ITEM_NAME_SKIP:
+        if item["name"] in skip:
             continue
-        name = ITEM_NAME_CORRECTIONS.get(item["name"], item["name"])
+        name = corrections.get(item["name"], item["name"])
         if name is None:  # corrections dict maps to None = skip this item
             continue
         if enabled_names is not None and name not in enabled_names:
@@ -1273,6 +1283,8 @@ def collect_unique_report_rows(label: str, payload: dict, divine_rate_exalts: fl
 
 def main():
     parser = argparse.ArgumentParser(description="Generate ExileBot 2 pickit rules from poe.ninja's real economy API.")
+    parser.add_argument("--game",            choices=("poe2", "poe1"), default="poe2",
+                        help="Which game's economy to use (default poe2). poe1 = economy only.")
     parser.add_argument("--league",          default=None,              help="Exact league name. Omit to auto-detect.")
     parser.add_argument("--min-exalt",       type=float, default=MIN_EXALT, help="Threshold below which items are commented out")
     parser.add_argument("--output",          default="poe2_pickit.txt", help="Output file path")
@@ -1290,19 +1302,20 @@ def main():
     parser.add_argument("--base-min-level",  type=int, default=CRAFT_BASE_MIN_ILVL, help=f"Min required level for base-type rules (default {CRAFT_BASE_MIN_ILVL})")
     args = parser.parse_args()
     min_exalt = args.min_exalt
+    game = get_game(args.game)
 
     if args.list_leagues:
-        for name, slug, display in fetch_live_leagues():
+        for name, slug, display in fetch_live_leagues(game):
             print(f"{display} | name={name} | url={slug}")
         return
 
-    league = args.league or detect_current_league()
+    league = args.league or detect_current_league(game)
 
     if args.check_endpoints:
         print(f"Checking endpoints for league: {league}")
-        for key, ninja_type, label, is_unique in ALL_CATEGORIES:
+        for key, ninja_type, label, is_unique in game.all_categories:
             try:
-                payload = fetch_category(league, key, ninja_type, is_unique)
+                payload = fetch_category(league, key, ninja_type, is_unique, game)
                 row_count = len(payload.get("lines", []))
                 print(f"  ✓  {label:<30} {row_count} rows")
             except requests.HTTPError as e:
@@ -1313,6 +1326,32 @@ def main():
         return
 
     print(f"Using league: {league}")
+
+    # ── PoE 1: economy-only path ──────────────────────────────────────────────
+    # PoE 1 has no rare-gear / craft / chance / fracture sections, so it uses a
+    # dedicated assembler rather than the long PoE 2 pipeline below.
+    if game.economy_only:
+        from .generators.assembly import build_poe1_economy_lines
+        cats = game.all_categories
+        stale: set = set()
+        print(f"Fetching {len(cats)} PoE1 categories…")
+        payloads = fetch_all_payloads(league, cats, game=game, stale_out=stale)
+        currency_payload = payloads.get("currency")
+        divine_rate, divine_found, _rate = (1.0, False, 0.0)
+        if isinstance(currency_payload, dict):
+            from .generators.assembly import compute_divine_rate
+            divine_rate, divine_found, _rate = compute_divine_rate(currency_payload)
+        if stale:
+            print(f"Warning: poe.ninja unreachable for {len(stale)} categor"
+                  f"{'y' if len(stale) == 1 else 'ies'} — used cached copies on disk",
+                  file=sys.stderr)
+        snapshot = {"min_exalt_gear": min_exalt, "min_exalt_unique": min_exalt,
+                    "item_states": {}, "category_enabled": {}}
+        out_lines, active = build_poe1_economy_lines(league, cats, payloads,
+                                                     divine_rate, divine_found, snapshot)
+        write_text_atomic(args.output, "\n".join(out_lines))
+        print(f"Wrote {active} active PoE1 rules → {args.output}")
+        return
 
     if args.variant == "all":
         categories = ALL_CATEGORIES
