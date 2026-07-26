@@ -82,12 +82,24 @@ src/exilebot_pickit/
 
 game_data.json           Remote-updatable game data (schema version 2). MUST stay in
                          sync with the code objects in data/ — tests enforce this.
-tests/                   pytest suite (network-free; poe.ninja mocked).
+tests/                   pytest suite (network-free; poe.ninja mocked), plus two
+                         Node harnesses: test_ui_logic.mjs (real app.html functions)
+                         and test_site_carousel.mjs (the landing page's PoE 1 / PoE 2
+                         screenshot switch, run against a DOM stub).
 .github/workflows/       ci.yml (test+lint+build smoke on push/PR to main),
-                         release.yml (build+publish exe on v* tags).
+                         release.yml (build+publish exe on v* tags),
+                         the Pages deploy (docs/ ships on every push to main).
 build.exe.bat            Local Windows build script (mirrors the CI build flags).
-docs/                    README screenshot.
+docs/                    The GitHub Pages landing page (index.html) and shots/ —
+                         one 1920x1009 capture per tab, per game, named
+                         <game>-NN-<slug>-v<VERSION>.png.
 tools/
+  capture_shots.py       Re-shoots every tab of both games by driving the REAL app
+                         (switch game -> generate -> click each tab -> grab the
+                         window). Windows only, takes over the screen for a few
+                         minutes: `python tools/capture_shots.py`. Use it instead of
+                         hand-taking screenshots — that is how the site ended up
+                         showing PoE 1 frames inside the PoE 2 tour.
   check_game_data.py     Game-data drift checker. Fetches the live GGPK mod dump
                          (repoe-fork mods.min.json) + NeverSink's SOFT filter and
                          diffs them against our stat ids, weights and base names.
