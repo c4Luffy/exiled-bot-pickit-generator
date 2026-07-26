@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Build a pickit you can understand.</strong><br>
-  Turn live poe.ninja prices—<strong>Path of Exile 1 or Path of Exile</strong>—into a validated Exiled Bot pickit, or translate an existing <code>.ipd</code> into an in-game loot filter with every unavoidable difference reported.
+  Turn live poe.ninja prices—<strong>Path of Exile 1 or 2</strong>—into a validated Exiled Bot pickit, or translate an existing <code>.ipd</code> into an in-game loot filter with every unavoidable difference reported.
 </p>
 
 <p align="center">
