@@ -95,6 +95,11 @@ _POE1_EXCHANGE = (
     ("tattoos",           "Tattoo",         "Tattoos",           False),
     ("allflame_embers",   "AllflameEmber",  "Allflame Embers",   False),
     ("delirium_orbs",     "DeliriumOrb",    "Delirium Orbs",     False),
+    # Runegrafts went unfetched until 2026-07-26 — 30 priced rows in the live
+    # league, all with trade volume and every one worth >= 5c (the top three
+    # 450-700c), and not one of them had a rule at any floor. Same shape as the
+    # Verisium miss: a category nobody asked poe.ninja for.
+    ("runegrafts",        "Runegraft",      "Runegrafts",        False),
 )
 _POE1_UNIQUE = (
     ("incubators",        "Incubator",      "Incubators",        True),
@@ -110,6 +115,10 @@ _POE1_UNIQUE = (
     ("unique_jewels",     "UniqueJewel",    "Unique Jewels",     True),
     ("unique_maps",       "UniqueMap",      "Unique Maps",       True),
     ("unique_relics",     "UniqueRelic",    "Unique Relics",     True),
+    # Maps are a stash-style payload (name on the line, no items table) but they
+    # are NOT uniques: they price by map base and are picked up by TIER, so
+    # build_poe1_map_lines handles them instead of the [UniqueName] builder.
+    ("maps",              "Map",            "Maps",              True),
 )
 POE1 = GameSpec(
     id="poe1",

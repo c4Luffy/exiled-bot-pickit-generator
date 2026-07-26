@@ -57,6 +57,7 @@ PAGES = [
     ("mypk",     "create-your-filter", True),
     ("hist",     "history",            True),
     ("eco",      "economy",            True),
+    ("maps",     "maps",               True),     # PoE 1 only (g1only)
     ("chance",   "chance",             False),
     ("craft",    "craft",              False),
     ("exc",      "exceptional",        False),
@@ -80,17 +81,62 @@ def js(window, code, default=None):
         return default
 
 
+def _hwnd(window):
+    try:
+        return window.native.Handle.ToInt64()
+    except Exception:
+        return None
+
+
 def place(window):
     """Pin the native window to (0,0) at exactly W x H so every shot lines up."""
     try:
-        hwnd = window.native.Handle.ToInt64()
+        hwnd = _hwnd(window)
         ctypes.windll.user32.SetWindowPos(hwnd, 0, 0, 0, W, H, 0x0040)  # SWP_SHOWWINDOW
         ctypes.windll.user32.SetForegroundWindow(hwnd)
     except Exception as e:
         log("!! could not place the window:", e)
 
 
+def _focus(window, tries=6):
+    """Make sure OUR window is the one on screen before grabbing.
+
+    ImageGrab reads the desktop, so anything that steals focus mid-run (an
+    editor, a notification) gets captured instead — silently, since the shot is
+    still 1920x1009 and looks fine to the script. Assert the foreground window
+    is ours and retry; give up loudly rather than saving someone else's screen.
+    """
+    u, k = ctypes.windll.user32, ctypes.windll.kernel32
+    hwnd = _hwnd(window)
+    if not hwnd:
+        return True                      # can't verify; caller still grabs
+    for _ in range(tries):
+        fg = u.GetForegroundWindow()
+        if fg == hwnd:
+            return True
+        # Windows refuses SetForegroundWindow from a process that doesn't own
+        # the foreground — which is exactly our case when the run is started
+        # from a terminal. Attaching to the foreground window's input thread
+        # lifts that restriction for the call.
+        tid = u.GetWindowThreadProcessId(fg, None) if fg else 0
+        cur = k.GetCurrentThreadId()
+        attached = bool(tid and tid != cur and u.AttachThreadInput(tid, cur, True))
+        try:
+            u.ShowWindow(hwnd, 9)        # SW_RESTORE
+            u.BringWindowToTop(hwnd)
+            u.SetForegroundWindow(hwnd)
+        finally:
+            if attached:
+                u.AttachThreadInput(tid, cur, False)
+        time.sleep(0.6)
+    return u.GetForegroundWindow() == hwnd
+
+
 def grab(window, name):
+    if not _focus(window):
+        log(f"!! {name}: the app is not the foreground window — SKIPPED "
+            "(don't click away while this runs)")
+        return
     b = window.native.Bounds
     u = ctypes.windll.user32
     vx, vy = u.GetSystemMetrics(76), u.GetSystemMetrics(77)   # virtual-screen origin
@@ -168,10 +214,30 @@ def run_generate(window, timeout=240):
     return False
 
 
+def switch_game(window, game, timeout=60):
+    """Switch games and CONFIRM it took effect.
+
+    A fixed sleep was not enough: one run captured the whole 'poe2' pass while
+    the app was still in PoE 1 — Item Check missing, the PoE1-only Maps tab
+    shot under a poe2 name — and nothing noticed. ECON_ONLY is the app's own
+    flag for 'this game is economy-only' (true for PoE 1), so poll that.
+    """
+    want = (game == "poe1")
+    end = time.time() + timeout
+    while time.time() < end:
+        js(window, f'setGame("{game}")')
+        time.sleep(4)
+        if js(window, "typeof ECON_ONLY!=='undefined'?ECON_ONLY:null") == want:
+            time.sleep(4)               # let lists reload and the toast fade
+            return True
+    log(f"!! could not switch to {game} — the pass would capture the wrong game")
+    return False
+
+
 def do_game(window, game):
     log(f"== {game} ==")
-    js(window, f'setGame("{game}")')
-    time.sleep(9)                       # game switch reloads lists, toast fades
+    if not switch_game(window, game):
+        return 0
     wait_ready(window)
     close_modals(window)
     if DO_GENERATE:
@@ -198,8 +264,12 @@ def do_game(window, game):
         if pid == "eco":
             wait_prices(window)
         close_modals(window, rounds=1)
+        # Pages scroll INSIDE their own container, so window.scrollTo alone left
+        # shots starting halfway down a long page (the Maps page did).
         js(window, "if(document.activeElement)document.activeElement.blur();"
-                   "window.scrollTo(0,0);")
+                   "window.scrollTo(0,0);"
+                   "document.querySelectorAll('main,.page.on,.page.on *')"
+                   ".forEach(function(e){if(e.scrollTop)e.scrollTop=0;});")
         time.sleep(1.2)
         log(f"-- {pid}")
         grab(window, f"{game}-{n:02d}-{slug}-{SUFFIX}")

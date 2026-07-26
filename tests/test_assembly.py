@@ -5,6 +5,7 @@ generation pipeline is finally testable on its own.
 Run with:  python -m pytest test_assembly.py -v
 """
 import datetime
+import re
 
 from exilebot_pickit.generators import assembly as asm
 from exilebot_pickit import generator as gen
@@ -235,3 +236,101 @@ def test_coverage_warnings_respects_a_custom_allowlist():
     cats = [("idols", "Idols", "Idols", False)]
     payloads = {"idols": {"items": []}}
     assert asm.coverage_warnings(payloads, cats, expected_empty={"idols"}) == []
+
+
+# ── PoE 1 maps ───────────────────────────────────────────────────────────────
+#
+# poe.ninja prices most PoE1 maps as "<Boss> Map (Tier N)" — a price bucket for
+# "any tier-N map with that influence", not an item name. Writing those as
+# [Type] rules would emit rules that match nothing, so the builder turns them
+# into the one tier rule Exiled Bot's own default.ipd uses.
+
+def _map_payload():
+    return {"lines": [
+        {"name": "Nightmare Map", "primaryValue": 40.0},
+        {"name": "Baran Vaal Temple Map", "baseType": "Vaal Temple Map",
+         "primaryValue": 30.0},
+        {"name": "Vaal Temple Map", "baseType": "Vaal Temple Map",
+         "primaryValue": 25.0},
+        {"name": "Drox Map (Tier 16)", "baseType": "Map (Tier 16)",
+         "primaryValue": 6.0},
+        {"name": "Veritania Map (Tier 16)", "baseType": "Map (Tier 16)",
+         "primaryValue": 6.0},
+        {"name": "Shaper Guardian Map", "primaryValue": 3.0},
+    ]}
+
+
+def test_poe1_maps_emit_one_active_tier_rule():
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=5.0, tier=16)
+    active = [ln for ln in lines if ln.startswith("[")]
+    tier_rules = [ln for ln in active if "[MapTier]" in ln]
+    assert tier_rules == ['[Category] == "Map" && [MapTier] >= "16" # [StashItem] == "true"']
+    # the other presets are offered, but commented out
+    for preset in (1, 6, 11, 14):
+        assert any(ln.startswith("//") and f'>= "{preset}"' in ln for ln in lines)
+
+
+def test_poe1_maps_never_write_a_tier_bucket_as_a_type():
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=16)
+    joined = "\n".join(ln for ln in lines if ln.startswith("["))
+    assert "Map (Tier 16)" not in joined
+    assert "Drox" not in joined and "Veritania" not in joined
+    # they are accounted for, not silently dropped
+    assert any("influence buckets" in ln for ln in lines)
+
+
+def test_poe1_maps_dedupe_influenced_variants_to_one_base():
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=16)
+    vaal = [ln for ln in lines if "Vaal Temple Map" in ln]
+    assert len(vaal) == 1, vaal
+    assert vaal[0].startswith('[Type] == "Vaal Temple Map"')
+    assert "Baran" not in vaal[0]          # the influence prefix is not a base type
+    assert "ExValue = 30.00" in vaal[0]    # keeps the higher of the two prices
+
+
+def test_poe1_maps_respect_the_floor_and_disabled_names():
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=5.0, tier=16)
+    assert any(ln.startswith('[Type] == "Nightmare Map"') for ln in lines)
+    assert any(ln.startswith('//[Type] == "Shaper Guardian Map"') for ln in lines)
+
+    off = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=16,
+                                   disabled={"Nightmare Map"})
+    assert any(ln.startswith('//[Type] == "Nightmare Map"') for ln in off)
+
+
+def test_poe1_map_tier_zero_writes_no_tier_rule():
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=0)
+    assert not any(ln.startswith("[Category]") for ln in lines)
+    assert any("Tier rule off" in ln for ln in lines)
+    # named maps still come through
+    assert any(ln.startswith('[Type] == "Nightmare Map"') for ln in lines)
+
+
+def test_poe1_runegrafts_are_fetched():
+    """A whole priced category went unfetched before (Verisium, then these)."""
+    from exilebot_pickit.data.games import POE1
+    keys = {c[0] for c in POE1.all_categories}
+    assert "runegrafts" in keys
+    assert "maps" in keys
+
+
+def test_poe1_map_rules_are_never_typeless():
+    """A [StashItem] rule with no [Type]/[Category] matches EVERYTHING on the
+    ground — the audit's standing rule, checked here for the map builder too."""
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=16)
+    for ln in lines:
+        if ln.startswith("//") or "[StashItem]" not in ln:
+            continue
+        assert "[Type]" in ln or "[Category]" in ln, ln
+
+
+def test_poe1_map_names_are_quote_escaped():
+    """A map name holding a literal quote must not unbalance its rule — the
+    v4.41.28 failure mode, checked for this builder too."""
+    payload = {"lines": [{"name": 'Weird " Map', "primaryValue": 99.0}]}
+    lines = asm.build_poe1_map_lines(payload, min_chaos=0.0, tier=0)
+    rule = next(ln for ln in lines if ln.startswith("[Type]"))
+    assert '\\"' in rule, rule                      # the name's quote is escaped
+    # structural quotes (the unescaped ones) must still pair up
+    unescaped = len(re.findall(r'(?<!\\)"', rule))
+    assert unescaped % 2 == 0, rule

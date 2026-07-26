@@ -437,6 +437,77 @@ def build_poe1_stash_lines(payload: dict, min_exalt: float,
     return [rule for _, rule in rows]
 
 
+# poe.ninja prices a conqueror/guardian map as "<Boss> Map (Tier N)" — a PRICE
+# BUCKET meaning "any tier-N map carrying that influence", not an item you can
+# name. There is no base type called "Drox Map (Tier 16)", so writing it as a
+# [Type] rule would match nothing. 24 of the 30 priced PoE1 map rows are these;
+# the tier rule below is what actually picks them up.
+_MAP_TIER_BUCKET = re.compile(r"^.*\bMap \(Tier \d+\)$")
+
+# Offered in the Economy tab. Same ladder Exiled Bot's own default.ipd ships.
+MAP_TIER_PRESETS = ((1, "every map"), (6, "yellow maps and up"),
+                    (11, "red maps and up"), (14, "T14 and up"), (16, "T16 only"))
+
+
+def build_poe1_map_lines(payload: dict, min_chaos: float, tier: int,
+                         disabled: set | None = None) -> list[str]:
+    """Rules for Path of Exile 1 maps.
+
+    Maps are picked up by TIER, not by name — there are ~120 map bases and a
+    pickit naming each would be unmaintainable, so Exiled Bot's own default.ipd
+    uses one ``[Category] == "Map" && [MapTier] >= "N"`` line. This mirrors that,
+    then adds ``[Type]`` rules for the few maps poe.ninja prices under a real
+    base name (Vaal Temple, Nightmare, …) so those are taken even when they drop
+    below the tier gate.
+
+    ``tier`` of 0 means "no tier rule" — named maps only. Pure: no I/O.
+    """
+    dis = set(disabled or ())
+    lines: list[str] = []
+
+    if tier and tier > 0:
+        lines.append(f'[Category] == "Map" && [MapTier] >= "{int(tier)}" '
+                     f'# [StashItem] == "true"')
+        lines.append(f"// ^ every map of tier {int(tier)} and above, whatever its base."
+                     " Change the tier on the app's Maps page.")
+        for preset, note in MAP_TIER_PRESETS:
+            if preset != int(tier):
+                lines.append(f'// [Category] == "Map" && [MapTier] >= "{preset}"'
+                             f' # [StashItem] == "true"   // {note}')
+    else:
+        lines.append("// Tier rule off — only the named maps below are taken.")
+    lines.append("")
+
+    rate = gen.exalted_rate(payload)
+    rows, seen, buckets = [], set(), 0
+    for line in payload.get("lines", []):
+        # baseType is the real item ("Vaal Temple Map"); name carries the
+        # influence prefix ("Baran Vaal Temple Map"), which is not a base type.
+        base = line.get("baseType") or line.get("name")
+        if not base:
+            continue
+        if _MAP_TIER_BUCKET.match(base):
+            buckets += 1
+            continue
+        if base in seen:
+            continue
+        seen.add(base)
+        pv = float(line.get("primaryValue") or 0.0)
+        ev = pv * rate if rate else pv
+        rule = (f'[Type] == "{gen._quote_ipd(base)}" '
+                f'# [StashItem] == "true" // ExValue = {ev:.2f}')
+        keep = ev >= min_chaos and base not in dis
+        rows.append((ev, rule if keep else f"//{rule}"))
+    rows.sort(key=lambda r: r[0], reverse=True)
+    lines += [rule for _, rule in rows]
+    if buckets:
+        lines.append(f"// {buckets} more priced rows are influence buckets"
+                     ' ("Drox Map (Tier 16)" and similar) — poe.ninja prices the'
+                     " influence, not a base type, so the tier rule above is what"
+                     " picks those up.")
+    return lines
+
+
 def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
                              divine_rate: float, divine_found: bool,
                              snapshot: dict) -> tuple[list[str], int]:
@@ -496,7 +567,14 @@ def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
             continue
         cat_states = item_states.get(key, {})
         eff_min = effective_min(snapshot, key, is_unique, min_gear, min_uniq)
-        if is_unique:
+        if key == "maps":
+            # Maps price by base and are taken by tier — not uniques, so they
+            # follow the general items floor rather than the unique floor.
+            eff_min = effective_min(snapshot, key, False, min_gear, min_uniq)
+            dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
+            cat_lines = build_poe1_map_lines(
+                payload, eff_min, int(snapshot.get("poe1_map_tier", 16) or 0), dis)
+        elif is_unique:
             dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
             # Stash-endpoint category. Real uniques (unique_* keys) match by
             # [UniqueName]; other stash items (incubators, gems, beasts…) by

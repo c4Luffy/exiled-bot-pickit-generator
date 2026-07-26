@@ -39,6 +39,7 @@ _SETTABLE = {
     "rare_strictness", "rare_strictness_slots",
     "filter_hide_rest",
     "setup_done",
+    "poe1_map_tier",
 }
 
 
@@ -223,6 +224,7 @@ class AppApi:
             "auto_floor_pct": int(c.get("auto_floor_pct", 40) or 40),
             "base_quality": int(c.get("base_quality", 25)),
             "base_min_level": int(c.get("base_min_level", 82)),
+            "poe1_map_tier": int(c.get("poe1_map_tier", 16) or 0),
             "copy_filter_to_game": bool(c.get("copy_filter_to_game", False)),
             "poe2_filter_dir": c.get("poe2_filter_dir", "") or _default_dir(),
             "backup_count": int(c.get("backup_count", 5)),
@@ -2481,6 +2483,8 @@ class AppApi:
                 "min_exalt_gear": min_gear, "min_exalt_unique": min_unique,
                 "item_states": self.cfg.get("item_states", {}) or {},
                 "category_enabled": {c[0]: enabled_cfg.get(c[0], True) for c in g.all_categories},
+                # Maps are taken by tier, not by name — see build_poe1_map_lines.
+                "poe1_map_tier": int(self.cfg.get("poe1_map_tier", 16) or 0),
             }
             self._log(f"Fetching live PoE1 prices for {league}…")
             stale: set = set()
@@ -3027,6 +3031,109 @@ class AppApi:
             _scan(root, ("", "*"))
 
         return {"found": bool(hits), "path": hits[0] if hits else "", "all": hits}
+
+    def maps_folder(self):
+        """Where THIS install keeps Exiled Bot's map-runner configs.
+
+        Never a hardcoded path: the bot's layout is
+        ``…/Configuration/<profile>/{Pickit,Maps}``, so Maps is simply the
+        sibling of the Pickit folder the app already detects (or scans for).
+        That resolves correctly wherever someone unpacked the bot.
+
+        This app does NOT write here — the map rules it generates are pickup
+        rules and go in the pickit. The path is surfaced so the Maps page can
+        point at the file that decides which maps get *run*.
+        """
+        folder = (self.cfg.get("bot_folder") or "").strip()
+        if not folder:
+            try:
+                folder = (self.detect_bot_folder() or {}).get("path") or ""
+            except Exception:
+                folder = ""
+        if not folder:
+            return {"found": False, "path": "", "files": [], "profile": ""}
+        base = os.path.dirname(os.path.normpath(folder))
+        maps = os.path.join(base, "Maps")
+        files = []
+        if os.path.isdir(maps):
+            try:
+                files = sorted(f for f in os.listdir(maps) if f.lower().endswith(".ipd"))
+            except OSError:
+                files = []
+        return {"found": os.path.isdir(maps), "path": maps, "files": files,
+                "profile": os.path.basename(base)}
+
+    def open_maps_folder(self):
+        """Open this install's Exiled Bot Maps folder in the file browser."""
+        import sys
+        info = self.maps_folder()
+        folder = info.get("path") or ""
+        if not folder:
+            return {"error": "Couldn't find your Exiled Bot folder — set it in Settings."}
+        if not os.path.isdir(folder):
+            return {"error": "No Maps folder there", "dir": folder}
+        try:
+            if sys.platform.startswith("win"):
+                os.startfile(folder)          # noqa: S606 (folder, no args)
+            else:
+                import webbrowser
+                webbrowser.open("file://" + folder)
+        except Exception as e:
+            return {"error": str(e), "dir": folder}
+        return {"ok": True, "dir": folder}
+
+    def maps_info(self):
+        """Everything the Maps page shows: the tier rule it will write, the maps
+        that additionally get a name rule, how many priced rows are influence
+        buckets, and where this PC's map-runner configs live.
+
+        Best-effort — prices come from the shared 15-minute cache the Economy
+        tab already warms, and any failure degrades to the folder info alone.
+        """
+        tier = int(self.cfg.get("poe1_map_tier", 16) or 0)
+        info = {
+            "tier": tier,
+            "rule": (f'[Category] == "Map" && [MapTier] >= "{tier}" # [StashItem] == "true"'
+                     if tier > 0 else ""),
+            "presets": [{"tier": t, "note": n} for t, n in asm.MAP_TIER_PRESETS],
+            "folder": self.maps_folder(),
+            "named": [], "buckets": 0, "rows": 0, "floor": 0.0, "lines": [], "error": "",
+        }
+        try:
+            g = gen.GAMES["poe1"]
+            league = (self.cfg.get("games", {}).get("poe1", {}) or {}).get("league") \
+                or self.cfg.get("league") or ""
+            cat = next(c for c in g.all_categories if c[0] == "maps")
+            payloads = gen.fetch_all_payloads(league, [cat], game=g)
+            payload = payloads.get("maps")
+            if not isinstance(payload, dict):
+                info["error"] = "poe.ninja prices are not loaded yet — open Economy once."
+                return info
+            floor = float(self.cfg.get("min_exalt_gear", 0.0) or 0.0)
+            info["floor"] = floor
+            rows = payload.get("lines") or []
+            info["rows"] = len(rows)
+            seen: dict = {}
+            for line in rows:
+                base = line.get("baseType") or line.get("name")
+                if not base:
+                    continue
+                if asm._MAP_TIER_BUCKET.match(base):
+                    info["buckets"] += 1
+                    continue
+                val = float(line.get("primaryValue") or 0.0)
+                seen[base] = max(val, seen.get(base, 0.0))
+            info["named"] = [{"name": n, "value": round(v, 2), "kept": v >= floor}
+                             for n, v in sorted(seen.items(), key=lambda kv: -kv[1])]
+            # The preview is the REAL builder's output, not a description of it —
+            # the same rule Item Check follows, so the page and the generated
+            # .ipd cannot disagree.
+            dis = {n for n, st in (self.cfg.get("item_states", {}) or {})
+                   .get("maps", {}).items() if not st.get("enabled", True)}
+            info["lines"] = asm.build_poe1_map_lines(payload, floor, tier, dis)
+        except Exception as e:
+            info["error"] = str(e)
+        return info
 
     def bot_connection(self):
         """Will the bot actually read what we generate? Verified, not assumed."""

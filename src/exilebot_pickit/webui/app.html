@@ -688,6 +688,44 @@
   .ubar .prog{height:8px;border-radius:99px;background:var(--bg3);overflow:hidden;margin-top:12px}
   .ubar .prog i{display:block;height:100%;width:0;border-radius:99px;background:var(--gold);transition:width .25s}
   .ubar .pt{font-size:12px;color:var(--dim);margin-top:6px;font-variant-numeric:tabular-nums}
+  /* ── Maps page ── */
+  .mapgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:10px;margin:0 0 4px}
+  .mapcard{padding:12px 13px;border:1px solid var(--border);border-radius:12px;background:var(--bg2);
+        cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
+  .mapcard:hover{border-color:var(--gold-dim);transform:translateY(-1px)}
+  .mapcard.on{border-color:var(--gold);background:var(--bg3);box-shadow:inset 0 0 0 1px var(--gold-dim)}
+  .mapcard-t{font-weight:700;font-size:13.5px;color:var(--fg)}
+  .mapcard.on .mapcard-t{color:var(--gold)}
+  .mapcard-n{font:11px/1.4 Consolas,ui-monospace,monospace;color:var(--dim);margin:2px 0 6px}
+  .mapcard-d{font-size:11.5px;line-height:1.55;color:var(--dim)}
+  .mapcard-w{margin-top:8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-dim)}
+  .mapcols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media (max-width:900px){.mapcols{grid-template-columns:1fr}}
+  .maplist{margin:0;padding-left:18px}
+  .maplist li{font-size:12.5px;line-height:1.7;color:var(--dim);margin-bottom:7px}
+  .maplist li b{color:var(--fg)}
+  .maplist.good li::marker{color:var(--ok)}
+  .maplist.bad li::marker{color:var(--err)}
+  /* No max-height: the whole generated block is shown. It is short (one tier
+     rule, four commented alternatives, one line per named map), and an inner
+     scrollbar hid the named-map rules — the part people actually check. */
+  /* pre-wrap, not pre: the bucket note is a long line and horizontal scroll
+     clipped it mid-sentence. Wrapping keeps every line fully readable. */
+  .mappre{font:12px/1.75 Consolas,ui-monospace,monospace;background:var(--bg);border:1px solid var(--border);
+        border-radius:10px;padding:12px 14px;white-space:pre-wrap;word-break:break-word}
+  .mappre .ln+.ln{margin-top:1px}
+  .mappre .ln{display:block}
+  .mappre .ln.off,.mappre .ln.skip{color:var(--dim);opacity:.7}
+  .mappre .ln.on{color:var(--fg)}
+  .mappre .k{color:var(--gold)}
+  .mappre .v{color:var(--ok)}
+  .mappre .c{color:var(--dim);font-style:italic}
+  .maplegend{display:flex;gap:16px;flex-wrap:wrap;margin-top:9px;font-size:11px;color:var(--dim)}
+  .maplegend span{display:inline-flex;align-items:center;gap:6px}
+  .maplegend .sw{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .maplegend .sw.on{background:var(--gold)}
+  .maplegend .sw.off{background:var(--border)}
+  .maplegend .sw.skip{background:var(--err);opacity:.6}
   /* ── modal (what's new) ── */
   .modal{display:none;position:fixed;inset:0;z-index:50;background:#000000aa;
         align-items:center;justify-content:center;padding:24px}
@@ -1029,6 +1067,7 @@
   </div>
   <div class="nav-links" data-lg="tune">
   <div class="nav-btn" data-p="eco">💰 Economy</div>
+  <div class="nav-btn g1only" data-p="maps" style="display:none">🗺️ Maps</div>
   <div class="nav-btn g2only" data-p="chance">🎲 Chance</div>
   <div class="nav-btn g2only" data-p="craft">🛠 Craft</div>
   <div class="nav-btn g2only" data-p="exc">💎 Exceptional</div>
@@ -1258,6 +1297,7 @@
     <button class="ghost mini" id="ecoReload">↻ Refresh prices</button>
     <span class="hint" style="margin:0" id="ecoInfo"></span>
   </div>
+
   <div style="display:flex;gap:12px;align-items:flex-start">
     <div id="ecoChips" class="craft-side" style="width:195px;flex:0 0 195px;position:sticky;top:6px;max-height:calc(90.9vh - 24px);overflow-y:auto"></div>
     <div class="card" style="padding:8px 6px;flex:1;min-width:0">
@@ -1269,6 +1309,121 @@
         <th style="width:54px"></th>
       </tr></thead><tbody id="ecoBody"></tbody></table>
     </div>
+  </div>
+</div>
+
+<!-- ══ MAPS (PoE 1) ══ -->
+<div class="page" id="p-maps">
+  <h1>Maps</h1>
+  <div class="sub">Path of Exile 1 maps are picked up by <b class="sub-tip">tier</b>, not by name — one rule
+    covers every map base at or above the tier you pick. Choose how greedy you want to be.</div>
+
+  <div class="mapgrid" id="mapTierCards">
+    <div class="mapcard" data-tier="16">
+      <div class="mapcard-t">T16 only</div>
+      <div class="mapcard-n">tier 16 +</div>
+      <div class="mapcard-d">Only the maps that actually sell. Smallest stash footprint.</div>
+      <div class="mapcard-w">Best if you buy your maps</div>
+    </div>
+    <div class="mapcard" data-tier="14">
+      <div class="mapcard-t">T14 and up</div>
+      <div class="mapcard-n">tier 14 +</div>
+      <div class="mapcard-d">Red-tier sustain without hoarding. Conqueror and boss maps drop T14–16.</div>
+      <div class="mapcard-w">Best all-round choice</div>
+    </div>
+    <div class="mapcard" data-tier="11">
+      <div class="mapcard-t">Red maps</div>
+      <div class="mapcard-n">tier 11 +</div>
+      <div class="mapcard-d">Everything red. Useful while you are still pushing the atlas.</div>
+      <div class="mapcard-w">Good while progressing</div>
+    </div>
+    <div class="mapcard" data-tier="6">
+      <div class="mapcard-t">Yellow and up</div>
+      <div class="mapcard-n">tier 6 +</div>
+      <div class="mapcard-d">Mid-tier sustain. Expect a lot of low-value maps in the stash.</div>
+      <div class="mapcard-w">Early league only</div>
+    </div>
+    <div class="mapcard" data-tier="1">
+      <div class="mapcard-t">Every map</div>
+      <div class="mapcard-n">tier 1 +</div>
+      <div class="mapcard-d">Takes every map that drops. Fills tabs fast; most of it is worth nothing.</div>
+      <div class="mapcard-w">Fresh league start</div>
+    </div>
+    <div class="mapcard" data-tier="0">
+      <div class="mapcard-t">Off</div>
+      <div class="mapcard-n">named only</div>
+      <div class="mapcard-d">No tier rule at all — only maps poe.ninja prices under a real base name.</div>
+      <div class="mapcard-w">You run bought maps</div>
+    </div>
+  </div>
+  <div class="hint" style="margin:10px 2px 0" id="mapTierNote"></div>
+
+  <div class="mapcols">
+    <div class="card">
+      <h2>Worth picking up</h2>
+      <ul class="maplist good">
+        <li><b>T16 maps</b> — the conqueror and guardian ones sell; that is where nearly all the map value is.</li>
+        <li><b>Maps with a real name</b> — Vaal Temple, Nightmare and friends are priced individually and are
+          listed below with today's values.</li>
+        <li><b>Unique maps</b> — already handled by your Economy unique rules, not by this page.</li>
+        <li><b>T14+ if you map yourself</b> — sustaining your own atlas is usually worth more than the raw
+          chaos value of the maps.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Usually not worth it</h2>
+      <ul class="maplist bad">
+        <li><b>White and yellow maps</b> (T1–T10) — pennies each, and they fill a stash tab in an evening.
+          Only take these at league start when you cannot buy maps yet.</li>
+        <li><b>Every map, forever</b> — "tier 1 and up" is the single biggest cause of a full stash and a bot
+          that spends its time walking to the stash instead of killing things.</li>
+        <li><b>Low-tier influenced maps</b> — the influence is only worth chaos at T16; below that it is just
+          another map.</li>
+        <li><b>Maps below your Economy floor</b> — they are written as commented-out lines so you can see the
+          decision, not silently dropped.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>Preview — exactly what goes in your pickit
+      <span class="badge" id="mapCount" style="background:var(--bg3);color:var(--dim)"></span></h2>
+    <div class="hint" style="margin:0 0 10px">Built by the same code that writes the file, so it cannot drift
+      from the real thing. Active rules are bright; the dim lines are written commented out.</div>
+    <div class="mappre" id="mapPreview"><span class="hint">Loading…</span></div>
+    <div class="maplegend">
+      <span><i class="sw on"></i>active rule</span>
+      <span><i class="sw off"></i>commented alternative</span>
+      <span><i class="sw skip"></i>below your Economy floor</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>Named maps <span class="badge" id="mapNamedCount" style="background:var(--bg3);color:var(--dim)"></span></h2>
+    <div class="hint" style="margin:0 0 10px">These price under a real base type, so each gets its own
+      <span class="kbd">[Type]</span> rule and is taken even when it drops below your tier. Influenced copies
+      collapse into their base — Baran, Drox and the plain version become one
+      <span class="kbd">Vaal Temple Map</span> rule at the highest price.</div>
+    <table class="ltbl" style="width:100%"><thead><tr>
+      <th style="text-align:left">Map</th><th style="text-align:right">Value</th>
+      <th style="text-align:right">In pickit</th>
+    </tr></thead><tbody id="mapNamedBody"><tr><td colspan="3" class="hint">Loading…</td></tr></tbody></table>
+    <div class="hint" style="margin:10px 0 0" id="mapBucketNote"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>Your map runner (not written by this app)</h2>
+    <div class="hint" style="margin:0 0 10px">
+      Which maps the bot <b>runs</b>, rerolls or skips is a different file: Exiled Bot&rsquo;s own
+      <code>Maps/*.ipd</code>, using <span class="kbd">RunMap</span>, <span class="kbd">IgnoreMap</span> and
+      <span class="kbd">RerollMods</span>. This app only decides what gets <b>picked up off the ground</b>, so it
+      never touches those files. Detected from your bot folder, so it points at your own install:
+    </div>
+    <div class="ctl" style="align-items:center;gap:10px;flex-wrap:wrap">
+      <code id="mapFolderPath" style="flex:1;min-width:220px;word-break:break-all">—</code>
+      <button class="ghost mini" id="mapFolderOpen">📂 Open</button>
+    </div>
+    <div class="hint" style="margin:8px 0 0" id="mapFolderFiles"></div>
   </div>
 </div>
 
@@ -1934,7 +2089,7 @@ function logLine(m,c){
 // Left rail: 3 section headers, every tab always visible beneath its header.
 // Clicking a header jumps to that section's last-used tab.
 const NAV_GROUPS={gen:"cockpit",prev:"cockpit",item:"cockpit",hist:"cockpit",mypk:"cockpit",
-                  eco:"tune",chance:"tune",craft:"tune",exc:"tune",fracture:"tune",rare:"tune",
+                  eco:"tune",maps:"tune",chance:"tune",craft:"tune",exc:"tune",fracture:"tune",rare:"tune",
                   guide:"system",set:"system",dbg:"system"};
 const _lastTab={cockpit:"gen",tune:"eco",system:"set"};
 function openPage(p){
@@ -1947,6 +2102,7 @@ function openPage(p){
   const g=NAV_GROUPS[p]||"cockpit";_lastTab[g]=p;
   document.querySelectorAll(".nav-grp").forEach(x=>x.classList.toggle("on",x.dataset.g===g));
   if(p==="eco"&&!eco)loadEco();
+  if(p==="maps")loadMapsInfo();
   if(p==="chance")loadChance();
   if(p==="craft")loadCraft();
   if(p==="exc")loadExc();
@@ -2280,6 +2436,70 @@ async function previewAutoFloor(){
       `(keeps top ${r.keep_pct}%). Nothing applied — flip the switch to use it.`;
   }catch(_){$("autoHint").textContent="Couldn't preview floors — check the connection.";}}
 $("genDocs").onclick=()=>api().open_url("https://github.com/c4Luffy/exiled-bot-pickit-generator#readme");
+const MAP_PRESETS=[[1,"every map"],[6,"yellow maps and up"],[11,"red maps and up"],
+                   [14,"T14 and up"],[16,"T16 only"]];
+let MAP_TIER=16;
+function mapTierNote(){
+  document.querySelectorAll(".mapcard").forEach(c=>
+    c.classList.toggle("on",parseInt(c.dataset.tier)===MAP_TIER));
+  const el=$("mapTierNote");
+  if(el)el.textContent=MAP_TIER>0
+    ? `Your pickit will take every map of tier ${MAP_TIER} and above, plus any named map above your Economy floor.`
+    : "No tier rule — only maps poe.ninja prices under a real base name are taken.";
+  loadMapsInfo();}
+
+// One generated line -> coloured HTML. [Keys] gold, "values" green, trailing
+// comment dim. A commented line that carries a value is below the floor; the
+// other commented lines are the deliberate tier alternatives.
+function mapLineHtml(raw){
+  const t=raw.trim();
+  const cls=!t.startsWith("//") ? "on" : (/ExValue/.test(t) ? "skip" : "off");
+  const html=esc(raw)
+    .replace(/(\[[A-Za-z]+\])/g,'<span class="k">$1</span>')
+    .replace(/(&quot;[^&]*?&quot;)/g,'<span class="v">$1</span>')
+    .replace(/(\/\/[^<]*)$/,'<span class="c">$1</span>');
+  return `<span class="ln ${cls}">${html||"&nbsp;"}</span>`;
+}
+
+// Live detail for the Maps page: the block the next generate will write, the
+// named maps behind it, and where this PC keeps the bot's map-runner configs.
+let _mapsBusy=false;
+async function loadMapsInfo(){
+  if(_mapsBusy||!$("mapPreview"))return; _mapsBusy=true;
+  try{
+    const i=await api().maps_info();
+    const f=i.folder||{};
+    $("mapFolderPath").textContent=f.path||"Not found — set your Exiled Bot folder in Settings.";
+    $("mapFolderFiles").textContent=(f.files&&f.files.length)
+      ? `Profile "${f.profile}" · ${f.files.length} map file(s): ${f.files.join(", ")}`
+      : (f.path?"No .ipd files in that folder yet.":"");
+    $("mapPreview").innerHTML=(i.lines&&i.lines.length)
+      ? i.lines.map(mapLineHtml).join("")
+      : `<span class="hint">${esc(i.error||"Prices aren't loaded yet — open Economy once.")}</span>`;
+    const rows=i.named||[];
+    $("mapCount").textContent=i.rows?`${i.rows} priced rows`:"";
+    $("mapNamedCount").textContent=rows.length?String(rows.length):"";
+    $("mapNamedBody").innerHTML=rows.length
+      ? rows.map(r=>`<tr><td>${esc(r.name)}</td>`+
+          `<td style="text-align:right">${r.value.toLocaleString()} c</td>`+
+          `<td style="text-align:right">${r.kept?'<b style="color:var(--ok)">kept</b>'
+            :'<span class="hint" style="margin:0">below floor</span>'}</td></tr>`).join("")
+      : `<tr><td colspan="3" class="hint">${esc(i.error||"No named maps priced right now.")}</td></tr>`;
+    $("mapBucketNote").textContent=i.buckets
+      ? `${i.buckets} more priced rows are influence buckets ("Drox Map (Tier 16)" and similar) — `
+        +"poe.ninja prices the influence, not a base type, so the tier rule is what picks those up."
+      : "";
+  }catch(e){ $("mapPreview").innerHTML=`<span class="hint">${esc(String(e))}</span>`; }
+  finally{ _mapsBusy=false; }
+}
+document.querySelectorAll(".mapcard").forEach(c=>c.onclick=()=>{
+  MAP_TIER=parseInt(c.dataset.tier)||0;
+  api().set_setting("poe1_map_tier",MAP_TIER);mapTierNote();
+  toast(MAP_TIER>0?`Maps: tier ${MAP_TIER} and above`:"Maps: tier rule off");});
+if($("mapFolderOpen")){
+  $("mapFolderOpen").onclick=async()=>{const r=await api().open_maps_folder();
+    if(r&&r.error)toast("✗ "+r.error);};
+}
 $("ninjaLink").onclick=e=>{e.preventDefault();api().open_url("https://poe.ninja/"+(ECON_ONLY?"poe1":"poe2")+"/economy");};
 $("okOpen").onclick=()=>api().open_output();
 
@@ -2526,6 +2746,7 @@ async function poll(){
         cb.style.display="";cb.classList.add("on");}
       else{cb.style.display="none";cb.classList.remove("on");}}
     logLine(`Done in ${d.secs}s → ${d.path}`,"ok");uEx();gEx();
+    if(document.querySelector(".page.on")?.id==="p-maps")loadMapsInfo();
     toast(`✓ Pickit built — ${(d.active||0).toLocaleString()} rules · ${d.secs}s${d.copied?" · deployed to bot":""}`);
   } else if(d.error){setSeal("err","Run failed",d.error);logLine("✗ "+d.error,"err");
     toast("✗ Generate failed — "+d.error);}}
@@ -4792,6 +5013,12 @@ function applyInfo(i){
   $("baseQ").value=_bq;$("baseL").value=_bl;
   $("bqGen").value=_bq;$("blGen").value=_bl;
   updTracks();
+  // PoE1 map tier: one number that becomes the whole [MapTier] rule.
+  if(document.querySelector(".mapcard")){
+    const _mt=parseInt(i.poe1_map_tier);
+    MAP_TIER=(_mt>=0&&!isNaN(_mt))?_mt:16;
+    mapTierNote();
+  }
   $("swAuto").classList.toggle("on",!!i.auto_floor);
   $("keepPct").value=String(i.auto_floor_pct||40);
   setAutoPill(!!i.auto_floor);

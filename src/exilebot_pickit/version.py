@@ -1,10 +1,15 @@
 """Single source of truth for the app version."""
-VERSION = "4.44.0"
+VERSION = "4.45.0"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• Path of Exile 1 maps are generated now, on their own Maps page under Economy. PoE1 has ~120 map bases and poe.ninja prices most of them as "Drox Map (Tier 16)" — a price for ANY tier-16 map with that influence, not an item you can name — so a name-by-name pickit would be both unmaintainable and wrong. You pick a tier instead, and the pickit gets one [Category] == "Map" && [MapTier] >= "N" rule (the same approach Exiled Bot's own default pickit uses), the other tiers written out commented so you can swap one by hand, plus a [Type] rule for every map poe.ninja prices under a real base name. The page shows what it will write, says what is worth keeping at each tier, and finds your bot's own Maps folder — the map RUNNER config, which this app never touches.
+
+• A whole priced category was missing from Path of Exile 1: Runegrafts. 30 of them price in the current league, every one with live trade volume and worth at least 5c — the top three between 450 and 700 chaos — and not one had a rule at any floor. The same miss as Verisium: a category nobody asked poe.ninja for.
+
+Also in 4.44.0:
 🎉 BOTH GAMES ARE OFFICIALLY DONE. Path of Exile 1 and Path of Exile 2 both run end to end: every tab of both games checked in the running app (14 in PoE 2, 8 in PoE 1), both fetching live poe.ninja prices and writing a validated pickit Exiled Bot reads. Nothing is half-built and there is no known issue open against either game. From here on it's bug hunting and new features — if you hit something, say so on Discord and it gets fixed.
 
 Also in 4.43.0:

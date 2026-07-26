@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.44.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.44.0 for Windows" src="https://img.shields.io/badge/Download-v4.44.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.45.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.45.0 for Windows" src="https://img.shields.io/badge/Download-v4.45.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,15 +20,15 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.44.0">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.45.0">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
 </p>
 
-![Real Exiled Bot Pickit Generator v4.43.0 — Path of Exile 1 Generate screen](docs/shots/poe1-01-generate-v4430.png)
+![Real Exiled Bot Pickit Generator v4.45.0 — Path of Exile 1 Generate screen](docs/shots/poe1-01-generate-v4450.png)
 
-<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.43.0 · <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/#top">see all 22 tabs of both games</a></sub></p>
+<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.45.0 · <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/#top">see all 23 tabs of both games</a></sub></p>
 
 ## Start here
 
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.44.0/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.45.0/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,9 +121,15 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.44.0
+## Current release: v4.45.0
 
-### Both games are officially done 🎉
+### Path of Exile 1 maps, and a whole category that was missing
+
+- **Maps are generated for Path of Exile 1**, on their own page under Economy. PoE1 has ~120 map bases and poe.ninja prices most of them as `Drox Map (Tier 16)` — a price for *any* tier-16 map with that influence, not an item you can name. So you pick a tier and the pickit gets one `[Category] == "Map" && [MapTier] >= "N"` rule (what Exiled Bot's own default pickit does), the other tiers written out commented, plus a `[Type]` rule for every map priced under a real base name.
+- **The page shows the real output**, rendered by the same builder that writes the file — with tier cards, a what-to-keep / what-to-skip guide, today's named-map values, and your bot's own map-runner folder (which this app never writes).
+- **Runegrafts were never fetched.** 30 price in the current league, all with live trade volume and worth 5c+ — the top three between 450 and 700 chaos — and none had a rule at any floor. The same miss as Verisium.
+
+### v4.44.0 — Both games are officially done 🎉
 
 **Path of Exile 1 and Path of Exile 2 both run end to end.** Every tab of both games was checked in the running app — **14 in PoE 2, 8 in PoE 1** — each fetching live poe.ninja prices and writing a validated pickit Exiled Bot reads. Nothing is half-built, and there is no known issue open against either game. Dual-game support landed in v4.42.0 and took five releases to finish; this is the line under it.
 
@@ -155,13 +161,13 @@ Windows SmartScreen may ask for confirmation because this free community executa
 
 - **The detail card that pops up when you hover an Economy row could sit on top of the keep/skip and copy buttons, so you couldn't click them.** It followed the cursor toward the right edge of the table and overlapped the whole action column — worse on a high-DPI or scaled display, where it covered several rows' buttons at once. The card now caps its right edge at the left edge of that action column, so it never overlaps the keep/copy buttons; it still appears beside the cursor as before, hovered or pinned.
 
+<details>
+<summary><strong>Older releases</strong></summary>
+
 ### v4.41.28 — Every rule builder now escapes quotes in item names
 
 - **A unique whose name or base type contained a literal `"` would have corrupted its pickit rule.** `build_unique_lines` interpolated the poe.ninja `name` and `baseType` straight into the rule with no escaping — the one builder the v4.41.18 audit fixed for `force_names` but left with raw quoting, and that release admitted quote escaping was "still incomplete elsewhere." A quote in either value would unbalance the rule and Exiled Bot's validator would reject the whole file. Both now go through `_quote_ipd`, matching every other builder. The uncut-gem builder (external names, but regex-gated so a quote can't reach it) is wrapped too, so "every builder escapes external names" is now literally true. No live item has a quote today; this closes the latent case.
 - **Regression test added**: a unique whose name and base both contain `"` still produces a rule whose structural quotes stay balanced.
-
-<details>
-<summary><strong>Older releases</strong></summary>
 
 ### v4.41.27 — Scheduled and piped runs stop crashing on a non-UTF-8 console
 
@@ -229,7 +235,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.44.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.44.0) · [full changelog](CHANGELOG.md)
+[Read the complete v4.45.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.45.0) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

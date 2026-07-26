@@ -6,6 +6,41 @@ download lives.
 
 ---
 
+## [v4.45.0] — 2026-07-26 — Path of Exile 1 maps, and a whole category that was missing
+
+- **Maps are generated for Path of Exile 1, on their own page under Economy.**
+  PoE1 has ~120 map bases and poe.ninja prices most of them as
+  `Drox Map (Tier 16)` — a price for *any* tier-16 map carrying that influence,
+  not an item you can name. Writing those as `[Type]` rules would emit rules that
+  match nothing, so the app does what Exiled Bot's own `default.ipd` does: you
+  pick a tier and it writes one
+  `[Category] == "Map" && [MapTier] >= "N" # [StashItem] == "true"` rule, with the
+  other tiers written out commented so you can swap one by hand. On top of that,
+  every map poe.ninja prices under a **real base type** (Vaal Temple, Nightmare,
+  Shaper Guardian) gets its own `[Type]` rule when it clears the Economy floor, so
+  it is taken even when it drops below the tier gate. Influenced copies collapse
+  into their base — Baran, Drox and the plain version become one
+  `Vaal Temple Map` rule at the highest of their prices.
+- **The Maps page shows the real thing, not a description of it.** A live preview
+  is rendered by calling the same builder that writes the file, so the page and
+  the generated `.ipd` cannot disagree. Alongside it: tier cards with a
+  recommendation each, a what-to-keep / what-to-skip guide, the named maps with
+  today's values, and how many priced rows are influence buckets.
+- **It finds your bot's map-runner folder.** Which maps get *run*, rerolled or
+  skipped lives in Exiled Bot's own `Maps/*.ipd` (`RunMap`, `IgnoreMap`,
+  `RerollMods`) — a different file this app never writes. The page locates it by
+  deriving the sibling of the Pickit folder already detected, so it resolves on
+  any install rather than a hardcoded path.
+- **Runegrafts were never fetched for Path of Exile 1.** 30 of them price in the
+  current league, every one with live trade volume and worth at least 5 chaos —
+  the top three between 450 and 700 — and not one had a rule at any floor. The
+  same shape as the Verisium miss: a category nobody asked poe.ninja for. Found by
+  diffing our category list against the community's AHK generator, then confirmed
+  against the live API.
+- **Screenshot tool hardened.** `tools/capture_shots.py` now refuses to save a
+  frame when the app is not the foreground window — it had silently captured the
+  editor instead — and scrolls each page to the top before grabbing.
+
 ## [v4.44.0] — 2026-07-26 — Both games are officially done 🎉
 
 - **Path of Exile 1 and Path of Exile 2 both run end to end.** Every tab of both
