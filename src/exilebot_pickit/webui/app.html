@@ -1249,7 +1249,7 @@
   <div class="eco-head eco-toolbar">
     <input type="text" id="ecoSearch" placeholder="🔎 Search all items…">
     <span class="chips" style="margin:0" id="unitChips">
-      <span class="chip on" data-u="ex">Exalt</span>
+      <span class="chip on g2only" data-u="ex">Exalt</span>
       <span class="chip" data-u="chaos">Chaos</span>
       <span class="chip" data-u="div">Divine</span>
     </span>
@@ -1826,6 +1826,10 @@
     </div>
       </div>
       <div class="set-sec" data-s="filter">
+<div class="card g1only" style="margin-top:14px;display:none;border-color:var(--gold-dim)">
+    <h2>🎮 In-game loot filter</h2>
+    <div class="hint">Path of Exile 1 mode writes only the <b>pickit</b> (<code>poe1_pickit.ipd</code>) — the file Exiled Bot reads. No in-game <code>.filter</code> is generated here: poe.ninja names PoE1 tattoos by their mod text, which isn't a valid loot-filter base type. If you want a loot filter for manual PoE1 play, use a community filter (e.g. FilterBlade) in-game.</div>
+  </div>
 <div class="card g2only" style="margin-top:14px">
     <details open>
       <summary style="cursor:pointer;display:flex;align-items:center;gap:9px;list-style:none">
@@ -1968,6 +1972,8 @@ function applyGameUI(i){
   ECON_ONLY=!!i.economy_only;
   GAME_UNIT=i.unit||"Exalt"; GAME_UNITS=i.unit_short||"ex";
   document.body.classList.toggle("econ-only",ECON_ONLY);
+  // g1only = PoE1-only content (the inverse of g2only)
+  document.querySelectorAll(".g1only").forEach(e=>e.style.display=ECON_ONLY?"":"none");
   document.querySelectorAll(".gamesw-btn").forEach(b=>
     b.classList.toggle("on",b.dataset.game===ACTIVE_GAME));
   // unit labels: PoE2 prices in Exalt ("ex"), PoE1 in Chaos ("c")
@@ -1975,6 +1981,12 @@ function applyGameUI(i){
   // Setup guide: show the PoE1 version in PoE1, the PoE2 version in PoE2
   const g1=$("guidePoe1"); if(g1) g1.style.display=ECON_ONLY?"":"none";
   document.querySelectorAll(".guidePoe2").forEach(e=>e.style.display=ECON_ONLY?"none":"");
+  // Economy value unit: PoE1's base unit is Chaos (Exalt makes no sense as a
+  // base there), so default the Exalt/Chaos/Divine toggle to Chaos in PoE1.
+  if(typeof ecoUnit!=="undefined"){
+    ecoUnit=ECON_ONLY?"chaos":"ex";
+    document.querySelectorAll('.chip[data-u]').forEach(c=>c.classList.toggle("on",c.dataset.u===ecoUnit));
+  }
   // PoE1 writes only the .ipd (no in-game .filter) — keep the status label honest
   const lw=$("lrWhere"); if(lw) lw.textContent=ECON_ONLY?".ipd":".ipd + .filter";
   // Floor descriptions: PoE1 has no runes/rare-gear/charms

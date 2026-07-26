@@ -1,10 +1,13 @@
 """Single source of truth for the app version."""
-VERSION = "4.42.0"
+VERSION = "4.42.1"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• Path of Exile 1 polish. The Economy tab now defaults to Chaos — PoE 1's base currency — and hides the Exalt toggle, so PoE 1 prices read in "c" everywhere. Settings shows a short note explaining that PoE 1 writes only the pickit (no in-game .filter). Fresh Path of Exile 1 screenshots on the README and site, and the site copy now speaks to both games.
+
+Also in 4.42.0:
 • Path of Exile 1 support — this is now one app for both games. A PoE 1 / PoE 2 switch at the top of the sidebar flips the whole app: pick PoE 1 and it prices Path of Exile 1 live from poe.ninja (currency, fragments, scarabs, fossils, essences, div cards, uniques and the rest) and writes a pickit in Exiled Bot's NATIVE PoE1 format — uniques by [UniqueName], everything else by [Type] — verified against a real Exiled Bot install's own generated pickit. Each game keeps its OWN league, value floors, output file (poe1_pickit.ipd vs poe2_pickit.ipd), run history and profiles, so switching never overwrites the other. PoE 1 is economy-only (no rare-gear / craft / chance / fracture pages), prices in Chaos, and has its own setup guide. The app and repo are renamed to "Exiled Bot Pickit Generator" now that they serve both games — the .exe filename is unchanged, so the in-app updater keeps working.
 
 Also in 4.41.29:

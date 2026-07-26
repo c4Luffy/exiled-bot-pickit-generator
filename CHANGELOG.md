@@ -6,6 +6,17 @@ download lives.
 
 ---
 
+## [v4.42.1] — 2026-07-25 — Path of Exile 1 polish
+
+- **The Economy tab defaults to Chaos in PoE 1** (its base currency) and hides
+  the Exalt toggle — so PoE 1 prices read in `c` everywhere, not the meaningless
+  exalt-equivalent. Chaos and Divine remain.
+- **Settings explains the missing filter in PoE 1.** PoE 1 writes only the
+  pickit (`poe1_pickit.ipd`); a short note now says so where the in-game-filter
+  card sits in PoE 2, instead of leaving a blank.
+- **Fresh Path of Exile 1 screenshots** on the README and the website (Generate,
+  Economy, History), and the site copy now speaks to both games.
+
 ## [v4.42.0] — 2026-07-25 — Path of Exile 1 support: one app for both games
 
 - **A PoE 1 / PoE 2 switch at the top of the sidebar makes this one app for both
@@ -2291,6 +2302,7 @@ element id was preserved — **no feature was removed**.
 
 ---
 
+[v4.42.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.1
 [v4.42.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.0
 [v4.41.29]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.29
 [v4.41.28]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.28
