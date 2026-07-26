@@ -2122,7 +2122,9 @@ function subCalc(a,s,noun){
   // divine once the floor is big enough to read in divine at all (>= 0.1 div, ~40 ex+),
   // so a small floor doesn't get a useless "0.01 div".
   const parts=[];
-  if(chaosEx>0)parts.push((ex/chaosEx).toFixed(2)+" chaos");
+  // In PoE1 the floor itself is already in Chaos, so a "chaos" reference just
+  // repeats it — show only the Divine equivalent there.
+  if(chaosEx>0&&GAME_UNITS!=="c")parts.push((ex/chaosEx).toFixed(2)+" chaos");
   if(divRate>1&&ex/divRate>=0.1)parts.push((ex/divRate).toFixed(2)+" div");
   $(s).textContent=parts.length?"\u2248 "+parts.join(" \u00b7 "):"";
   return ex;}
@@ -2221,7 +2223,8 @@ function fillTopPicks(top){
   const val3=ex=>{
     const d=divRate>1?`${abbr(ex/divRate)} <span class="u">div</span>`:null;
     const c=chaosEx>0?`${abbr(ex/chaosEx)} <span class="u">c</span>`:null;
-    const e=`${abbr(ex)} <span class="u">${GAME_UNITS}</span>`;
+    // In PoE1 the base unit IS Chaos, so this would just repeat `c` — skip it.
+    const e=GAME_UNITS!=="c"?`${abbr(ex)} <span class="u">${GAME_UNITS}</span>`:null;
     const o=[d,c,e].filter(Boolean);      // Divine → Chaos → Exalt (skip unavailable)
     return {main:o[0],sub:o.slice(1).join(" · ")};};
   const thumb=t=>t.icon?`<img class="lt-thumb" loading="lazy" src="${esc(t.icon)}" onerror="this.style.display='none'">`
@@ -4443,7 +4446,8 @@ $("prevBox").addEventListener("click",e=>{
   const raw=prevLines[n-1]||line;
   const skipped=raw.startsWith("//");
   let sec=null;for(const s of pvSections){if(s.start<n)sec=s;else break;}
-  const nm=raw.match(/\[Type\]\s*==\s*"((?:[^"\\]|\\.)*)"/);
+  // [Type] for market items; [UniqueName] for PoE1 uniques (which have no [Type])
+  const nm=raw.match(/\[Type\]\s*==\s*"((?:[^"\\]|\\.)*)"/)||raw.match(/\[UniqueName\]\s*==\s*"((?:[^"\\]|\\.)*)"/);
   const cat=raw.match(/\[Category\]\s*==\s*"(\w+)"/);
   const title=nm?nm[1].replace(/\\"/g,'"'):cat?cat[1]+" (category)":"Condition rule";
   const mv=raw.match(/ExValue\s*=\s*([\d.,]+)/i);
@@ -4453,7 +4457,7 @@ $("prevBox").addEventListener("click",e=>{
     const ex=parseFloat(mv[1].replace(/,/g,""))||0;
     const [kind,label]=pvTier(ex,d);
     const st=lfParse((FILTER_THEMES.classic||{})[kind]||[]);
-    priceHtml=`Worth <b>${ex.toLocaleString()} ex</b>`+(d>1&&ex>=d?` (${(ex/d).toFixed(1)} div)`:"")
+    priceHtml=`Worth <b>${ex.toLocaleString()} ${GAME_UNITS}</b>`+(d>1&&ex>=d?` (${(ex/d).toFixed(1)} div)`:"")
       +` at generate time — poe.ninja priced it this run.`;
     chip=`<span style="display:inline-flex;align-items:center;padding:1px 9px;font-family:Georgia,serif;font-variant:small-caps;font-weight:700;font-size:12.5px;color:${st.text||"#c8c8c8"};background:${st.bg||"rgba(0,0,0,.8)"};border:1px solid ${st.border||"rgba(255,255,255,.2)"}">${label}</span>`;
   }else{

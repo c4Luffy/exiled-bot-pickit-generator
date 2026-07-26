@@ -6,6 +6,19 @@ download lives.
 
 ---
 
+## [v4.42.3] — 2026-07-26 — Path of Exile 1 detail pass
+
+- **Copy-rule and the Economy hover card now match what's actually written.**
+  Right-clicking a PoE 1 unique (or the hover card's rule line) showed the PoE 2
+  `[Type] == base && [Rarity] == "Unique" # [UniqueName]` form; PoE 1 writes
+  `[UniqueName] == name` alone. `rule_for` is now game-aware.
+- **Preview rule detail reads PoE 1 rules.** A `[UniqueName]`-only rule showed
+  the title "Condition rule" (the parser only matched `[Type]`) and priced it in
+  "ex". It now names the unique and prices it in Chaos.
+- **Top-pick cards stopped showing Chaos twice** in PoE 1 (the base-unit column
+  is Chaos there, same as the Chaos column), and the floor reference line drops
+  the redundant "chaos" echo when the floor itself is already in Chaos.
+
 ## [v4.42.2] — 2026-07-26 — More Path of Exile 1 polish
 
 - **Number-key shortcuts match the visible sidebar in PoE 1.** `Ctrl+1…0` were
@@ -2315,6 +2328,7 @@ element id was preserved — **no feature was removed**.
 
 ---
 
+[v4.42.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.3
 [v4.42.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.2
 [v4.42.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.1
 [v4.42.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.0

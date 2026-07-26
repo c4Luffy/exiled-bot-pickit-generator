@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.2/ExileBot2PickitGenerator.exe"><img alt="Download v4.42.2 for Windows" src="https://img.shields.io/badge/Download-v4.42.2-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.3/ExileBot2PickitGenerator.exe"><img alt="Download v4.42.3 for Windows" src="https://img.shields.io/badge/Download-v4.42.3-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,18 +20,18 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.2">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.3">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
 </p>
 
-![Real Exiled Bot Pickit Generator v4.42.2 — Path of Exile 1 Generate screen](docs/shots/01-generate-poe1-v4420.png)
+![Real Exiled Bot Pickit Generator v4.42.3 — Path of Exile 1 Generate screen](docs/shots/01-generate-poe1-v4420.png)
 
-<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.42.2</sub></p>
+<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.42.3</sub></p>
 
 > [!IMPORTANT]
-> **Using v4.20.0 or v4.21.0? Update manually once.** Close the old app, [download v4.42.2](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.2/ExileBot2PickitGenerator.exe), and open it. Your settings, profiles, and Exiled Bot folder stay in place. Later in-app updates work normally.
+> **Using v4.20.0 or v4.21.0? Update manually once.** Close the old app, [download v4.42.3](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.3/ExileBot2PickitGenerator.exe), and open it. Your settings, profiles, and Exiled Bot folder stay in place. Later in-app updates work normally.
 
 ## Start here
 
@@ -116,7 +116,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.2/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.3/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -124,7 +124,7 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.42.2
+## Current release: v4.42.3
 
 ### Path of Exile 1 support — one app for both games
 
@@ -325,7 +325,7 @@ Every tab was audited that cycle. The headline items are behaviour fixes — thi
 
 </details>
 
-[Read the complete v4.42.2 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.2) · [full changelog](CHANGELOG.md)
+[Read the complete v4.42.3 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.3) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

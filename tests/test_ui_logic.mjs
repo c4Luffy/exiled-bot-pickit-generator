@@ -158,7 +158,7 @@ function test(label, fn) {
   function makeCtx(chaosEx, divRate, amount) {
     const els = { amt: { value: String(amount) }, sub: { textContent: "" } };
     return { els, ctx: load(["subCalc", "floorMax"],
-      { $: (id) => els[id], chaosEx, divRate }) };
+      { $: (id) => els[id], chaosEx, divRate, GAME_UNITS: "ex" }) };
   }
   test("subCalc shows chaos always, divine only once it's readable (>=0.1 div)", () => {
     const { els, ctx } = makeCtx(58, 424, 25);   // 25 ex

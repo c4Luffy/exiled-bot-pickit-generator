@@ -710,8 +710,18 @@ class AppApi:
             return {"text": ""}
 
     def rule_for(self, cat_key, name, is_unique, base, ex):
-        """The pickit rule line for one item — for right-click 'copy rule'."""
+        """The pickit rule line for one item — for right-click 'copy rule'.
+
+        Must match exactly what the generator writes, per game. PoE1 uses Exiled
+        Bot 1's native form: real uniques by [UniqueName] alone, everything else
+        by [Type] — never the PoE2 [Type]+[Rarity]+[UniqueName] shape.
+        """
         safe = name.replace('"', '\\"')
+        if self._game().economy_only:
+            if is_unique and str(cat_key).startswith("unique_"):
+                return (f'[UniqueName] == "{safe}" # [StashItem] == "true" '
+                        f'// ExValue = {float(ex):.2f}')
+            return f'[Type] == "{safe}" # [StashItem] == "true" // ExValue = {float(ex):.2f}'
         if cat_key == "tablets":
             # Display name is "{base type} ({variant})" (see economy()) —
             # pull the rarity back out to rebuild the real emitted rule,

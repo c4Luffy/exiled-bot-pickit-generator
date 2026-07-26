@@ -1,10 +1,13 @@
 """Single source of truth for the app version."""
-VERSION = "4.42.2"
+VERSION = "4.42.3"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• Path of Exile 1 detail pass. Right-click "copy rule" and the Economy hover card now show the EXACT rule PoE 1 writes — uniques as [UniqueName], not the PoE 2 [Type]+[Rarity] form. Preview's rule detail names a PoE 1 unique (instead of "Condition rule") and prices it in Chaos. Top-pick cards stop repeating Chaos twice, and the floor reference line drops the redundant "chaos" echo when the floor is already in Chaos.
+
+Also in 4.42.2:
 • More Path of Exile 1 polish. The number-key shortcuts (Ctrl+1…0) now match the sidebar you actually SEE in PoE 1 — they were still counting the hidden Item Check tab, so every number was one off. The History "1 Divine in …" chart and the profile "What's in it?" floors read in Chaos in PoE 1. The PoE2-only "Keys" lens no longer shows in PoE 1, and Preview's tier colours now read the PoE 1 (Chaos) Divine rate instead of falling back to a default.
 
 Also in 4.42.1:
