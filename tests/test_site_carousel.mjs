@@ -23,6 +23,11 @@ const slideData = [...html.matchAll(
   /<a class="carousel-slide[^"]*" data-game="(\w+)" data-title="([^"]+)" data-version="([^"]+)"/g)]
   .map(([, game, title, version]) => ({ game, title, version }));
 const switchData = [...html.matchAll(/data-game-switch="(\w+)"/g)].map(m => m[1]);
+// Which game the page opens on is an editorial choice (currently the leftmost
+// switch). Read it from the markup instead of hardcoding it, so reordering the
+// switches is a one-line change and not a test failure.
+const startGame = html.match(/class="gameswitch-btn is-on"[^>]*data-game-switch="(\w+)"/)[1];
+const otherGame = switchData.find(g => g !== startGame);
 
 assert.ok(slideData.length > 0, "no carousel slides found in docs/index.html");
 assert.equal(switchData.length, 2, "expected exactly two game switches");
@@ -112,36 +117,44 @@ vm.createContext(sandbox);
 vm.runInContext(script, sandbox, { timeout: 5000 });
 
 const dots = () => dotWrap.children.length;
-const poe2 = slideData.filter(s => s.game === "poe2").length;
-const poe1 = slideData.filter(s => s.game === "poe1").length;
+const NAMES = { poe1: "Path of Exile 1", poe2: "Path of Exile 2" };
+const countOf = g => slideData.filter(s => s.game === g).length;
+const nStart = countOf(startGame);
+const nOther = countOf(otherGame);
 
-// initial state: PoE 2, first slide
-assert.equal(dots(), poe2, `expected ${poe2} dots for PoE 2, got ${dots()}`);
-assert.equal(countEl.textContent, `1 of ${poe2}`);
-assert.equal(gameEl.textContent, "Path of Exile 2");
-assert.equal(noteEl.textContent, `All ${poe2} Path of Exile 2 tabs`);
-assert.equal(titleEl.textContent, slideData.find(s => s.game === "poe2").title);
+// the page opens on the selected switch, showing that game's first slide
+assert.equal(dots(), nStart, `expected ${nStart} dots for ${startGame}, got ${dots()}`);
+assert.equal(countEl.textContent, `1 of ${nStart}`);
+assert.equal(gameEl.textContent, NAMES[startGame]);
+assert.equal(noteEl.textContent, `All ${nStart} ${NAMES[startGame]} tabs`);
+assert.equal(titleEl.textContent, slideData.find(s => s.game === startGame).title);
 assert.match(versionEl.textContent, /^v\d+\.\d+\.\d+$/);
+
+// the first slide in the document is the one the page opens on, so the eager
+// <img> and the no-JS fallback show the same frame the switch says is selected
+assert.equal(slideData[0].game, startGame,
+  "the first slide must belong to the game the switch starts on");
 
 // advancing stays inside the active game
 nextBtn.click();
-assert.equal(countEl.textContent, `2 of ${poe2}`);
+assert.equal(countEl.textContent, `2 of ${nStart}`);
 
 // switching games re-slices slides, dots and the note
-carousel.querySelector('[data-game-switch="poe1"]').click();
-assert.equal(dots(), poe1, `expected ${poe1} dots for PoE 1, got ${dots()}`);
-assert.equal(countEl.textContent, `1 of ${poe1}`);
-assert.equal(gameEl.textContent, "Path of Exile 1");
-assert.equal(noteEl.textContent, `All ${poe1} Path of Exile 1 tabs`);
+carousel.querySelector(`[data-game-switch="${otherGame}"]`).click();
+assert.equal(dots(), nOther, `expected ${nOther} dots for ${otherGame}, got ${dots()}`);
+assert.equal(countEl.textContent, `1 of ${nOther}`);
+assert.equal(gameEl.textContent, NAMES[otherGame]);
+assert.equal(noteEl.textContent, `All ${nOther} ${NAMES[otherGame]} tabs`);
 
 // exactly one slide is visible, and it belongs to the selected game
 const active = carousel.querySelectorAll(".carousel-slide").filter(s => s.classes.has("is-active"));
 assert.equal(active.length, 1, "exactly one slide must be active");
-assert.equal(active[0].dataset.game, "poe1");
+assert.equal(active[0].dataset.game, otherGame);
 
 // and back again
-carousel.querySelector('[data-game-switch="poe2"]').click();
-assert.equal(dots(), poe2);
-assert.equal(countEl.textContent, `1 of ${poe2}`);
+carousel.querySelector(`[data-game-switch="${startGame}"]`).click();
+assert.equal(dots(), nStart);
+assert.equal(countEl.textContent, `1 of ${nStart}`);
 
-console.log(`site carousel: OK (${poe2} PoE 2 + ${poe1} PoE 1 slides, switch re-slices both ways)`);
+console.log(`site carousel: OK (opens on ${startGame} with ${nStart} slides, `
+  + `${otherGame} has ${nOther}, switch re-slices both ways)`);

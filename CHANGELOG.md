@@ -31,6 +31,14 @@ download lives.
   mention the version being shipped. The site's release panel also had v4.41.29's
   Economy-card fix printed under a **v4.42.0** heading, with the real v4.42.0 (Path
   of Exile 1 support) missing entirely; both are corrected.
+- **The site and README drop what had gone out of date.** The "Using v4.20.0 or
+  v4.21.0? Update manually once" callout was 23 releases old and is gone from both;
+  the site's release panel is down to five entries and the README's visible history
+  to five, with the rest folded away and the full record left to this file. The
+  screenshot switch reads **PoE 1 · PoE 2**, matching the app's own sidebar, and the
+  page opens on Path of Exile 1. `tools/release.py` now keeps the README's download
+  badge, header link and checksum link on the current version too — they were still
+  on v4.42.4 after v4.43.0 shipped.
 - **The landing page carousel is covered by a behaviour test.** `tests/test_site_carousel.mjs`
   runs the page's own script against a DOM stub and checks the game switch really
   re-slices slides, dots and counts both ways — the hero is driven by one inline

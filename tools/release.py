@@ -39,6 +39,7 @@ ROOT = Path(__file__).resolve().parent.parent
 VERSION_FILE = ROOT / "src" / "exilebot_pickit" / "version.py"
 CHANGELOG = ROOT / "CHANGELOG.md"
 SITE = ROOT / "docs" / "index.html"
+READ_ME = ROOT / "README.md"
 
 GATES = [
     ("tests", [sys.executable, "-m", "pytest", "-q"]),
@@ -85,9 +86,32 @@ def sync_site(tag: str, apply: bool = True) -> list[str]:
     for pattern, repl in subs:
         html, n = re.subn(pattern, repl, html)
         if n:
-            changed.append(f"{pattern} ×{n}")
+            changed.append(f"index.html: {pattern} ×{n}")
     if apply and changed:
         SITE.write_text(html, encoding="utf-8", newline="\n")
+
+    # The README goes stale exactly the same way — its download badge, header
+    # link and checksum link all point at "the current release". Its release
+    # HISTORY must not be touched, so only these anchored spots are rewritten.
+    if READ_ME.exists():
+        md = READ_ME.read_text(encoding="utf-8")
+        md_subs = [
+            (r"(releases/download/)v\d+\.\d+\.\d+(/)", rf"\g<1>{tag}\g<2>"),
+            (r"(alt=\"Download )v\d+\.\d+\.\d+", rf"\g<1>{tag}"),
+            (r"(badge/Download-)v\d+\.\d+\.\d+", rf"\g<1>{tag}"),
+            (r"(releases/tag/)v\d+\.\d+\.\d+(\">Release notes)", rf"\g<1>{tag}\g<2>"),
+            (r"(## Current release: )v\d+\.\d+\.\d+", rf"\g<1>{tag}"),
+            (r"\[Read the complete v[\d.]+ release notes\]\((\S*releases/tag/)v[\d.]+\)",
+             rf"[Read the complete {tag} release notes](\g<1>{tag})"),
+        ]
+        md_changed = []
+        for pattern, repl in md_subs:
+            md, n = re.subn(pattern, repl, md)
+            if n:
+                md_changed.append(f"README.md: {pattern} ×{n}")
+        if apply and md_changed:
+            READ_ME.write_text(md, encoding="utf-8", newline="\n")
+        changed += md_changed
     return changed
 
 
