@@ -21,6 +21,8 @@ you just set notes by hand.
 from __future__ import annotations
 
 import argparse
+import datetime
+import os
 import re
 import subprocess
 import sys
@@ -36,17 +38,70 @@ except Exception:
 ROOT = Path(__file__).resolve().parent.parent
 VERSION_FILE = ROOT / "src" / "exilebot_pickit" / "version.py"
 CHANGELOG = ROOT / "CHANGELOG.md"
+SITE = ROOT / "docs" / "index.html"
 
 GATES = [
     ("tests", [sys.executable, "-m", "pytest", "-q"]),
     ("lint", [sys.executable, "-m", "ruff", "check", "."]),
     ("ui gate", [sys.executable, "tools/check_ui.py"]),
     ("ui logic", ["node", "tests/test_ui_logic.mjs"]),
+    ("site carousel", ["node", "tests/test_site_carousel.mjs"]),
 ]
 
 
 def run(cmd, **kw):
     return subprocess.run(cmd, cwd=ROOT, **kw)
+
+
+def sync_site(tag: str, apply: bool = True) -> list[str]:
+    """Point the GitHub Pages site at this release.
+
+    Nothing used to update docs/index.html, so every release left the landing
+    page advertising (and linking the .exe of) an older version — it sat on
+    v4.42.0 while v4.42.4 was out, so every Download button served a stale
+    build. Only the mechanical spots are rewritten: download links always point
+    at the current release, as do the "Download vX.Y.Z" labels and the two
+    "current release" markers. Prose (the release-notes list) is left alone and
+    warned about instead, because it can't be generated.
+    """
+    if not SITE.exists():
+        return []
+    html = SITE.read_text(encoding="utf-8")
+    today = datetime.date.today().strftime("%-d %B %Y") if os.name != "nt" \
+        else datetime.date.today().strftime("%d %B %Y").lstrip("0")
+    # NB: `releases/tag/` links are deliberately NOT rewritten. Each entry in the
+    # release-list links its OWN tag, and a blanket rewrite repointed all nine of
+    # them at the newest release.
+    subs = [
+        (r"(releases/download/)v\d+\.\d+\.\d+(/)", rf"\g<1>{tag}\g<2>"),
+        (r"Download v\d+\.\d+\.\d+", f"Download {tag}"),
+        (r"(Current release &middot; |Current release · )v\d+\.\d+\.\d+",
+         rf"\g<1>{tag}"),
+        (r'(class="release-version">)v\d+\.\d+\.\d+', rf"\g<1>{tag}"),
+        (r"(<small>Current release (?:&middot;|·) )[^<]*(</small>)", rf"\g<1>{today}\g<2>"),
+        (r"(download v)\d+\.\d+\.\d+", rf"\g<1>{tag[1:]}"),
+    ]
+    changed = []
+    for pattern, repl in subs:
+        html, n = re.subn(pattern, repl, html)
+        if n:
+            changed.append(f"{pattern} ×{n}")
+    if apply and changed:
+        SITE.write_text(html, encoding="utf-8", newline="\n")
+    return changed
+
+
+def check_site_notes(tag: str) -> None:
+    """The site's release panel leads with a hand-written entry. Warn when it
+    doesn't mention this version — that's how the panel ended up describing
+    v4.41.29's fix under a v4.42.0 heading."""
+    if not SITE.exists():
+        return
+    html = SITE.read_text(encoding="utf-8")
+    head = html.split('<ul class="release-list">', 1)
+    if len(head) == 2 and tag not in head[1].split("</li>", 1)[0]:
+        print(f"⚠ docs/index.html: the top release-list entry doesn't mention {tag} — "
+              "write this release's entry before shipping.")
 
 
 def die(msg: str) -> None:
@@ -88,6 +143,7 @@ def main() -> int:
     # CHANGELOG must mention this version (soft — warn, don't block)
     if CHANGELOG.exists() and f"[{tag}]" not in CHANGELOG.read_text(encoding="utf-8"):
         print(f"⚠ CHANGELOG has no '## [{tag}]' entry — add it before release.")
+    check_site_notes(tag)
 
     # ── gates, before touching anything ─────────────────────────────────────────
     print(f"Releasing {tag}: running gates first\n")
@@ -102,6 +158,8 @@ def main() -> int:
     if a.dry_run:
         print("DRY RUN — would now:")
         print(f"  set version.py = {a.version}")
+        for line in sync_site(tag, apply=False):
+            print(f"  site: {line}")
         print(f"  git commit -am '{tag}: {a.message}'")
         print(f"  git tag {tag} && git push origin main && git push origin {tag}")
         print("  wait for the release build, then set notes + --latest")
@@ -118,6 +176,9 @@ def main() -> int:
     if _n != 1:
         die(f"expected exactly one VERSION assignment in version.py, found {_n}")
     VERSION_FILE.write_text(_new, encoding="utf-8", newline="\n")
+
+    for line in sync_site(tag):
+        print(f"  site updated: {line}")
 
     run(["git", "add", "-A"])
     if run(["git", "commit", "-q", "-m", f"{tag}: {a.message}"]).returncode != 0:

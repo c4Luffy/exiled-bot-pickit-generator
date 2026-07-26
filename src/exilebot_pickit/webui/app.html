@@ -2513,11 +2513,16 @@ async function poll(){
     if(d.safety){const ob=$("offBanner");
       ob.textContent="🛑 SAFETY: "+d.safety+" — auto-copy was blocked. Check the Preview tab before using this pickit.";
       ob.classList.add("on");}
-    // Coverage self-check: a poe.ninja category came back empty (renamed/retired
-    // type). Surface it so a whole category doesn't silently stop pricing.
+    // Coverage self-check: a poe.ninja category fetched fine but priced nothing,
+    // so no rule was written for it. Surfaced so a whole category can't silently
+    // stop pricing — but it does NOT mean the type was renamed: a renamed type
+    // 404s and never reaches here (it's reported as a failed fetch instead).
+    // PoE1's Incubators price 29 items in Standard and zero in a league that
+    // doesn't drop them, and the old wording told everyone to report that.
     {const cb=$("covBanner"),ca=d.coverage_alerts||[];
-      if(ca.length){cb.textContent="⚠ poe.ninja returned no items for: "+ca.join(", ")+
-        " — that category may have been renamed and stopped pricing. Please report it.";
+      if(ca.length){cb.textContent="⚠ poe.ninja prices nothing in this league for: "+ca.join(", ")+
+        " — normal when that category doesn't drop here, so nothing was left out by mistake. "+
+        "If it does drop and sell in your league, report it.";
         cb.style.display="";cb.classList.add("on");}
       else{cb.style.display="none";cb.classList.remove("on");}}
     logLine(`Done in ${d.secs}s → ${d.path}`,"ok");uEx();gEx();

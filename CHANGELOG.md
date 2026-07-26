@@ -6,6 +6,36 @@ download lives.
 
 ---
 
+## [v4.43.0] — 2026-07-26 — Every tab of both games, and an empty category stops crying wolf
+
+- **An empty price category no longer claims it was renamed.** poe.ninja prices no
+  Incubators in some Path of Exile 1 leagues, and the coverage banner told the user
+  the category "may have been renamed and stopped pricing. Please report it." The
+  type is correct — `Incubator` returns 29 items in Standard — it simply doesn't
+  drop in that league. The premise was wrong too: a renamed type returns a **404**,
+  which never reaches the coverage check (it is reported as a failed fetch), so an
+  empty-but-valid payload never meant a rename. Both the banner and the run log now
+  say poe.ninja prices nothing in this league for that category, that nothing was
+  left out by mistake, and to report it only if it does sell in your league.
+- **The website shows every tab of both games.** All 22 tabs — 14 in Path of Exile 2,
+  8 in Path of Exile 1 — captured from the running app, behind a **PoE 1 / PoE 2
+  switch on the screenshot frame**. Previously three of the fourteen frames were
+  Path of Exile 1 captures sitting inside a Path of Exile 2 tour, every one of them
+  labelled with a version none of them were taken on, and the social preview image
+  had the same mismatch.
+- **The release tool now points the website at the release it just cut.** Nothing
+  updated `docs/index.html`, so the landing page sat on **v4.42.0 while v4.42.4 was
+  out** — the eyebrow, the release panel and all six download links, meaning every
+  Download button on the site served a stale build. `tools/release.py` now rewrites
+  those mechanical spots and warns when the hand-written release entry doesn't
+  mention the version being shipped. The site's release panel also had v4.41.29's
+  Economy-card fix printed under a **v4.42.0** heading, with the real v4.42.0 (Path
+  of Exile 1 support) missing entirely; both are corrected.
+- **The landing page carousel is covered by a behaviour test.** `tests/test_site_carousel.mjs`
+  runs the page's own script against a DOM stub and checks the game switch really
+  re-slices slides, dots and counts both ways — the hero is driven by one inline
+  script where a single null lookup leaves a dead frame.
+
 ## [v4.42.4] — 2026-07-26 — Chaos and Divine in every rule comment
 
 - **Priced rule comments now show Chaos and Divine, not just one number.** A

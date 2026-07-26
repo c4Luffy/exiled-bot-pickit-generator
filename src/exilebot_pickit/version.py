@@ -1,10 +1,17 @@
 """Single source of truth for the app version."""
-VERSION = "4.42.4"
+VERSION = "4.43.0"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• An empty price category no longer tells you it was renamed. poe.ninja prices no Incubators in some Path of Exile 1 leagues, and the banner said that category "may have been renamed and stopped pricing. Please report it." The type is fine — Incubator returns 29 items in Standard — it just doesn't drop in that league. A renamed type returns a 404 and is already reported as a failed fetch, so an empty-but-valid payload never meant a rename. The banner and the run log now say the league prices none of them, that nothing was left out by mistake, and to report it only if they do sell in your league.
+
+• The website now shows every tab of BOTH games — all 22 (14 in PoE 2, 8 in PoE 1), captured from the running app, behind a PoE 1 / PoE 2 switch on the screenshot frame. Three of the old fourteen frames were PoE 1 captures sitting inside a PoE 2 tour, each labelled with a version none of them were taken on.
+
+• The release tool now points the website at the release it just cut. Nothing did, so the landing page sat on v4.42.0 while v4.42.4 was out — including all six Download buttons, which served that stale build.
+
+Also in 4.42.4:
 • Every priced rule's comment now shows Chaos AND Divine, not just the raw value. A line that read `// ExValue = 23.88` now reads `// ExValue = 23.88 c · 0.03 div` in PoE 1 (the value is Chaos there) and `// ExValue = 23.88 ex · 5.4 c · 0.03 div` in PoE 2 (Exalt, with the Chaos and Divine equivalents worked out). The bare number still comes first, so the loot filter reads it exactly as before.
 
 Also in 4.42.3:

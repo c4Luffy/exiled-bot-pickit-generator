@@ -2500,8 +2500,8 @@ class AppApi:
 
             cov_alerts: list = []
             for _key, _label in asm.coverage_warnings(payloads, cats, expected_empty=set()):
-                self._log(f"⚠ {_label}: poe.ninja returned no items — the category "
-                          f"may have been renamed. Report it so it can be re-mapped.")
+                self._log(f"⚠ {_label}: poe.ninja prices nothing in this league — "
+                          f"normal where it doesn't drop. Report it only if it sells here.")
                 cov_alerts.append(_label)
 
             top_pool = asm.top_items_from_lines(out)
@@ -2680,15 +2680,16 @@ class AppApi:
                 self._log(f"✓ {label}")
 
             # Coverage self-check: a category that fetched OK but came back EMPTY
-            # is the signature of poe.ninja renaming/retiring a type — the whole
-            # category silently stops pricing (how Verisium went unfetched). Warn
-            # loudly so it's caught here, not weeks later in-game.
+            # wrote no rules at all, and nothing used to say so (how Verisium went
+            # unnoticed). Warn here rather than weeks later in-game — but as a
+            # league-has-no-prices notice, not a "renamed type" claim: a renamed
+            # type 404s and is reported as a failed fetch instead.
             # local, not self. — accumulated across the run like top_pool/alerts
             # below, and only handed to self._status inside the final lock.
             cov_alerts = []
             for _key, _label in asm.coverage_warnings(payloads, cats):
-                self._log(f"⚠ {_label}: poe.ninja returned no items — the category "
-                          f"may have been renamed. Report it so it can be re-mapped.")
+                self._log(f"⚠ {_label}: poe.ninja prices nothing in this league — "
+                          f"normal where it doesn't drop. Report it only if it sells here.")
                 cov_alerts.append(_label)
 
             # Always-pick sections — each group is its own Economy category;

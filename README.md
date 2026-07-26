@@ -20,18 +20,18 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.4">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.43.0">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
 </p>
 
-![Real Exiled Bot Pickit Generator v4.42.4 — Path of Exile 1 Generate screen](docs/shots/01-generate-poe1-v4420.png)
+![Real Exiled Bot Pickit Generator v4.43.0 — Path of Exile 1 Generate screen](docs/shots/poe1-01-generate-v4430.png)
 
-<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.42.4</sub></p>
+<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.43.0 · <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/#top">see all 22 tabs of both games</a></sub></p>
 
 > [!IMPORTANT]
-> **Using v4.20.0 or v4.21.0? Update manually once.** Close the old app, [download v4.42.4](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.4/ExileBot2PickitGenerator.exe), and open it. Your settings, profiles, and Exiled Bot folder stay in place. Later in-app updates work normally.
+> **Using v4.20.0 or v4.21.0? Update manually once.** Close the old app, [download v4.43.0](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.43.0/ExileBot2PickitGenerator.exe), and open it. Your settings, profiles, and Exiled Bot folder stay in place. Later in-app updates work normally.
 
 ## Start here
 
@@ -124,14 +124,29 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.42.4
+## Current release: v4.43.0
 
-### Path of Exile 1 support — one app for both games
+### Every tab of both games, and an empty category stops crying wolf
+
+- **The website now shows a real capture of all 22 tabs — 14 in Path of Exile 2, 8 in Path of Exile 1 —**
+  behind a PoE 1 / PoE 2 switch on the screenshot frame. Before this, three of the fourteen frames were
+  Path of Exile 1 captures sitting in a Path of Exile 2 tour, all labelled with a version none of them
+  were taken on.
+- **An empty price category no longer tells you it was renamed.** poe.ninja prices no Incubators in some
+  Path of Exile 1 leagues, and the banner said the category "may have been renamed and stopped pricing —
+  please report it". The type is fine (29 items price in Standard) and simply doesn't drop there. A
+  renamed type returns a 404 and is already reported as a failed fetch, so an empty-but-valid payload
+  never meant a rename. It now says the league prices none of them, and to report it only if they sell there.
+- **The release tool now points the website at the release it just cut** — nothing did, so the landing page
+  advertised v4.42.0, and every Download button on it served that build, while v4.42.4 was out.
+
+### v4.42.0–v4.42.4 — Path of Exile 1 support: one app for both games
 
 - **A PoE 1 / PoE 2 switch at the top of the sidebar turns this into one app for both games.** Pick PoE 1 and it prices Path of Exile 1 live from poe.ninja — currency, fragments, scarabs, fossils, essences, divination cards, uniques and the rest — and writes a pickit in **Exiled Bot's native PoE1 format**: uniques by `[UniqueName]`, everything else by `[Type]`, verified against a real Exiled Bot install's own generated pickit.
 - **Each game keeps its own everything.** League, value floors, output file (`poe1_pickit.ipd` vs `poe2_pickit.ipd`), run history and profiles are stored per game, so switching never overwrites the other.
 - **PoE 1 is economy-only** — no rare-gear / craft / chance / fracture pages — prices in **Chaos**, defaults to a league that poe.ninja actually prices, and has its own setup guide.
 - **Renamed** to *Exiled Bot Pickit Generator* now that it serves both games. The `.exe` filename is unchanged, so the in-app updater keeps working across the rename.
+- **Then four polish passes (v4.42.1–v4.42.4).** Every priced rule's comment now shows Chaos *and* Divine — `// ExValue = 23.88 c · 0.03 div` in PoE 1, `// ExValue = 23.88 ex · 5.4 c · 0.03 div` in PoE 2 — with the bare number still first so the loot filter reads it unchanged. Copy-rule, the Economy hover card and Preview all show the real PoE 1 `[UniqueName]` rule instead of the PoE 2 form, the number-key shortcuts match the sidebar PoE 1 actually shows, and History and profile floors read in Chaos.
 
 ### v4.41.29 — The Economy hover card stops covering a row's keep/copy buttons
 

@@ -50,6 +50,9 @@ jobs:
       - name: UI logic tests (behaviour of the real app.html functions)
         run: node tests/test_ui_logic.mjs
 
+      - name: Site carousel tests (the landing page's PoE 1 / PoE 2 screenshot switch)
+        run: node tests/test_site_carousel.mjs
+
       - name: Validate [ItemLevel] placement in all generated rules
         # [ItemLevel] belongs BEFORE the # (ground-side filter): the bot reads
         # game memory, so ilvl is known pre-pickup — its own editor lists Item

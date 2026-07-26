@@ -236,9 +236,14 @@ EXPECTED_EMPTY_CATEGORIES = {"waystones"}
 def coverage_warnings(payloads: dict, categories: list,
                       expected_empty: set | None = None) -> list:
     """Fetched categories whose payload ARRIVED but carries no priced items —
-    the fingerprint of poe.ninja renaming or retiring a type, which silently
-    stops the app pricing that whole category (the class of bug that hid
-    Verisium and, before it, would hide any renamed type).
+    so no rule was written for that whole category and nothing said so (the
+    class of bug that hid Verisium).
+
+    This is NOT proof the type was renamed: poe.ninja 404s an unknown type, and
+    a failed fetch is reported separately. An empty-but-valid payload means the
+    selected league prices none of that category — PoE1 Incubators return 29
+    items in Standard and 0 in a league that doesn't drop them. Word any
+    user-facing message accordingly.
 
     Returns ``[(key, label), ...]``. The expected-empty allowlist is skipped.
     A *missing* payload (network failure) is deliberately NOT flagged here — it

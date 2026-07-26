@@ -15,15 +15,15 @@
 <meta property="og:url" content="https://c4luffy.github.io/exiled-bot-pickit-generator/">
 <meta property="og:title" content="Exiled Bot Pickit Generator">
 <meta property="og:description" content="Build a pickit you can understand from current Path of Exile 1 or 2 prices, or translate an existing .ipd with every unavoidable difference reported.">
-<meta property="og:image" content="https://c4luffy.github.io/exiled-bot-pickit-generator/shots/01-generate-poe1-v4420.png">
+<meta property="og:image" content="https://c4luffy.github.io/exiled-bot-pickit-generator/shots/poe2-01-generate-v4430.png">
 <meta property="og:image:width" content="1920">
 <meta property="og:image:height" content="1009">
-<meta property="og:image:alt" content="Real Exiled Bot Pickit Generator v4.38.2 Generate screen">
+<meta property="og:image:alt" content="Real Exiled Bot Pickit Generator v4.43.0 Generate screen">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Exiled Bot Pickit Generator">
 <meta name="twitter:description" content="Build a pickit you can understand from current Path of Exile 1 or 2 prices, or translate an existing .ipd with every unavoidable difference reported.">
-<meta name="twitter:image" content="https://c4luffy.github.io/exiled-bot-pickit-generator/shots/01-generate-poe1-v4420.png">
-<meta name="twitter:image:alt" content="Real Exiled Bot Pickit Generator v4.38.2 Generate screen">
+<meta name="twitter:image" content="https://c4luffy.github.io/exiled-bot-pickit-generator/shots/poe2-01-generate-v4430.png">
+<meta name="twitter:image:alt" content="Real Exiled Bot Pickit Generator v4.43.0 Generate screen">
 <style>
 :root{
   color-scheme:dark;
@@ -112,6 +112,14 @@ button{font:inherit}
 .app-stage{position:relative;z-index:3;margin-top:54px}
 .app-frame,.item-shot{margin:0}
 .app-frame{padding:8px;border:1px solid var(--line);border-radius:13px;background:#111216;box-shadow:var(--shadow)}
+.carousel-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:3px 4px 10px}
+.carousel-eyebrow{color:var(--quiet);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.gameswitch{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--line);border-radius:999px;background:rgba(8,9,11,.72)}
+.gameswitch-btn{display:inline-flex;align-items:baseline;gap:6px;min-height:32px;padding:6px 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.03em;cursor:pointer;transition:background .18s ease,color .18s ease}
+.gameswitch-btn small{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.gameswitch-btn:hover{color:var(--paper)}
+.gameswitch-btn.is-on{background:var(--gold);color:#171106}
+.gameswitch-btn.is-on:hover{background:var(--gold-2)}
 .carousel-viewport{position:relative;overflow:hidden;aspect-ratio:1920/1009;border:1px solid #26231e;border-radius:8px;background:#08090b}
 .carousel-slide{position:absolute;inset:0;display:block;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease}
 .carousel-slide.is-active{opacity:1;visibility:visible;pointer-events:auto}
@@ -252,14 +260,14 @@ footer{border-top:1px solid var(--line-soft);padding:27px 0 35px;color:var(--qui
       <a href="#start">Start here</a><a href="#create-filter">Create a filter</a><a href="#item-check">Item Check</a><a href="#safety">Safety</a>
     </nav>
     <a class="nav-ghost" href="https://github.com/c4Luffy/exiled-bot-pickit-generator" aria-label="View the project on GitHub"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
-    <a class="nav-cta" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.0/ExileBot2PickitGenerator.exe">Download v4.42.0 <span aria-hidden="true">↓</span></a>
+    <a class="nav-cta" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.43.0/ExileBot2PickitGenerator.exe">Download v4.43.0 <span aria-hidden="true">↓</span></a>
     <button class="menu" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="mobileNav">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
   </div>
   <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation">
     <a href="#start">Start here</a><a href="#create-filter">Create a filter</a><a href="#item-check">Item Check</a><a href="#safety">Safety</a>
-    <a class="nav-cta" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.0/ExileBot2PickitGenerator.exe">Download v4.42.0</a>
+    <a class="nav-cta" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.43.0/ExileBot2PickitGenerator.exe">Download v4.43.0</a>
     <a class="nav-ghost" href="https://github.com/c4Luffy/exiled-bot-pickit-generator"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
   </nav>
 </header>
@@ -268,13 +276,13 @@ footer{border-top:1px solid var(--line-soft);padding:27px 0 35px;color:var(--qui
   <section class="hero" id="top">
     <div class="wrap">
       <div class="hero-copy">
-        <span class="eyebrow">Current release · v4.42.0 · Windows</span>
+        <span class="eyebrow">Current release · v4.43.0 · Windows</span>
         <h1 class="serif">Build a pickit<br>you can <em>understand.</em></h1>
-        <p class="hero-lead">One app for <strong>Path of Exile 1 and Path of Exile</strong>: turn live poe.ninja prices into a validated Exiled Bot pickit. Already have an <span class="mono">.ipd</span>? Translate it into an in-game loot filter with every unavoidable difference reported.</p>
+        <p class="hero-lead">One app for <strong>Path of Exile 1 and Path of Exile 2</strong>: turn live poe.ninja prices into a validated Exiled Bot pickit. Already have an <span class="mono">.ipd</span>? Translate it into an in-game loot filter with every unavoidable difference reported.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.0/ExileBot2PickitGenerator.exe">
+          <a class="btn btn-primary" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.43.0/ExileBot2PickitGenerator.exe">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
-            Download v4.42.0
+            Download v4.43.0
           </a>
           <a class="btn btn-secondary" href="#start">See how it works <span aria-hidden="true">↓</span></a>
         </div>
@@ -286,46 +294,46 @@ footer{border-top:1px solid var(--line-soft);padding:27px 0 35px;color:var(--qui
       </div>
 
       <div class="app-stage">
-        <figure class="app-frame" data-carousel role="region" aria-roledescription="carousel" aria-label="Real screenshots of all 14 app tabs">
-          <div class="carousel-viewport">
-            <a class="carousel-slide is-active" data-title="Generate" data-version="v4.38.2" href="shots/01-generate-poe1-v4420.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Generate capture at full size"><img src="shots/01-generate-poe1-v4420.png" width="1920" height="1009" fetchpriority="high" decoding="async" alt="Real running-app v4.38.2 Generate capture showing a completed and validated run with 1,233 active rules"></a>
-            <a class="carousel-slide" data-title="Preview" data-version="v4.38.2" href="shots/02-preview-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Preview capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/02-preview-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Preview capture showing the current generated pickit, its counts, and file header"></a>
-            <a class="carousel-slide" data-title="Item Check" data-version="v4.38.2" href="shots/03-item-check-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Item Check capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/03-item-check-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Item Check capture showing an Ignored verdict and the exact unique-floor fix"></a>
-            <a class="carousel-slide" data-title="Create your filter" data-version="v4.38.2" href="shots/04-create-your-filter-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Create your filter capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/04-create-your-filter-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Create your filter capture showing the loaded pickit and real in-game ground-label preview"></a>
-            <a class="carousel-slide" data-title="History" data-version="v4.38.2" href="shots/05-history-poe1-v4420.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 History capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/05-history-poe1-v4420.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 History capture showing logged generation runs, rule-count changes, and Divine-rate history"></a>
-            <a class="carousel-slide" data-title="Economy" data-version="v4.38.2" href="shots/06-economy-poe1-v4420.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Economy capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/06-economy-poe1-v4420.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Economy capture showing live prices, seven-day changes, and generated-pickit inclusion controls"></a>
-            <a class="carousel-slide" data-title="Chance" data-version="v4.38.2" href="shots/07-chance-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Chance capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/07-chance-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Chance capture showing target uniques, live values, art, and enabled bases"></a>
-            <a class="carousel-slide" data-title="Craft" data-version="v4.38.2" href="shots/08-craft-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Craft capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/08-craft-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Craft capture showing enabled bases and per-base item-level controls"></a>
-            <a class="carousel-slide" data-title="Exceptional" data-version="v4.38.2" href="shots/09-exceptional-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Exceptional capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/09-exceptional-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Exceptional capture showing quality and item-level gates plus the current base grid"></a>
-            <a class="carousel-slide" data-title="Fracture" data-version="v4.38.2" href="shots/10-fracture-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Fracture capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/10-fracture-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Fracture capture showing verified target modifiers and matching generated-rule examples"></a>
-            <a class="carousel-slide" data-title="Magic &amp; Rare" data-version="v4.38.2" href="shots/11-magic-rare-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Magic and Rare capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/11-magic-rare-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Magic and Rare capture showing flask rules and rare-gear stat scoring"></a>
-            <a class="carousel-slide" data-title="Setup guide" data-version="v4.38.2" href="shots/12-setup-guide-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Setup guide capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/12-setup-guide-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Setup guide capture explaining generation and Exiled Bot connection steps"></a>
-            <a class="carousel-slide" data-title="Settings" data-version="v4.38.2" href="shots/13-settings-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Settings capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/13-settings-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Settings capture showing a connected pickit folder and automatic deployment enabled"></a>
-            <a class="carousel-slide" data-title="Debug" data-version="v4.38.2" href="shots/14-debug-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Debug capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/14-debug-v4382.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real running-app v4.38.2 Debug capture showing health checks, cached payloads, price repair, and problem-report actions"></a>
+        <figure class="app-frame" data-carousel role="region" aria-roledescription="carousel" aria-label="Real screenshots of every app tab, for both games">
+          <div class="carousel-top">
+            <span class="carousel-eyebrow">Real running-app captures</span>
+            <div class="gameswitch" role="group" aria-label="Choose which game to preview">
+              <button class="gameswitch-btn is-on" type="button" data-game-switch="poe2" aria-pressed="true">PoE 2<small>14 tabs</small></button>
+              <button class="gameswitch-btn" type="button" data-game-switch="poe1" aria-pressed="false">PoE 1<small>8 tabs</small></button>
+            </div>
           </div>
-          <figcaption class="app-caption"><strong><span data-carousel-title>Generate</span> · real running-app capture</strong><span><span data-carousel-count>1 of 14</span> · captured on <span data-carousel-version>v4.38.2</span> · tap to open full size</span></figcaption>
+          <div class="carousel-viewport">
+            <a class="carousel-slide is-active" data-game="poe2" data-title="Generate" data-version="v4.43.0" href="shots/poe2-01-generate-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Generate capture at full size"><img src="shots/poe2-01-generate-v4430.png" width="1920" height="1009" fetchpriority="high" decoding="async" alt="Real Path of Exile 2 capture of the Generate tab after a completed, validated run: league, preset, price floors and the run summary"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Preview" data-version="v4.43.0" href="shots/poe2-02-preview-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Preview capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-02-preview-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Preview tab showing the generated pickit itself, its rule counts and file header"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Item Check" data-version="v4.43.0" href="shots/poe2-03-item-check-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Item Check capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-03-item-check-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Item Check tab explaining a single pasted item's verdict and the deciding rule"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Create your filter" data-version="v4.43.0" href="shots/poe2-04-create-your-filter-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Create your filter capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-04-create-your-filter-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Create your filter tab translating a loaded pickit into an in-game loot filter with its report"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="History" data-version="v4.43.0" href="shots/poe2-05-history-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 History capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-05-history-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the History tab with past runs, rule-count changes and the Divine-rate chart"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Economy" data-version="v4.43.0" href="shots/poe2-06-economy-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Economy capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-06-economy-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Economy tab listing live poe.ninja prices with seven-day change and per-item keep controls"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Chance" data-version="v4.43.0" href="shots/poe2-07-chance-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Chance capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-07-chance-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Chance tab showing target uniques, their live values and the enabled chance bases"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Craft" data-version="v4.43.0" href="shots/poe2-08-craft-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Craft capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-08-craft-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Craft tab with the craftable bases and their per-base item-level gates"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Exceptional" data-version="v4.43.0" href="shots/poe2-09-exceptional-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Exceptional capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-09-exceptional-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Exceptional tab with its quality and item-level gates above the base grid"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Fracture" data-version="v4.43.0" href="shots/poe2-10-fracture-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Fracture capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-10-fracture-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Fracture tab listing verified target modifiers and the rules they generate"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Magic &amp; Rare" data-version="v4.43.0" href="shots/poe2-11-magic-rare-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Magic &amp; Rare capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-11-magic-rare-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Magic and Rare tab with flask rules and weighted rare-gear stat scoring"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Setup guide" data-version="v4.43.0" href="shots/poe2-12-setup-guide-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Setup guide capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-12-setup-guide-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Setup guide tab walking through generating and connecting Exiled Bot"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Settings" data-version="v4.43.0" href="shots/poe2-13-settings-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Settings capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-13-settings-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Settings tab with the connected pickit folder and output options"></a>
+            <a class="carousel-slide" data-game="poe2" data-title="Debug" data-version="v4.43.0" href="shots/poe2-14-debug-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 2 Debug capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe2-14-debug-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 2 capture of the Debug tab with health checks, cached payloads and problem-report actions"></a>
+            <a class="carousel-slide" data-game="poe1" data-title="Generate" data-version="v4.43.0" href="shots/poe1-01-generate-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 1 Generate capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe1-01-generate-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 1 capture of the Path of Exile 1 Generate tab after a completed run, with floors priced in Chaos"></a>
+            <a class="carousel-slide" data-game="poe1" data-title="Preview" data-version="v4.43.0" href="shots/poe1-02-preview-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 1 Preview capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe1-02-preview-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 1 capture of the Preview tab showing the generated Path of Exile 1 pickit and its rule counts"></a>
+            <a class="carousel-slide" data-game="poe1" data-title="Create your filter" data-version="v4.43.0" href="shots/poe1-03-create-your-filter-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 1 Create your filter capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe1-03-create-your-filter-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 1 capture of the Create your filter tab translating a Path of Exile 1 pickit into a loot filter"></a>
+            <a class="carousel-slide" data-game="poe1" data-title="History" data-version="v4.43.0" href="shots/poe1-04-history-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 1 History capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe1-04-history-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 1 capture of the History tab with past Path of Exile 1 runs and the Chaos-priced Divine-rate chart"></a>
+            <a class="carousel-slide" data-game="poe1" data-title="Economy" data-version="v4.43.0" href="shots/poe1-05-economy-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 1 Economy capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe1-05-economy-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 1 capture of the Economy tab listing live Path of Exile 1 poe.ninja prices in Chaos"></a>
+            <a class="carousel-slide" data-game="poe1" data-title="Setup guide" data-version="v4.43.0" href="shots/poe1-06-setup-guide-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 1 Setup guide capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe1-06-setup-guide-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 1 capture of the Path of Exile 1 setup guide, which writes only the pickit Exiled Bot reads"></a>
+            <a class="carousel-slide" data-game="poe1" data-title="Settings" data-version="v4.43.0" href="shots/poe1-07-settings-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 1 Settings capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe1-07-settings-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 1 capture of the Settings tab with the Path of Exile 1 output file and pickit folder"></a>
+            <a class="carousel-slide" data-game="poe1" data-title="Debug" data-version="v4.43.0" href="shots/poe1-08-debug-v4430.png" target="_blank" rel="noopener" aria-label="Open the Path of Exile 1 Debug capture at full size" aria-hidden="true" tabindex="-1"><img src="shots/poe1-08-debug-v4430.png" width="1920" height="1009" loading="lazy" decoding="async" alt="Real Path of Exile 1 capture of the Debug tab with health checks and cached Path of Exile 1 payloads"></a>
+          </div>
+          <figcaption class="app-caption"><strong><span data-carousel-title>Generate</span> &middot; <span data-carousel-game>Path of Exile 2</span></strong><span><span data-carousel-count>1 of 14</span> &middot; real capture on <span data-carousel-version>v4.43.0</span> &middot; tap to open full size</span></figcaption>
           <div class="carousel-controls" aria-label="Screenshot tour controls">
             <button class="carousel-button" type="button" data-carousel-toggle aria-label="Pause automatic screenshot tour">Pause</button>
-            <button class="carousel-button" type="button" data-carousel-prev aria-label="Show previous tab screenshot">←</button>
-            <div class="carousel-dots" aria-label="Choose a tab screenshot">
-              <button class="carousel-dot" type="button" data-carousel-dot="0" aria-label="Show Generate screenshot" aria-current="true"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="1" aria-label="Show Preview screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="2" aria-label="Show Item Check screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="3" aria-label="Show Create your filter screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="4" aria-label="Show History screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="5" aria-label="Show Economy screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="6" aria-label="Show Chance screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="7" aria-label="Show Craft screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="8" aria-label="Show Exceptional screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="9" aria-label="Show Fracture screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="10" aria-label="Show Magic and Rare screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="11" aria-label="Show Setup guide screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="12" aria-label="Show Settings screenshot"></button>
-              <button class="carousel-dot" type="button" data-carousel-dot="13" aria-label="Show Debug screenshot"></button>
-            </div>
-            <button class="carousel-button" type="button" data-carousel-next aria-label="Show next tab screenshot">→</button>
+            <button class="carousel-button" type="button" data-carousel-prev aria-label="Show previous tab screenshot">&larr;</button>
+            <div class="carousel-dots" data-carousel-dots aria-label="Choose a tab screenshot"></div>
+            <button class="carousel-button" type="button" data-carousel-next aria-label="Show next tab screenshot">&rarr;</button>
           </div>
-          <p class="carousel-note">All 14 tabs · real running-app captures taken on v4.38.2. Tap any frame to open the full 1920 × 1009 image.</p>
+          <p class="carousel-note"><span data-carousel-note>All 14 Path of Exile 2 tabs</span> &middot; real running-app captures taken on v4.43.0. Switch games above; tap any frame to open the full 1920 &times; 1009 image.</p>
         </figure>
       </div>
 
@@ -335,7 +343,7 @@ footer{border-top:1px solid var(--line-soft);padding:27px 0 35px;color:var(--qui
         <div class="trust-item"><span class="trust-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h6l2 2h8v10H4z"/><path d="M4 7V5h6l2 2"/></svg></span><span class="trust-copy"><b>Your pickit files stay local</b><span>They are never uploaded</span></span></div>
       </div>
 
-      <aside class="update-note"><b>Using v4.20.0 or v4.21.0?</b> Update manually once. Close the old app, <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.0/ExileBot2PickitGenerator.exe">download v4.42.0</a>, and open it. Your settings, profiles, and Exiled Bot folder stay in place.</aside>
+      <aside class="update-note"><b>Using v4.20.0 or v4.21.0?</b> Update manually once. Close the old app, <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.43.0/ExileBot2PickitGenerator.exe">download v4.43.0</a>, and open it. Your settings, profiles, and Exiled Bot folder stay in place.</aside>
     </div>
   </section>
 
@@ -393,7 +401,7 @@ footer{border-top:1px solid var(--line-soft);padding:27px 0 35px;color:var(--qui
       <div class="outputs">
         <div class="file-list">
           <article class="file-row"><span class="file-ext">.ipd</span><span><h3>Bot pickit</h3><p>Used by Exiled Bot. Your <span class="mono">pickit.ini</span> needs to point to this generated filename.</p></span></article>
-          <article class="file-row"><span class="file-ext">.filter</span><span><h3>In-game loot filter</h3><p>Used by Path of Exile. Select it again under Options → Game → Filters after every save or regeneration.</p></span></article>
+          <article class="file-row"><span class="file-ext">.filter</span><span><h3>In-game loot filter</h3><p>Used by Path of Exile. Select it again under Options → Game → Filters after every save or regeneration. Generated for Path of Exile 2; in Path of Exile 1 the app writes only the <span class="mono">.ipd</span>, and Create your filter still converts any pickit you bring.</p></span></article>
           <article class="file-row"><span class="file-ext">VIEW</span><span><h3>On-screen report</h3><p>See what was written, translated more widely, or could not be represented. This is a report, not a third output file.</p></span></article>
         </div>
         <div class="rule-box">
@@ -444,13 +452,13 @@ footer{border-top:1px solid var(--line-soft);padding:27px 0 35px;color:var(--qui
   <section class="section" id="item-check">
     <div class="wrap item-grid">
       <figure class="item-shot">
-        <a href="shots/03-item-check-v4382.png" target="_blank" rel="noopener" aria-label="Open the real v4.38.2 Item Check capture at full size"><img src="shots/03-item-check-v4382.png" width="1920" height="1009" loading="lazy" alt="Real running-app v4.38.2 Item Check capture showing an Ignored verdict and the exact unique-floor fix"></a>
-        <figcaption class="shot-caption"><b>Real running-app capture · Item Check</b> · captured on v4.38.2</figcaption>
+        <a href="shots/poe2-03-item-check-v4430.png" target="_blank" rel="noopener" aria-label="Open the real v4.43.0 Item Check capture at full size"><img src="shots/poe2-03-item-check-v4430.png" width="1920" height="1009" loading="lazy" alt="Real running-app v4.43.0 Path of Exile 2 Item Check capture showing a single item's verdict and the deciding rule"></a>
+        <figcaption class="shot-caption"><b>Real running-app capture · Item Check</b> · Path of Exile 2 · captured on v4.43.0</figcaption>
       </figure>
       <div class="feature-copy">
-        <span class="kicker">One item · one explainable answer</span>
+        <span class="kicker">One item · one explainable answer · Path of Exile 2</span>
         <h2 class="serif">Ask the generated pickit, not a guess.</h2>
-        <p>Hover an item in Path of Exile, press <span class="mono">Ctrl+C</span>, then paste it into Item Check. It shows the deciding rule and a practical next step.</p>
+        <p>Hover an item in Path of Exile 2, press <span class="mono">Ctrl+C</span>, then paste it into Item Check. It shows the deciding rule and a practical next step. This tab is Path of Exile 2 only — Path of Exile 1 is economy-priced, so it has no rare-gear rolls to judge.</p>
         <div class="verdicts"><span class="verdict good">Picked up</span><span class="verdict bad">Ignored</span><span class="verdict depends">Depends on the rolls</span></div>
         <div class="truth-callout"><strong>The verdict is not a simulation.</strong><p>Item Check runs the same generator that writes the <span class="mono">.ipd</span> and shows the actual emitted line. With the same settings, the tab and generated pickit cannot disagree.</p></div>
       </div>
@@ -480,22 +488,22 @@ footer{border-top:1px solid var(--line-soft);padding:27px 0 35px;color:var(--qui
   <section class="section" id="release">
     <div class="wrap">
       <article class="release-panel">
-        <div class="release-mark"><img src="logo.png" width="104" height="104" alt=""><span class="release-version">v4.42.0<small>Current release · 24 July 2026</small></span></div>
+        <div class="release-mark"><img src="logo.png" width="104" height="104" alt=""><span class="release-version">v4.43.0<small>Current release · 26 July 2026</small></span></div>
         <div class="release-copy">
-          <h2 class="serif">Every button stays clickable.</h2>
-          <p>The Economy detail card no longer parks itself on top of a row&rsquo;s keep and copy buttons &mdash; it now stops at the edge of the action column.</p>
+          <h2 class="serif">One app. Both games.</h2>
+          <p>A PoE 1 / PoE 2 switch at the top of the sidebar flips the whole app between Path of Exile 1 and Path of Exile 2 &mdash; each with its own league, floors, output file and history.</p>
           <ul class="release-list">
-            <li><span><b>v4.42.0 &middot; The Economy hover card stops covering a row&rsquo;s keep/copy buttons</b> &mdash; the detail card that pops up when you hover an Economy row could sit right on top of the keep/skip and copy buttons, so you couldn&rsquo;t click them &mdash; worse on a high-DPI or scaled display, where it covered a whole column of buttons at once. The card now caps its right edge at the left edge of that action column, so it never overlaps the buttons; it still appears beside the cursor as before, hovered or pinned. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.0">Read the v4.42.0 notes.</a></span></li>
+            <li><span><b>v4.43.0 &middot; Every tab of both games, and a landing page that stops going stale</b> &mdash; this page now carries a real capture of all 22 tabs &mdash; 14 in Path of Exile 2, 8 in Path of Exile 1 &mdash; with a PoE&nbsp;1 / PoE&nbsp;2 switch on the frame, instead of one game&rsquo;s screenshots labelled with another game&rsquo;s version. In the app, an empty price category stops crying wolf: poe.ninja prices no Incubators in some Path of Exile 1 leagues, and the banner told everyone the category &ldquo;may have been renamed &mdash; please report it&rdquo; when the type is fine and simply doesn&rsquo;t drop there. A renamed type returns a 404 and is reported as a failed fetch, so an empty-but-valid payload never meant a rename. The release tool now also points this page at the release it just cut, which is why it had been advertising v4.42.0 while v4.42.4 was out. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.43.0">Read the v4.43.0 notes.</a></span></li>
+            <li><span><b>v4.42.4 &middot; Chaos and Divine in every rule comment</b> &mdash; a priced rule&rsquo;s comment read <span class="mono">// ExValue = 23.88</span> and left you to work out what that was worth. It now reads <span class="mono">// ExValue = 23.88 c &middot; 0.03 div</span> in Path of Exile 1 (the value is Chaos there) and <span class="mono">// ExValue = 23.88 ex &middot; 5.4 c &middot; 0.03 div</span> in Path of Exile 2, with the Chaos and Divine equivalents worked out from the live rates. The bare number still comes first, so Exiled Bot&rsquo;s loot filter reads the value exactly as before. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.4">Read the v4.42.4 notes.</a></span></li>
+            <li><span><b>v4.42.0 &middot; Path of Exile 1 support &mdash; one app for both games</b> &mdash; pick PoE&nbsp;1 and the app prices Path of Exile 1 live from poe.ninja (currency, fragments, scarabs, fossils, essences, divination cards, uniques and the rest) and writes a pickit in <b>Exiled Bot&rsquo;s native PoE1 format</b>: uniques by <span class="mono">[UniqueName]</span>, everything else by <span class="mono">[Type]</span>, verified against a real Exiled Bot install&rsquo;s own generated pickit. Each game keeps its own league, value floors, output file, run history and profiles, so switching never overwrites the other. Path of Exile 1 is economy-only and prices in Chaos; the <span class="mono">.ipd</span> is what the bot reads. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.0">Read the v4.42.0 notes.</a></span></li>
+            <li><span><b>v4.41.29 &middot; The Economy hover card stops covering a row&rsquo;s keep/copy buttons</b> &mdash; the detail card that pops up when you hover an Economy row could sit right on top of the keep/skip and copy buttons, so you couldn&rsquo;t click them &mdash; worse on a high-DPI or scaled display, where it covered a whole column of buttons at once. The card now caps its right edge at the left edge of that action column, so it never overlaps the buttons; it still appears beside the cursor as before, hovered or pinned. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.29">Read the v4.41.29 notes.</a></span></li>
             <li><span><b>v4.41.28 &middot; Every rule builder now escapes quotes in item names</b> &mdash; a unique whose name or base type held a literal double quote would have corrupted its pickit rule: <span class="mono">build_unique_lines</span> interpolated the poe.ninja name and baseType straight in with no escaping, the one builder the v4.41.18 audit fixed for always-kept names but left with raw quoting &mdash; and that release admitted escaping was &ldquo;still incomplete elsewhere.&rdquo; A quote in either value would unbalance the rule and Exiled Bot&rsquo;s validator would reject the whole file. Both now go through the same escaping every other builder uses, and the regex-gated uncut-gem builder is wrapped too, so the guarantee holds for every builder. No live item has a quote today; this closes the latent case. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.28">Read the v4.41.28 notes.</a></span></li>
             <li><span><b>v4.41.27 &middot; Scheduled and piped runs stop crashing on a non-UTF-8 console</b> &mdash; both headless modes (<span class="mono">--cli</span> and <span class="mono">--regenerate</span>) print progress with &#10003; and &middot;, and on a Windows console that isn&rsquo;t UTF-8 &mdash; cp1252, which is exactly what Task Scheduler and a redirected pipe hand you &mdash; the first ticked category raised a <span class="mono">UnicodeEncodeError</span> and killed the run before a single file was written. Since <span class="mono">--regenerate</span> is documented for Task Scheduler, its intended home was the one that broke it. Both entry points now wrap their output as UTF-8, so an exotic console degrades a glyph instead of aborting the run. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.27">Read the v4.41.27 notes.</a></span></li>
             <li><span><b>v4.41.26 &middot; Concurrent writes stop failing, plus visual polish</b> &mdash; every generated file (the <span class="mono">.ipd</span>, the <span class="mono">.filter</span>, the item report and the bot&rsquo;s own <span class="mono">pickit.ini</span>) used a temp file named after its target, so two runs writing the same output shared one temp name. Since the app ships <span class="mono">--regenerate</span> for Task Scheduler, the GUI generating while the timer fires is an ordinary overlap; reproduced with two writers, the old code raised a Windows PermissionError and the write simply failed. Each write now gets a uniquely named temp file. Alongside it: accent-lined number tiles, accent bars on section headings, and a tighter sidebar that reclaims about 104px so the theme picker and Discord links stop falling off shorter windows. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.26">Read the v4.41.26 notes.</a></span></li>
             <li><span><b>v4.41.25 &middot; The Exceptional tab explains its own exceptions</b> &mdash; that tab is justified entirely by the extra rune socket an exceptional base rolls, but belts and quivers take no runes at all, so seven bases sat in a list whose stated premise did not apply to them with nothing saying why. They are listed because they are still the strongest base of their slot to craft on, and the card now says so. Wording only &mdash; no base added, removed or re-gated. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.25">Read the v4.41.25 notes.</a></span></li>
             <li><span><b>v4.41.24 &middot; A gate you couldn&rsquo;t lower, and two more counts that lied</b> &mdash; Create your filter reported &ldquo;11 disabled rules&rdquo; for a pickit with nothing disabled: all eleven were the syntax guide&rsquo;s own worked examples and flag legend, the fourth place that guide produced a wrong number. The Craft tab could not lower the item-level gate on Solar Amulet, Gold Amulet or Gold Ring &mdash; missing data rows made the stepper floor at a hardcoded 75 while those bases drop from 30, 35 and 40. And History under-reported past 30 runs, so &ldquo;peak rules&rdquo; could miss a real peak among the 50 runs actually kept. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.24">Read the v4.41.24 notes.</a></span></li>
-            <li><span><b>v4.41.23 &middot; Two exceptional staff bases stop rendering blank</b> &mdash; Sanctified Staff and Paralysing Staff showed as an icon and a name with nothing else on the Exceptional tab, while every other one of the 121 bases showed at least an item level. Both joined the staff slot in v4.39.1 but were never given a stats row, so the level fell back to zero and rendered as nothing. Both now carry their real drop level (56 and 52), read from the game&rsquo;s own base-item table and cross-checked against the existing rows rather than guessed. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.23">Read the v4.41.23 notes.</a></span></li>
-            <li><span><b>v4.41.22 &middot; Three screens stop miscounting skipped rules</b> &mdash; Preview read &ldquo;9 skipped&rdquo; on a pickit with nothing disabled: those nine were the <span class="mono">// Example:</span> lines of the syntax guide added in v4.41.18, which contain <span class="mono">[StashItem]</span> and so were counted as rules you had switched off. The same miscount fed the Generate tab&rsquo;s skipped tile and the <span class="mono">--cli</span> total, so three screens reported a number that was never real. The Chance tab now also lists every unique that shares each base with live prices, so its own &ldquo;far more often an Ingenuity than a Mageblood&rdquo; warning becomes visible data, and pasted diagnostics collapse 30 identical log lines into one while keeping any error. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.22">Read the v4.41.22 notes.</a></span></li>
-            <li><span><b>v4.41.21 &middot; Prices load in the background</b> &mdash; opening Economy used to fetch 24 separate poe.ninja price lists on the spot, five at a time, each with a back-off wait whenever poe.ninja rate-limited, while you watched &ldquo;Loading prices&hellip;&rdquo;. That same fetch now starts in the background shortly after the app opens, so the tab is normally populated the moment you click it. Everything that reads prices shares one 15-minute cache, so Generate, the Chance tab and Auto-floor get the same head start. It is fire-and-forget: offline or failed, the tab loads exactly as before, and Refresh prices still forces a live re-fetch. <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.21">Read the v4.41.21 notes.</a></span></li>
           </ul>
-          <a class="text-link" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.0">Read the release notes <span aria-hidden="true">→</span></a>
+          <a class="text-link" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.43.0">Read the release notes <span aria-hidden="true">→</span></a>
         </div>
       </article>
     </div>
@@ -513,13 +521,13 @@ footer{border-top:1px solid var(--line-soft);padding:27px 0 35px;color:var(--qui
         <details><summary>Should I leave Hide everything else on?</summary><p>It starts off and remembers your choice; gold is never hidden. Keep it off while botting because hidden labels can stall pickup.</p></details>
         <details><summary>Why didn&rsquo;t my in-game filter update after regeneration?</summary><p>Path of Exile may still have the previous filter loaded. After saving or regenerating, select the <span class="mono">.filter</span> again under Options &rarr; Game &rarr; Filters.</p></details>
         <details><summary>Where are generated files saved, and are backups made?</summary><p>The app writes the generated <span class="mono">.ipd</span> and optional <span class="mono">.filter</span> to your chosen output folder. Rotating backups protect generated output before replacement and can be restored from Settings.</p></details>
-        <details><summary>Why does Windows show a warning?</summary><p>The app is not code-signed. Its source, build workflow, and <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.0/SHA256SUMS.txt">SHA-256 checksum</a> are public, so the downloaded executable can be verified.</p></details>
+        <details><summary>Why does Windows show a warning?</summary><p>The app is not code-signed. Its source, build workflow, and <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.43.0/SHA256SUMS.txt">SHA-256 checksum</a> are public, so the downloaded executable can be verified.</p></details>
       </div>
     </div>
   </section>
 
   <section class="final-cta">
-    <div class="wrap"><img src="logo.png" width="78" height="78" alt=""><h2 class="serif">Ready to create your pickit?</h2><p>Start with current league prices or bring an <span class="mono">.ipd</span> you already trust.</p><div class="hero-actions"><a class="btn btn-primary" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.42.0/ExileBot2PickitGenerator.exe">Download v4.42.0 for Windows</a></div><div class="final-meta">Free · Portable</div></div>
+    <div class="wrap"><img src="logo.png" width="78" height="78" alt=""><h2 class="serif">Ready to create your pickit?</h2><p>Start with current league prices or bring an <span class="mono">.ipd</span> you already trust.</p><div class="hero-actions"><a class="btn btn-primary" href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.43.0/ExileBot2PickitGenerator.exe">Download v4.43.0 for Windows</a></div><div class="final-meta">Free · Portable</div></div>
   </section>
 </main>
 
@@ -542,14 +550,21 @@ if(menu&&mobile){
 }
 const carousel=document.querySelector('[data-carousel]');
 if(carousel){
-  const slides=Array.from(carousel.querySelectorAll('.carousel-slide'));
-  const dots=Array.from(carousel.querySelectorAll('[data-carousel-dot]'));
+  const all=Array.from(carousel.querySelectorAll('.carousel-slide'));
+  const dotWrap=carousel.querySelector('[data-carousel-dots]');
+  const switches=Array.from(carousel.querySelectorAll('[data-game-switch]'));
   const title=carousel.querySelector('[data-carousel-title]');
+  const gameLabel=carousel.querySelector('[data-carousel-game]');
   const version=carousel.querySelector('[data-carousel-version]');
   const count=carousel.querySelector('[data-carousel-count]');
+  const note=carousel.querySelector('[data-carousel-note]');
   const previous=carousel.querySelector('[data-carousel-prev]');
   const next=carousel.querySelector('[data-carousel-next]');
   const toggle=carousel.querySelector('[data-carousel-toggle]');
+  const NAMES={poe2:'Path of Exile 2',poe1:'Path of Exile 1'};
+  let game='poe2';
+  let slides=[];
+  let dots=[];
   let active=0;
   let timer=0;
   let userPaused=false;
@@ -566,23 +581,49 @@ if(carousel){
     timer=window.setTimeout(()=>show(active+1),3500);
   };
   const show=nextIndex=>{
+    if(!slides.length)return;
     const target=(nextIndex+slides.length)%slides.length;
-    slides.forEach((slide,index)=>{
-      const selected=index===target;
+    all.forEach(slide=>{
+      const selected=slides[target]===slide;
       slide.classList.toggle('is-active',selected);
       slide.setAttribute('aria-hidden',String(!selected));
       slide.tabIndex=selected?0:-1;
-      dots[index]?.setAttribute('aria-current',selected?'true':'false');
     });
+    dots.forEach((dot,index)=>dot.setAttribute('aria-current',index===target?'true':'false'));
     active=target;
     title.textContent=slides[active].dataset.title;
+    gameLabel.textContent=NAMES[game];
     version.textContent=slides[active].dataset.version;
     count.textContent=`${active+1} of ${slides.length}`;
     schedule();
   };
+  const setGame=(next,focusFirst)=>{
+    game=next;
+    slides=all.filter(slide=>slide.dataset.game===game);
+    switches.forEach(button=>{
+      const on=button.dataset.gameSwitch===game;
+      button.classList.toggle('is-on',on);
+      button.setAttribute('aria-pressed',String(on));
+    });
+    dotWrap.textContent='';
+    dots=slides.map((slide,index)=>{
+      const dot=document.createElement('button');
+      dot.type='button';
+      dot.className='carousel-dot';
+      dot.setAttribute('aria-label',`Show the ${NAMES[game]} ${slide.dataset.title} screenshot`);
+      dot.addEventListener('click',()=>show(index));
+      dotWrap.appendChild(dot);
+      return dot;
+    });
+    note.textContent=`All ${slides.length} ${NAMES[game]} tabs`;
+    show(0);
+    if(focusFirst)carousel.querySelector(`[data-game-switch="${game}"]`).focus();
+  };
+  switches.forEach(button=>button.addEventListener('click',()=>{
+    if(button.dataset.gameSwitch!==game)setGame(button.dataset.gameSwitch,false);
+  }));
   previous.addEventListener('click',()=>show(active-1));
   next.addEventListener('click',()=>show(active+1));
-  dots.forEach((dot,index)=>dot.addEventListener('click',()=>show(index)));
   toggle.addEventListener('click',()=>{userPaused=!userPaused;if(!userPaused){hovered=false;focused=false;}syncToggle();schedule();});
   carousel.addEventListener('mouseenter',()=>{hovered=true;stop();});
   carousel.addEventListener('mouseleave',()=>{hovered=false;schedule();});
@@ -590,7 +631,7 @@ if(carousel){
   carousel.addEventListener('focusout',event=>{if(!carousel.contains(event.relatedTarget)){focused=false;schedule();}});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else schedule();});
   syncToggle();
-  show(0);
+  setGame('poe2',false);
 }
 </script>
 <noscript><style>.carousel-controls{display:none}@media(max-width:980px){.menu{display:none}.mobile-nav{display:block}}</style></noscript>
