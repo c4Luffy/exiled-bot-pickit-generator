@@ -1,10 +1,13 @@
 """Single source of truth for the app version."""
-VERSION = "4.42.1"
+VERSION = "4.42.2"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• More Path of Exile 1 polish. The number-key shortcuts (Ctrl+1…0) now match the sidebar you actually SEE in PoE 1 — they were still counting the hidden Item Check tab, so every number was one off. The History "1 Divine in …" chart and the profile "What's in it?" floors read in Chaos in PoE 1. The PoE2-only "Keys" lens no longer shows in PoE 1, and Preview's tier colours now read the PoE 1 (Chaos) Divine rate instead of falling back to a default.
+
+Also in 4.42.1:
 • Path of Exile 1 polish. The Economy tab now defaults to Chaos — PoE 1's base currency — and hides the Exalt toggle, so PoE 1 prices read in "c" everywhere. Settings shows a short note explaining that PoE 1 writes only the pickit (no in-game .filter). Fresh Path of Exile 1 screenshots on the README and site, and the site copy now speaks to both games.
 
 Also in 4.42.0:

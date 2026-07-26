@@ -1432,7 +1432,7 @@
     </div>
     <div id="sparkWrap" style="border-top:1px solid var(--border);margin-top:10px;padding-top:8px;display:none">
       <div class="hint" style="display:flex;gap:10px;align-items:baseline;margin:0 0 2px">
-        <span>💱 1 Divine in Exalted</span><span id="histSparkSum" style="margin-left:auto"></span>
+        <span id="histDivLbl">💱 1 Divine in Exalted</span><span id="histSparkSum" style="margin-left:auto"></span>
       </div>
       <svg id="histSpark" width="100%" height="54" style="display:block"></svg>
     </div>
@@ -1978,6 +1978,7 @@ function applyGameUI(i){
     b.classList.toggle("on",b.dataset.game===ACTIVE_GAME));
   // unit labels: PoE2 prices in Exalt ("ex"), PoE1 in Chaos ("c")
   document.querySelectorAll(".unitLbl").forEach(e=>e.textContent=GAME_UNITS);
+  const hd=$("histDivLbl"); if(hd) hd.textContent="💱 1 Divine in "+(ECON_ONLY?"Chaos":"Exalted");
   // Setup guide: show the PoE1 version in PoE1, the PoE2 version in PoE2
   const g1=$("guidePoe1"); if(g1) g1.style.display=ECON_ONLY?"":"none";
   document.querySelectorAll(".guidePoe2").forEach(e=>e.style.display=ECON_ONLY?"none":"");
@@ -2095,7 +2096,10 @@ const PAGE_SEARCH={eco:"ecoSearch",prev:"prevFilter",craft:"craftSearch",
 document.addEventListener("keydown",e=>{
   if(e.ctrlKey&&e.key.toLowerCase()==="g"){e.preventDefault();doGenerate();}
   if(e.ctrlKey&&e.key>="0"&&e.key<="9"){
-    const p=TAB_ORDER[(parseInt(e.key)+9)%10];   // 1..9 -> 0..8, 0 -> the 10th
+    // Only tabs actually VISIBLE right now — PoE1 hides some (Item Check, the
+    // rare-gear pages), so the number must match what you SEE, not the raw list.
+    const vis=TAB_ORDER.filter(p=>{const b=document.querySelector(`.nav-btn[data-p="${p}"]`);return b&&b.offsetParent!==null;});
+    const p=vis[(parseInt(e.key)+9)%10];   // 1..9 -> 0..8, 0 -> the 10th
     if(p){e.preventDefault();openPage(p);}}
   if(e.ctrlKey&&e.key.toLowerCase()==="f"){
     const cur=document.querySelector(".page.on");
@@ -4424,7 +4428,7 @@ $("prevCopyPath").onclick=async()=>{
    user is selecting text, so normal select-to-copy still works. */
 function pvDivineRate(){
   for(const l of prevLines){
-    const m=l.match(/1 Divine\s*=\s*([\d.,]+)\s*Exalted/i);
+    const m=l.match(/1 Divine\s*=\s*([\d.,]+)\s*(?:Exalted|Chaos)/i);   // PoE2 header says Exalted, PoE1 says Chaos
     if(m)return parseFloat(m[1].replace(/,/g,""))||500;}
   return 500;}
 function pvTier(ex,d){

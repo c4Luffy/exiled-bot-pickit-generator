@@ -493,10 +493,12 @@ class AppApi:
             cat_en = {c[0]: enabled_cfg.get(c[0], True) for c in g.all_categories}
             for key, _l, _r in (self._ap_groups() if not g.economy_only else []):
                 cat_en[key] = self._ap_cat_enabled(enabled_cfg, key)
+            # The "Keys" lens groups PoE2 pinnacle keys — a PoE2-only concept.
+            # Send empty tables for an economy-only game so it doesn't show.
             return {"divine_rate": round(div_rate, 1),
                     "cats": out, "stale": sorted(stale),
-                    "key_sections": dict(gen.KEY_ITEM_SECTIONS),
-                    "key_order": list(gen.KEY_SECTION_ORDER),
+                    "key_sections": {} if g.economy_only else dict(gen.KEY_ITEM_SECTIONS),
+                    "key_order": [] if g.economy_only else list(gen.KEY_SECTION_ORDER),
                     "cat_enabled": cat_en}
         except Exception as e:
             return {"error": str(e)}
@@ -858,9 +860,10 @@ class AppApi:
             add("Floors", "unreadable — this profile's value floors aren't numbers",
                 warn=True)
         else:
-            add("Floors", f"currency & items >= {gear:g} ex  ·  uniques >= {uniq:g} ex")
+            u = self._game().unit_short   # "ex" (PoE2) / "c" (PoE1)
+            add("Floors", f"currency & items >= {gear:g} {u}  ·  uniques >= {uniq:g} {u}")
         add("Output file",
-            _sanitize_output_base(prof.get("output_base") or "poe2_pickit") + ".ipd")
+            _sanitize_output_base(prof.get("output_base") or self._game().default_output_base) + ".ipd")
 
         def names_off(bucket):
             if not isinstance(bucket, dict):

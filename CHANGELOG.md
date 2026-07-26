@@ -6,6 +6,19 @@ download lives.
 
 ---
 
+## [v4.42.2] — 2026-07-26 — More Path of Exile 1 polish
+
+- **Number-key shortcuts match the visible sidebar in PoE 1.** `Ctrl+1…0` were
+  counting the hidden Item Check tab, so every shortcut was one off (Ctrl+6, not
+  Ctrl+5, opened Economy). They now walk only the tabs actually shown.
+- **Chaos everywhere it was still Exalt.** The History "1 Divine in …" chart
+  header and the profile "What's in it?" floors now say Chaos in PoE 1.
+- **The "Keys" lens is PoE 2 only.** That Economy lens groups PoE 2 pinnacle
+  keys, which don't exist in PoE 1 — it no longer appears there.
+- **Preview tier colours read the right rate in PoE 1.** The value-ladder parser
+  looked only for "1 Divine = N Exalted"; PoE 1 headers say "Chaos", so it fell
+  back to a default. It now reads both.
+
 ## [v4.42.1] — 2026-07-25 — Path of Exile 1 polish
 
 - **The Economy tab defaults to Chaos in PoE 1** (its base currency) and hides
@@ -2302,6 +2315,7 @@ element id was preserved — **no feature was removed**.
 
 ---
 
+[v4.42.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.2
 [v4.42.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.1
 [v4.42.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.0
 [v4.41.29]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.41.29
