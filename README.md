@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.43.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.43.0 for Windows" src="https://img.shields.io/badge/Download-v4.43.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.44.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.44.0 for Windows" src="https://img.shields.io/badge/Download-v4.44.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.43.0">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.44.0">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.43.0/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.44.0/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,9 +121,15 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.43.0
+## Current release: v4.44.0
 
-### Every tab of both games, and an empty category stops crying wolf
+### Both games are officially done 🎉
+
+**Path of Exile 1 and Path of Exile 2 both run end to end.** Every tab of both games was checked in the running app — **14 in PoE 2, 8 in PoE 1** — each fetching live poe.ninja prices and writing a validated pickit Exiled Bot reads. Nothing is half-built, and there is no known issue open against either game. Dual-game support landed in v4.42.0 and took five releases to finish; this is the line under it.
+
+**From here the work is bug hunting and new features.** Hit something? [Say so on Discord](https://discord.gg/T7DU3Afve6) and it gets fixed.
+
+### v4.43.0 — Every tab of both games, and an empty category stops crying wolf
 
 - **The website now shows a real capture of all 22 tabs — 14 in Path of Exile 2, 8 in Path of Exile 1 —**
   behind a PoE 1 / PoE 2 switch on the screenshot frame. Before this, three of the fourteen frames were
@@ -154,13 +160,13 @@ Windows SmartScreen may ask for confirmation because this free community executa
 - **A unique whose name or base type contained a literal `"` would have corrupted its pickit rule.** `build_unique_lines` interpolated the poe.ninja `name` and `baseType` straight into the rule with no escaping — the one builder the v4.41.18 audit fixed for `force_names` but left with raw quoting, and that release admitted quote escaping was "still incomplete elsewhere." A quote in either value would unbalance the rule and Exiled Bot's validator would reject the whole file. Both now go through `_quote_ipd`, matching every other builder. The uncut-gem builder (external names, but regex-gated so a quote can't reach it) is wrapped too, so "every builder escapes external names" is now literally true. No live item has a quote today; this closes the latent case.
 - **Regression test added**: a unique whose name and base both contain `"` still produces a rule whose structural quotes stay balanced.
 
+<details>
+<summary><strong>Older releases</strong></summary>
+
 ### v4.41.27 — Scheduled and piped runs stop crashing on a non-UTF-8 console
 
 - **A headless `--cli` / `--regenerate` run aborted before writing a single file on a console that wasn't UTF-8.** Both modes print progress with `✓` and `·`, and on a Windows console that isn't UTF-8 — cp1252, which is exactly what Task Scheduler and a redirected pipe (`> log.txt`) hand you — the *first* ticked category raised `UnicodeEncodeError` and killed the run before any output was generated. `--regenerate` is documented for Task Scheduler, so its intended home was the one that broke it.
 - Both entry points now wrap `stdout`/`stderr` as UTF-8 with `errors="replace"` (the same wrapper `tools/check_game_data.py` already uses), so an exotic console degrades a glyph instead of aborting the run. Only a stream that isn't already UTF-8 is touched, so a normal terminal is unaffected.
-
-<details>
-<summary><strong>Older releases</strong></summary>
 
 ### v4.41.26 — Concurrent writes stop failing, plus a pass of visual polish
 
@@ -223,7 +229,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.43.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.43.0) · [full changelog](CHANGELOG.md)
+[Read the complete v4.44.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.44.0) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

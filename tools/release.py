@@ -87,6 +87,17 @@ def sync_site(tag: str, apply: bool = True) -> list[str]:
         html, n = re.subn(pattern, repl, html)
         if n:
             changed.append(f"index.html: {pattern} ×{n}")
+
+    # A one-off announcement (marked `<!-- one-time-banner vX.Y.Z -->` above the
+    # block it introduces) belongs to exactly the release that shipped it. Strip
+    # it the moment a LATER release is cut, so "just this once" copy can't sit
+    # there for months — the failure this page already had with its v4.20.0 note.
+    m = re.search(r"[ \t]*<!-- one-time-banner (v\d+\.\d+\.\d+).*?-->\s*"
+                  r"<aside class=\"milestone\".*?</aside>\n", html, re.S)
+    if m and m.group(1) != tag:
+        html = html[:m.start()] + html[m.end():]
+        changed.append(f"index.html: dropped the one-time banner from {m.group(1)}")
+
     if apply and changed:
         SITE.write_text(html, encoding="utf-8", newline="\n")
 

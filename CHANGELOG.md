@@ -6,6 +6,22 @@ download lives.
 
 ---
 
+## [v4.44.0] — 2026-07-26 — Both games are officially done 🎉
+
+- **Path of Exile 1 and Path of Exile 2 both run end to end.** Every tab of both
+  games was checked in the running app — 14 in Path of Exile 2, 8 in Path of Exile 1
+  — each fetching live poe.ninja prices and writing a validated pickit Exiled Bot
+  reads. Nothing is half-built, and there is no known issue open against either game.
+  Dual-game support landed in v4.42.0 and took five releases to finish; this release
+  is the line under it. **From here the work is bug hunting and new features.**
+- **Said once, in the three places it belongs** — the in-app "What's new" dialog, the
+  release notes, and a one-time banner on the website. That banner carries a
+  `<!-- one-time-banner vX.Y.Z -->` marker and `tools/release.py` strips it the moment
+  a later release is cut, so a celebration can't quietly become stale copy the way the
+  site's v4.20.0 upgrade notice did.
+
+No behaviour changed in this release.
+
 ## [v4.43.0] — 2026-07-26 — Every tab of both games, and an empty category stops crying wolf
 
 - **An empty price category no longer claims it was renamed.** poe.ninja prices no
