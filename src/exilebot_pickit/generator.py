@@ -885,6 +885,57 @@ def _essence_tier_key(name: str):
     return (99, name)
 
 
+_EXVAL_RE = re.compile(r'(//\s*ExValue = )([\d.]+)(.*)$')
+
+
+def annotate_value_lines(lines: list, divine_rate: float, base_unit: str = "c",
+                         exalt_per_chaos: float | None = None) -> list:
+    """Rewrite every ``// ExValue = X`` comment to also show Chaos and Divine.
+
+    The bare number stays FIRST (the loot-filter's ``ExValue = ([\\d.]+)`` parser
+    reads it), so this only appends readable equivalents:
+
+      * PoE 1 (``base_unit="c"``) — ``X`` is already Chaos →
+        ``// ExValue = 23.88 c · 0.03 div``.
+      * PoE 2 (``base_unit="ex"``, ``exalt_per_chaos`` = the Exalt value of one
+        Chaos Orb) — ``// ExValue = 23.88 ex · 5.4 c · 0.03 div``.
+
+    ``divine_rate`` is the base-unit value of one Divine Orb; the div (and, for
+    PoE2, chaos) parts are dropped when their rate is unknown.
+    """
+    out = []
+    for line in lines:
+        m = _EXVAL_RE.search(line)
+        if not m:
+            out.append(line)
+            continue
+        x = float(m.group(2))
+        note = f"{x:.2f} {base_unit}"
+        if base_unit != "c" and exalt_per_chaos and exalt_per_chaos > 0:
+            note += f" · {x / exalt_per_chaos:,.1f} c"      # PoE2: derive Chaos
+        if divine_rate and divine_rate > 0:
+            div = x / divine_rate
+            if div >= 0.001:            # skip the "0.000 div" noise on cheap items
+                note += f" · {div:.3f} div"
+        out.append(line[:m.start()] + m.group(1) + note + m.group(3))
+    return out
+
+
+def chaos_orb_exalt_value(currency_payload: dict) -> float:
+    """The Exalt value of one Chaos Orb from a currency payload (0.0 if absent).
+
+    Needed to render the Chaos equivalent in PoE2 rule comments — the ExValue is
+    in Exalt there, and this is what one Chaos costs in Exalt."""
+    if not isinstance(currency_payload, dict):
+        return 0.0
+    rate = exalted_rate(currency_payload) or 1.0
+    by_id = {i["id"]: i for i in currency_payload.get("items", [])}
+    for ln in currency_payload.get("lines", []):
+        if (by_id.get(ln.get("id")) or {}).get("name") == "Chaos Orb":
+            return float(ln.get("primaryValue") or 0.0) * rate
+    return 0.0
+
+
 def format_rule(name: str, exalt_value: float, _divine_value: float, header: str = "Type",
                 min_exalt: float | None = None, ritual_threshold: float | None = None) -> str:
     threshold = min_exalt if min_exalt is not None else MIN_EXALT
@@ -1349,6 +1400,7 @@ def main():
                     "item_states": {}, "category_enabled": {}}
         out_lines, active = build_poe1_economy_lines(league, cats, payloads,
                                                      divine_rate, divine_found, snapshot)
+        out_lines = annotate_value_lines(out_lines, divine_rate)   # add Chaos + Divine to comments
         write_text_atomic(args.output, "\n".join(out_lines))
         print(f"Wrote {active} active PoE1 rules → {args.output}")
         return
@@ -1539,6 +1591,9 @@ def main():
         print(f"  {len(base_lines)} base rules added.")
 
     # ── Write output ──────────────────────────────────────────────────────────
+    # Add Chaos + Divine to every priced rule's comment (PoE2 base = Exalt).
+    output_lines = annotate_value_lines(output_lines, divine_rate_exalts, base_unit="ex",
+                                        exalt_per_chaos=chaos_orb_exalt_value(currency_payload))
     content = "\n".join(output_lines)
     write_text_atomic(args.output, content)
 

@@ -6,6 +6,15 @@ download lives.
 
 ---
 
+## [v4.42.4] — 2026-07-26 — Chaos and Divine in every rule comment
+
+- **Priced rule comments now show Chaos and Divine, not just one number.** A
+  line that read `// ExValue = 23.88` now reads `// ExValue = 23.88 c · 0.03 div`
+  in PoE 1 (the value is Chaos there) and `// ExValue = 23.88 ex · 5.4 c ·
+  0.03 div` in PoE 2 (Exalt, with the Chaos and Divine worked out from the live
+  rates). The bare number stays first, so Exiled Bot's loot filter reads the
+  `ExValue` exactly as before. Cheap items drop the negligible "0.000 div".
+
 ## [v4.42.3] — 2026-07-26 — Path of Exile 1 detail pass
 
 - **Copy-rule and the Economy hover card now match what's actually written.**
@@ -2328,6 +2337,7 @@ element id was preserved — **no feature was removed**.
 
 ---
 
+[v4.42.4]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.4
 [v4.42.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.3
 [v4.42.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.2
 [v4.42.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.1

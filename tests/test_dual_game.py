@@ -146,6 +146,24 @@ def test_build_poe1_economy_lines_applies_floors_and_syntax():
     assert active == 3
 
 
+def test_annotate_value_lines_adds_chaos_and_divine():
+    lines = ['[Type] == "X" # [StashItem] == "true" // ExValue = 100.00',
+             '[Type] == "Cheap" # [StashItem] == "true" // ExValue = 0.10',
+             '[Type] == "Y" # [StashItem] == "true"']            # no ExValue → untouched
+    # PoE1: base is Chaos, 1 Divine = 200 chaos
+    p1 = gen.annotate_value_lines(lines, 200.0)
+    assert '// ExValue = 100.00 c · 0.500 div' in p1[0]
+    # 0.10 / 200 = 0.0005 div < 0.001 → the noisy div part is dropped
+    assert '// ExValue = 0.10 c' in p1[1] and "div" not in p1[1]
+    assert p1[2] == lines[2]                                       # unchanged
+    # PoE2: base is Exalt, 1 chaos = 10 ex, 1 Divine = 500 ex
+    p2 = gen.annotate_value_lines(lines, 500.0, base_unit="ex", exalt_per_chaos=10.0)
+    assert '// ExValue = 100.00 ex · 10.0 c · 0.200 div' in p2[0]
+    # the loot-filter parser must still read the bare number first
+    import re
+    assert re.search(r'ExValue = ([\d.]+)', p1[0]).group(1) == "100.00"
+
+
 def test_build_exchange_lines_can_skip_poe2_name_fixes():
     # With empty corrections/skip, a name that IS a PoE2 correction key must pass
     # through unchanged (PoE1 items must not be renamed by PoE2 rules).

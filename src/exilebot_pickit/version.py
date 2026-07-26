@@ -1,10 +1,13 @@
 """Single source of truth for the app version."""
-VERSION = "4.42.3"
+VERSION = "4.42.4"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• Every priced rule's comment now shows Chaos AND Divine, not just the raw value. A line that read `// ExValue = 23.88` now reads `// ExValue = 23.88 c · 0.03 div` in PoE 1 (the value is Chaos there) and `// ExValue = 23.88 ex · 5.4 c · 0.03 div` in PoE 2 (Exalt, with the Chaos and Divine equivalents worked out). The bare number still comes first, so the loot filter reads it exactly as before.
+
+Also in 4.42.3:
 • Path of Exile 1 detail pass. Right-click "copy rule" and the Economy hover card now show the EXACT rule PoE 1 writes — uniques as [UniqueName], not the PoE 2 [Type]+[Rarity] form. Preview's rule detail names a PoE 1 unique (instead of "Condition rule") and prices it in Chaos. Top-pick cards stop repeating Chaos twice, and the floor reference line drops the redundant "chaos" echo when the floor is already in Chaos.
 
 Also in 4.42.2:

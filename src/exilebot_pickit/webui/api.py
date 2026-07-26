@@ -2492,6 +2492,8 @@ class AppApi:
 
             out, _active = asm.build_poe1_economy_lines(
                 league, cats, payloads, div_rate, div_found, snap)
+            # Show Chaos + Divine in every priced rule's comment (PoE1 base = Chaos).
+            out = gen.annotate_value_lines(out, div_rate)
             for key, _t, label, _u in cats:
                 self._log(f"✓ {label}" if isinstance(payloads.get(key), dict)
                           else f"✗ {label}: no data")
@@ -2732,6 +2734,10 @@ class AppApi:
                 out += gen.build_base_rules(min_quality=snap["base_quality"],
                                             min_level=snap["base_min_level"],
                                             disabled=excdis)
+
+            # Show Chaos + Divine in every priced rule's comment (PoE2 base = Exalt).
+            out = gen.annotate_value_lines(out, div_rate, base_unit="ex",
+                                           exalt_per_chaos=gen.chaos_orb_exalt_value(cur))
 
             # Validate the FLATTENED lines — multi-line banner headers in
             # `out` would shift line numbers vs what Preview displays.
@@ -3101,7 +3107,8 @@ class AppApi:
     def fix_bot_profile(self):
         """Point the bot's active_profile at our output file. Backs the ini up first."""
         ini = self._bot_ini_path()
-        out = (self.cfg.get("output_base") or "poe2_pickit").strip() or "poe2_pickit"
+        dflt = self._game().default_output_base
+        out = (self.cfg.get("output_base") or dflt).strip() or dflt
         if not ini or not os.path.isfile(ini):
             return {"ok": False, "error": "Couldn't find the bot's pickit.ini."}
         try:
