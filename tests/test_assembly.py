@@ -270,11 +270,13 @@ def test_poe1_maps_emit_one_active_tier_rule():
     conds = [ln for ln in two if ln.startswith("[Category]")]
     assert conds == ['[Category] == "Map" && [MapTier] == "14" # [StashItem] == "true"',
                      '[Category] == "Map" && [MapTier] >= "16" # [StashItem] == "true"'], conds
-    # a contiguous block collapses into ONE rule
+    # An interior block becomes one rule PER TIER, never a "<=" bound: the map
+    # runner's own docs warn that "less than" on [MapTier] hits a bot bug.
     block = asm.build_poe1_map_lines(_map_payload(), min_chaos=5.0, tiers=[11, 12, 13])
     conds = [ln for ln in block if ln.startswith("[Category]")]
-    assert conds == ['[Category] == "Map" && [MapTier] >= "11" && [MapTier] <= "13" '
-                     '# [StashItem] == "true"'], conds
+    assert conds == [f'[Category] == "Map" && [MapTier] == "{t}" # [StashItem] == "true"'
+                     for t in (11, 12, 13)], conds
+    assert not any("<=" in c for c in conds)
 
 
 def test_poe1_maps_name_the_generic_tier_base():
@@ -380,10 +382,18 @@ def test_legacy_single_tier_setting_still_means_that_tier_and_up():
 
 def test_top_of_the_ladder_stays_open_ended():
     """Conqueror/boss maps drop up to T18, so the top run must not be pinned."""
-    assert '[MapTier] >= "16"' in asm.map_tier_rule(16, 16)
-    assert "<=" not in asm.map_tier_rule(14, 16)
-    assert asm.map_tier_rule(3, 3) == ('[Category] == "Map" && [MapTier] == "3" '
-                                       '# [StashItem] == "true"')
+    assert asm.map_tier_rule(16, 16) == ['[Category] == "Map" && [MapTier] >= "16" '
+                                         '# [StashItem] == "true"']
+    assert asm.map_tier_rule(3, 3) == ['[Category] == "Map" && [MapTier] == "3" '
+                                       '# [StashItem] == "true"']
+
+
+def test_map_tier_conditions_never_use_less_than():
+    """The map runner's docs warn that "less than" on [MapTier] hits a bot bug
+    unless paired with a magic >= 66. Avoid the operator entirely instead."""
+    for lo, hi in [(1, 16), (11, 13), (3, 3), (14, 16), (2, 9)]:
+        for c in asm.map_tier_conditions(lo, hi):
+            assert "<" not in c, (lo, hi, c)
 
 
 # ── PoE 1 map runner (Maps/*.ipd) ────────────────────────────────────────────
@@ -416,7 +426,7 @@ def test_map_runner_never_writes_an_empty_run_rule():
     stop the bot dead. Keep the bot's own default range instead."""
     out = asm.build_poe1_map_runner_lines([])
     runs = [ln for ln in out if "[RunMap]" in ln and not ln.startswith("//")]
-    assert runs == ['[MapTier] >= "1" && [MapTier] <= "16" # [RunMap] == "true"'], runs
+    assert runs == ['[MapTier] >= "1" # [RunMap] == "true"'], runs
 
 
 def test_map_runner_upgrades_the_tiers_you_do_not_run():

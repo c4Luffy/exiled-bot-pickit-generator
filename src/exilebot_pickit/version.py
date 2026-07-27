@@ -1,10 +1,15 @@
 """Single source of truth for the app version."""
-VERSION = "4.48.0"
+VERSION = "4.48.1"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• Map rules stop using "less than" on [MapTier]. The map runner's own documentation warns that a < or <= on [MapTier] hits a bot bug unless it is paired with a magic >= "66" — so a tier block like T11-T13 was written as a range the bot may mishandle. It now writes one == rule per tier, and the open-ended >= for a run that reaches the top. No magic number, no bug to trip over.
+
+• The generated map runner carries Exiled Bot's own priority list and its two gotchas: upgrading only happens on a map the bot has actually selected to farm (and only once it holds minimum_map_number_to_upgrade_tier of them), and marking a map for BOTH upgrading and running means it gets run. It also writes the optional UpgradeToRare and UpgradeQuality lines commented, ready to switch on.
+
+Also in 4.48.0:
 • The map runner now upgrades the tiers you don't run. Every tier below your selection gets an [UpgradeMapTier] rule, so low maps get traded up towards the ones you actually farm instead of rotting in a tab. Exiled Bot ships ~20 upgrade examples in its own map file, but every one of them is commented out AND names a pre-3.28 base (Arena Map, Barrows Map...) that no longer exists, so they would match nothing even if you uncommented them.
 
 • The Maps page reads your bot's own settings and says whether it will actually work. Writing the file is only half the job: the bot picks its map file by map_profile in config.ini, and tier upgrading needs enable_map_tier_upgrading=true (it ships false). Both are shown with a tick or a warning and the exact value to set, instead of leaving you to find out that a correctly generated file was never being read.

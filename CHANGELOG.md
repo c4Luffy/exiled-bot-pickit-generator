@@ -6,6 +6,25 @@ download lives.
 
 ---
 
+## [v4.48.1] — 2026-07-27 — No "less than" on [MapTier], and the bot's own priority rules
+
+- **A tier block no longer uses `<=` on `[MapTier]`.** The map runner's own
+  documentation warns that using "less than" on `[MapTier]` hits a bot bug unless
+  paired with a large `>=` ("never less than 66"). Selecting T11–T13 wrote
+  `[MapTier] >= "11" && [MapTier] <= "13"`, exactly the shape that warning is
+  about. It now writes one `==` rule per tier, and keeps the open-ended `>=` for a
+  run reaching the top — no magic number, and no operator the bot mishandles. The
+  same applies to the runner's `[RunMap]` lines and the no-selection fallback.
+- **The generated runner carries the bot's own priority list**
+  (`[UpgradeMapTier] >> [IgnoreMap] >> [UpgradeToRare] >> [UpgradeToMagic] >>
+  [RunMap]`) and the two gotchas printed alongside it: upgrading only happens to a
+  map the bot has actually selected to farm, and marking a map for *both*
+  upgrading and running means it gets run — which is why the tiers you select are
+  never also marked for upgrading.
+- **The optional levers are written out, commented.** `[UpgradeToRare]` (which
+  outranks `[UpgradeToMagic]`) and `[UpgradeQuality]` are there ready to switch on
+  rather than something you have to know about.
+
 ## [v4.48.0] — 2026-07-27 — Map tier upgrading, and the bot's own switches checked
 
 - **The map runner upgrades the tiers you don't run.** Every tier below your

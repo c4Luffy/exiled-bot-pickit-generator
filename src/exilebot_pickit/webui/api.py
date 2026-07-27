@@ -3185,7 +3185,8 @@ class AppApi:
         info = {
             "tiers": tiers,
             "max_tier": asm.MAX_MAP_TIER,
-            "rules": [asm.map_tier_rule(lo, hi) for lo, hi in asm.map_tier_runs(tiers)],
+            "rules": [r for lo, hi in asm.map_tier_runs(tiers)
+                      for r in asm.map_tier_rule(lo, hi)],
             "presets": [{"key": k, "label": lb, "tiers": list(ts)}
                         for k, lb, ts in asm.MAP_TIER_PRESETS],
             "folder": self.maps_folder(),

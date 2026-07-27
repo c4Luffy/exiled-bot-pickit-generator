@@ -490,20 +490,27 @@ def map_tier_runs(tiers) -> list[tuple[int, int]]:
     return [(a, b) for a, b in runs]
 
 
-def map_tier_rule(lo: int, hi: int) -> str:
-    """One tier run -> one [MapTier] rule, in its simplest correct form.
+def map_tier_conditions(lo: int, hi: int) -> list[str]:
+    """A tier run -> the [MapTier] condition(s) that express it.
 
-    A run that reaches the top of the ladder stays OPEN-ENDED (``>=``): Exiled
-    Bot's own default.ipd notes "Conquer/Boss maps can drop T14-18", so tiers
-    above the 16 you can pick do exist.
+    A run reaching the top of the ladder stays OPEN-ENDED (``>=``): Exiled Bot's
+    own default.ipd notes "Conquer/Boss maps can drop T14-18", so tiers above the
+    16 you can pick do exist and an exact top bound would walk past them.
+
+    Below the top it emits one ``==`` per tier and NEVER a ``<=`` bound. The map
+    runner's own documentation warns that a "less than" on [MapTier] hits a bot
+    bug unless paired with a large ``>=`` ("never less than 66"), so the operator
+    is avoided outright rather than worked around with a magic number.
     """
     if hi >= MAX_MAP_TIER:
-        cond = f'[MapTier] >= "{lo}"'
-    elif lo == hi:
-        cond = f'[MapTier] == "{lo}"'
-    else:
-        cond = f'[MapTier] >= "{lo}" && [MapTier] <= "{hi}"'
-    return f'[Category] == "Map" && {cond} # [StashItem] == "true"'
+        return [f'[MapTier] >= "{lo}"']
+    return [f'[MapTier] == "{t}"' for t in range(lo, hi + 1)]
+
+
+def map_tier_rule(lo: int, hi: int) -> list[str]:
+    """Pickup rules for a tier run — one per condition (see map_tier_conditions)."""
+    return [f'[Category] == "Map" && {c} # [StashItem] == "true"'
+            for c in map_tier_conditions(lo, hi)]
 
 
 def map_base_rule(tier: int) -> str:
@@ -542,7 +549,7 @@ def build_poe1_map_lines(payload: dict, min_chaos: float, tiers,
         lines.append("// Belt and braces: the same tiers expressed with [MapTier], which still")
         lines.append("// catches older named bases that carry a tier.")
         for lo, hi in map_tier_runs(picked):
-            lines.append(map_tier_rule(lo, hi))
+            lines += map_tier_rule(lo, hi)
     else:
         lines.append("// No tier selected — only the named maps below are taken.")
     lines.append("")
@@ -766,21 +773,24 @@ def build_poe1_map_runner_lines(tiers, league: str = "", version: str = "") -> l
         '[Rarity] == "Normal" # [UpgradeToMagic] == "true"',
         '[Rarity] == "Magic"  # [AugmentIfPossible] == "true"',
         "",
+        "//   Optional, off by default — uncomment either to switch it on.",
+        "//   UpgradeToRare takes priority over UpgradeToMagic above, so enabling it",
+        "//   makes the bot chase rare maps instead of magic ones (more currency,",
+        "//   more dangerous mods to reroll).",
+        '// [Rarity] == "Normal" # [UpgradeToRare] == "true"',
+        "//   Quality up to 16% on a white map, if you have the currency to spare.",
+        '// [Quality] <= "16" && [Rarity] == "Normal" # [UpgradeQuality] == "true"',
+        "",
         "// 2 Which tiers to run — from your selection on the Maps page",
     ]
     if runs:
         for lo, hi in runs:
-            if hi >= MAX_MAP_TIER:
-                cond = f'[MapTier] >= "{lo}"'
-            elif lo == hi:
-                cond = f'[MapTier] == "{lo}"'
-            else:
-                cond = f'[MapTier] >= "{lo}" && [MapTier] <= "{hi}"'
-            lines.append(f'{cond} # [RunMap] == "true"')
+            for cond in map_tier_conditions(lo, hi):
+                lines.append(f'{cond} # [RunMap] == "true"')
     else:
         lines.append('// No tiers selected on the Maps page — nothing would run, so the')
         lines.append('// bot default is kept instead of writing an empty rule.')
-        lines.append('[MapTier] >= "1" && [MapTier] <= "16" # [RunMap] == "true"')
+        lines.append('[MapTier] >= "1" # [RunMap] == "true"')
     lines += [
         '[Rarity] == "Unique" # [IgnoreMap] == "true"',
         "",
@@ -812,4 +822,21 @@ def build_poe1_map_runner_lines(tiers, league: str = "", version: str = "") -> l
     else:
         lines.append("//   No tiers selected, so nothing is marked for upgrading.")
     lines.append("")
+    lines += [
+        "",
+        "// -- How Exiled Bot resolves these ---------------------------------",
+        "// Its own map file states the priority as:",
+        "//   [UpgradeMapTier] >> [IgnoreMap] >> [UpgradeToRare] >> [UpgradeToMagic] >> [RunMap]",
+        "// and adds two things worth knowing:",
+        "//   * 'Map upgrading will only be made on a Map that has been selected",
+        "//     by the bot to farm' - a tier marked for upgrading is only traded up",
+        "//     once the bot has it in hand, and only once it holds at least",
+        "//     minimum_map_number_to_upgrade_tier of them.",
+        "//   * 'If you enabled UpgradeMapTier and RunMap simultaneously for a Map,",
+        "//     the bot will run that Map' - which is why the tiers you selected are",
+        "//     NOT also marked for upgrading.",
+        "// [IgnoreMap] outranks everything, so the reflect / no-regen rules above",
+        "// win over any RunMap line.",
+        "",
+    ]
     return lines
