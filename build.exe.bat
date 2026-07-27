@@ -48,7 +48,11 @@ if exist "src\exilebot_pickit\resources\appicon.ico" (echo Files OK ^(app icon f
 :: ── [4/5] Clean old build ──────────────────────────────────────────────────────
 echo.
 echo [4/5] Cleaning old build...
-if exist "dist\ExileBot2PickitGenerator.exe" del /f "dist\ExileBot2PickitGenerator.exe"
+:: A RUNNING copy cannot be overwritten on Windows. Without this check the
+:: delete failed silently, PyInstaller could not write the new exe, and dist\n:: kept the PREVIOUS build — which looks exactly like "the version never
+:: updates", because the stale exe still reports the version it was built at.
+if exist "dist\ExileBot2PickitGenerator.exe" del /f "dist\ExileBot2PickitGenerator.exe" 2>nul
+if exist "dist\ExileBot2PickitGenerator.exe" goto :exe_locked
 if exist "build" rmdir /s /q "build"
 if exist "ExileBot2PickitGenerator.spec" del /f "ExileBot2PickitGenerator.spec"
 
@@ -126,3 +130,20 @@ echo.
 :: Open the dist folder and close the window
 start "" explorer "%CD%\dist"
 exit /b 0
+
+:exe_locked
+echo.
+echo ================================================
+echo   BUILD STOPPED - the old EXE is still running
+echo ================================================
+echo.
+echo   dist\ExileBot2PickitGenerator.exe is open, so Windows
+echo   will not let the build replace it.
+echo.
+echo   Close the app (check Task Manager for
+echo   ExileBot2PickitGenerator) and run this again.
+echo.
+echo   Without this check the build would leave the OLD exe
+echo   in dist, which looks like the version never updated.
+echo.
+pause & exit /b 1
