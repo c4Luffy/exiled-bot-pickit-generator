@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.47.0 for Windows" src="https://img.shields.io/badge/Download-v4.47.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.1/ExileBot2PickitGenerator.exe"><img alt="Download v4.47.1 for Windows" src="https://img.shields.io/badge/Download-v4.47.1-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.0">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.1">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.0/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.1/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,9 +121,15 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.47.0
+## Current release: v4.47.1
 
-### Path of Exile 1 map pickup actually works
+### The bot's map runner is generated too
+
+- **Every Path of Exile 1 run now writes the map-runner config as well.** `<output>_maps.ipd` — the file deciding which maps the bot **runs**, rerolls or skips — is written beside the pickit and copied into the bot's `Maps` folder. It follows Exiled Bot's own `Maps/default.ipd` rule for rule: upgrade normal/magic maps, run the tiers you picked, skip uniques, reroll reflect and no-regen mods on magic maps and skip those maps when they're rare.
+- **Your bot's own `default.ipd` is never overwritten** — the app writes its own profile file, so set `map_profile` in the bot's `config.ini` to the new name to use it. The run log says so when it still points elsewhere.
+- **The last PoE 1 loot-filter traces are gone** — the `.filter` button on Generate and the run line that promised a file PoE 1 never writes.
+
+### v4.47.0 — Path of Exile 1 map pickup actually works
 
 - **The map rules v4.45/v4.46 generated matched nothing.** Since 3.28's Atlas rework every ordinary map of a tier shares one base, literally named `Map (Tier N)`, and **Exiled Bot v0.102 doesn't resolve `[MapTier]` on those bases** — so the `[Category] == "Map" && [MapTier]` rule could never match a map. The pickit now names the base directly (`[Type] == "Map (Tier 16)"`), which is exactly what the bot's own `default.ipd` does and documents. **Regenerate any PoE 1 pickit built on 4.45 or 4.46.**
 - **Path of Exile 1 drops the loot-filter features.** PoE 1 writes only the pickit, so "Create your filter" and Settings → In-game filter are hidden there rather than explaining why they do nothing.
@@ -145,14 +151,14 @@ Windows SmartScreen may ask for confirmation because this free community executa
 - **The page shows the real output**, rendered by the same builder that writes the file — with tier cards, a what-to-keep / what-to-skip guide, today's named-map values, and your bot's own map-runner folder (which this app never writes).
 - **Runegrafts were never fetched.** 30 price in the current league, all with live trade volume and worth 5c+ — the top three between 450 and 700 chaos — and none had a rule at any floor. The same miss as Verisium.
 
+<details>
+<summary><strong>Older releases</strong></summary>
+
 ### v4.44.0 — Both games are officially done 🎉
 
 **Path of Exile 1 and Path of Exile 2 both run end to end.** Every tab of both games was checked in the running app — **14 in PoE 2, 8 in PoE 1** — each fetching live poe.ninja prices and writing a validated pickit Exiled Bot reads. Nothing is half-built, and there is no known issue open against either game. Dual-game support landed in v4.42.0 and took five releases to finish; this is the line under it.
 
 **From here the work is bug hunting and new features.** Hit something? [Say so on Discord](https://discord.gg/T7DU3Afve6) and it gets fixed.
-
-<details>
-<summary><strong>Older releases</strong></summary>
 
 ### v4.43.0 — Every tab of both games, and an empty category stops crying wolf
 
@@ -251,7 +257,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.47.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.0) · [full changelog](CHANGELOG.md)
+[Read the complete v4.47.1 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.1) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

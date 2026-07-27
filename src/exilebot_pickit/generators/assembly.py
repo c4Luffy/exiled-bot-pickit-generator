@@ -723,3 +723,73 @@ def compute_price_alerts(categories, all_payloads: dict,
             alerts.append((abs(delta), text))
 
     return new_gen_prices, alerts
+
+
+# ── PoE 1 map RUNNER (Maps/*.ipd) ─────────────────────────────────────────────
+#
+# A different file from the pickit: the pickit decides what gets picked UP, this
+# decides which maps the bot RUNS, rerolls or skips. Modelled on Exiled Bot's own
+# Maps/default.ipd — same rules, same order, with the tier gate driven by the
+# selection made on the Maps page.
+#
+# The three mods are the ones the bot's own default singles out: a reflect map
+# kills a bot outright, and no-regen stalls it. Magic maps get rerolled (cheap),
+# rare maps get skipped (rerolling a rare map is not worth the currency).
+MAP_DANGER_MODS = (
+    ("map_monsters_reflect_%_elemental_damage", "Mirrored -- Monsters Reflect % Elemental Damage"),
+    ("map_monsters_reflect_%_physical_damage", "Punishing -- Monsters Reflect % Physical Damage"),
+    ("map_players_no_regeneration_including_es", "Of Statis -- Players have no Life or Mana Regeneration"),
+)
+
+
+def build_poe1_map_runner_lines(tiers, league: str = "", version: str = "") -> list[str]:
+    """The bot's map-runner config for Path of Exile 1.
+
+    Pure: no network, no file I/O. Returns the full file contents as lines.
+    """
+    runs = map_tier_runs(tiers)
+    lines = [
+        "/" * gen._W,
+        "//" + "  EXILEBOT  |  AUTO-GENERATED MAP RUNNER  |  PATH OF EXILE 1".center(gen._W - 4) + "//",
+        "/" * gen._W,
+    ]
+    if league:
+        lines.append(f"// League    : {league}")
+    if version:
+        lines.append(f"// Built by  : Exiled Bot Pickit Generator v{version}")
+    lines += [
+        "// This file decides which maps the bot RUNS, rerolls or skips.",
+        "// It is NOT the pickit — what gets picked up off the ground lives there.",
+        "// Structure follows Exiled Bot's own Maps/default.ipd.",
+        "/" * gen._W, "",
+        "// 1 Basic settings — upgrade what is cheap to upgrade",
+        '[Rarity] == "Normal" # [UpgradeToMagic] == "true"',
+        '[Rarity] == "Magic"  # [AugmentIfPossible] == "true"',
+        "",
+        "// 2 Which tiers to run — from your selection on the Maps page",
+    ]
+    if runs:
+        for lo, hi in runs:
+            if hi >= MAX_MAP_TIER:
+                cond = f'[MapTier] >= "{lo}"'
+            elif lo == hi:
+                cond = f'[MapTier] == "{lo}"'
+            else:
+                cond = f'[MapTier] >= "{lo}" && [MapTier] <= "{hi}"'
+            lines.append(f'{cond} # [RunMap] == "true"')
+    else:
+        lines.append('// No tiers selected on the Maps page — nothing would run, so the')
+        lines.append('// bot default is kept instead of writing an empty rule.')
+        lines.append('[MapTier] >= "1" && [MapTier] <= "16" # [RunMap] == "true"')
+    lines += [
+        '[Rarity] == "Unique" # [IgnoreMap] == "true"',
+        "",
+        "// 3 Dangerous mods — reroll them on a magic map (cheap)",
+    ]
+    for stat, note in MAP_DANGER_MODS:
+        lines.append(f'[{stat}] >= "1" && [Rarity] == "Magic" # [RerollMods] == "true" // {note}')
+    lines += ["", "// 4 Dangerous mods — skip the map outright when it is rare"]
+    for stat, note in MAP_DANGER_MODS:
+        lines.append(f'[{stat}] >= "1" && [Rarity] == "Rare" # [IgnoreMap] == "true" // {note}')
+    lines.append("")
+    return lines

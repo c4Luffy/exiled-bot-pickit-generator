@@ -1,10 +1,15 @@
 """Single source of truth for the app version."""
-VERSION = "4.47.0"
+VERSION = "4.47.1"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• The bot's MAP RUNNER is generated too. Every Path of Exile 1 run now also writes <output>_maps.ipd — the file that decides which maps the bot RUNS, rerolls or skips — and copies it into your bot's Maps folder beside the pickit. It follows Exiled Bot's own Maps/default.ipd exactly: upgrade normal/magic maps, run the tiers you picked on the Maps page, skip uniques, reroll reflect and no-regen mods on magic maps and skip those maps outright when they are rare. Your bot's own default.ipd is never overwritten — it writes its own profile file — so set map_profile in the bot's config.ini to the new name to use it. The run log tells you if it still points somewhere else.
+
+• Path of Exile 1 has no in-game loot filter, so the last traces are gone: the ".filter" button on Generate and the run summary line that promised one.
+
+Also in 4.47.0:
 • PATH OF EXILE 1 MAP PICKUP ACTUALLY WORKS NOW. The rules the last release wrote matched NOTHING. Since 3.28's Atlas rework every ordinary map of a tier shares one base literally named "Map (Tier N)" — the old named bases (Strand Map, Cemetery Map...) are gone — and Exiled Bot v0.102 does not resolve [MapTier] on those bases at all. So the [Category] == "Map" && [MapTier] rule it generated could never match a map. The pickit now names the base directly, [Type] == "Map (Tier 16)", which is exactly what Exiled Bot's own default.ipd does and says (its comment spells out the same trap). The [MapTier] rules are still written alongside, since they cost nothing and still catch named bases that do carry a tier. If you generated a PoE 1 pickit on 4.45 or 4.46, regenerate it.
 
 • Path of Exile 1 drops the loot-filter features entirely. PoE 1 writes only the pickit, so "Create your filter" and the Settings > In-game filter section are gone in PoE 1 instead of being present and explaining why they do nothing.

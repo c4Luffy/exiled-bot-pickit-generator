@@ -384,3 +384,36 @@ def test_top_of_the_ladder_stays_open_ended():
     assert "<=" not in asm.map_tier_rule(14, 16)
     assert asm.map_tier_rule(3, 3) == ('[Category] == "Map" && [MapTier] == "3" '
                                        '# [StashItem] == "true"')
+
+
+# ── PoE 1 map runner (Maps/*.ipd) ────────────────────────────────────────────
+
+def test_map_runner_follows_the_bot_default_structure():
+    """Same rules and order as Exiled Bot's own Maps/default.ipd."""
+    out = asm.build_poe1_map_runner_lines([14, 15, 16], "Allflame", "9.9.9")
+    active = [ln for ln in out if ln and not ln.startswith("//")]
+    assert active[0] == '[Rarity] == "Normal" # [UpgradeToMagic] == "true"'
+    assert active[1] == '[Rarity] == "Magic"  # [AugmentIfPossible] == "true"'
+    assert '[MapTier] >= "14" # [RunMap] == "true"' in active
+    assert '[Rarity] == "Unique" # [IgnoreMap] == "true"' in active
+    # each danger mod appears twice: reroll on magic, skip on rare
+    for stat, _note in asm.MAP_DANGER_MODS:
+        hits = [ln for ln in active if stat in ln]
+        assert len(hits) == 2, (stat, hits)
+        assert any('[Rarity] == "Magic"' in h and "RerollMods" in h for h in hits)
+        assert any('[Rarity] == "Rare"' in h and "IgnoreMap" in h for h in hits)
+
+
+def test_map_runner_tier_selection_drives_runmap():
+    out = asm.build_poe1_map_runner_lines([14, 16])
+    runs = [ln for ln in out if "[RunMap]" in ln and not ln.startswith("//")]
+    assert runs == ['[MapTier] == "14" # [RunMap] == "true"',
+                    '[MapTier] >= "16" # [RunMap] == "true"'], runs
+
+
+def test_map_runner_never_writes_an_empty_run_rule():
+    """No tiers selected must not produce a file that runs nothing — that would
+    stop the bot dead. Keep the bot's own default range instead."""
+    out = asm.build_poe1_map_runner_lines([])
+    runs = [ln for ln in out if "[RunMap]" in ln and not ln.startswith("//")]
+    assert runs == ['[MapTier] >= "1" && [MapTier] <= "16" # [RunMap] == "true"'], runs

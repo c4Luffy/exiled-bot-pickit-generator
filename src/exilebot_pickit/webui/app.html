@@ -1215,7 +1215,7 @@
 
       <div class="output">
         <span class="hint">Output</span>
-        <button class="ghost mini" id="openIpd" title="The file your bot reads">.ipd</button> <button class="ghost mini" id="openFlt" title="In-game filter for manual play — don't feed it to the bot">.filter</button> <button class="ghost mini" id="open" title="All generated files + backups">📂 Output folder</button>
+        <button class="ghost mini" id="openIpd" title="The file your bot reads">.ipd</button> <button class="ghost mini g2only" id="openFlt" title="In-game filter for manual play — don't feed it to the bot">.filter</button> <button class="ghost mini" id="open" title="All generated files + backups">📂 Output folder</button>
         <span class="sp"></span>
         <span class="hint">Generate <span class="kbd">Ctrl</span>+<span class="kbd">G</span></span>
       </div>
@@ -1238,7 +1238,7 @@
         <div class="lrt"><b>Validated stat ids</b><span id="sVal">–</span></div>
         <span class="lrv" id="lrValid">✓</span></div>
       <div class="lr"><div class="lric">📂</div>
-        <div class="lrt"><b>Written to output</b><span id="lrWhere">.ipd + .filter</span></div>
+        <div class="lrt"><b>Written to output</b><span id="lrWhere">.ipd</span></div>
         <span class="lrv" id="lrWrite">OK</span></div>
     </div>
 
@@ -1955,9 +1955,6 @@
     </div>
       </div>
       <div class="set-sec" data-s="filter">
-<div class="card g1only" style="margin-top:14px;display:none;border-color:var(--gold-dim)">
-    <h2>🎮 In-game loot filter</h2>
-    <div class="hint">Path of Exile 1 mode writes only the <b>pickit</b> (<code>poe1_pickit.ipd</code>) — the file Exiled Bot reads. No in-game <code>.filter</code> is generated here: poe.ninja names PoE1 tattoos by their mod text, which isn't a valid loot-filter base type. If you want a loot filter for manual PoE1 play, use a community filter (e.g. FilterBlade) in-game.</div>
   </div>
 <div class="card g2only" style="margin-top:14px">
     <details open>
@@ -2163,6 +2160,8 @@ function resetRunPanel(){
   const blank=["sActive","sSkip","lrRules","sDiv","sSecs","sVal","sCats"];
   blank.forEach(id=>{const e=$(id);if(e)e.textContent="\u2013";});
   ["sDiff","sMoves"].forEach(id=>{const e=$(id);if(e)e.textContent="";});
+  const lw=$("lrWhere");
+  if(lw)lw.textContent=ECON_ONLY?".ipd":".ipd + .filter";
   const sum=$("sum");   if(sum)sum.style.display="none";
   const fr=$("fresh");  if(fr)fr.style.display="none";
   _freshAt=0;

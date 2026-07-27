@@ -6,6 +6,26 @@ download lives.
 
 ---
 
+## [v4.47.1] — 2026-07-27 — The bot's map runner is generated too
+
+- **Every Path of Exile 1 run now writes the map-runner config as well.**
+  `<output>_maps.ipd` — the file that decides which maps the bot **runs**, rerolls
+  or skips — is written beside the pickit and copied into the bot's `Maps` folder.
+  It follows Exiled Bot's own `Maps/default.ipd` rule for rule: upgrade normal and
+  magic maps, run the tiers picked on the Maps page, skip uniques, reroll the
+  reflect and no-regen mods on a magic map and skip the map outright when it is
+  rare. Until now the app only ever wrote pickup rules and left that folder alone.
+- **The bot's own `default.ipd` is never overwritten.** The app writes its own
+  profile file, so the shipped default stays as a fallback — which means the bot's
+  `map_profile` in `config.ini` has to name the new file. The run log says so
+  explicitly when it still points elsewhere, rather than leaving a written-but-
+  unused file behind.
+- **An empty tier selection can't stop the bot.** With nothing selected the runner
+  keeps the bot's own 1–16 range instead of writing a rule that would run no maps
+  at all.
+- **The last PoE 1 loot-filter traces are gone** — the `.filter` button on Generate
+  and the run-summary line that promised a file PoE 1 never writes.
+
 ## [v4.47.0] — 2026-07-27 — Path of Exile 1 map pickup actually works
 
 - **The map rules v4.45.0/v4.46.0 generated matched nothing.** Since 3.28's Atlas

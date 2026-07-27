@@ -2565,6 +2565,8 @@ class AppApi:
                 except OSError as e:
                     self._log(f"✗ Auto-copy failed ({e}) — copy the pickit by hand")
 
+            self._write_map_runner(league)
+
             self._last_lines = content.splitlines()
             active = sum(1 for l in out if l and not l.startswith("//") and asm.is_rule_line(l))
             commented = sum(1 for l in out if l.startswith("//") and asm.is_rule_line(l))
@@ -3039,6 +3041,71 @@ class AppApi:
         if "poe1_map_tiers" in cfg:
             return asm.normalise_map_tiers(cfg.get("poe1_map_tiers"))
         return asm.normalise_map_tiers(cfg.get("poe1_map_tier", 16))
+
+    def _write_map_runner(self, league: str = ""):
+        """Write the PoE 1 map-RUNNER config and deploy it beside the pickit.
+
+        A different file from the pickit: this one decides which maps the bot
+        RUNS, rerolls or skips. It goes in the bot's Maps folder, and the bot
+        picks a file there by `map_profile` in config.ini — so writing it is only
+        half the job; the profile has to name it. Both are reported in the log.
+
+        Never overwrites the bot's own `default.ipd`: it writes its own profile
+        file, so the shipped default stays as a fallback.
+        """
+        from exilebot_pickit.version import VERSION
+        try:
+            tiers = self._map_tiers()
+            lines = asm.build_poe1_map_runner_lines(tiers, league, VERSION)
+            name = f"{self.cfg.get('output_base', 'poe1_pickit')}_maps.ipd"
+            local = os.path.join(OUTPUT_DIR, name)
+            gen.write_text_atomic(local, "\n".join(lines))
+            self._log(f"Wrote {name} (map runner)")
+        except Exception as e:
+            self._log(f"✗ Map runner not written ({e})")
+            return
+
+        info = self.maps_folder()
+        folder = info.get("path") or ""
+        if not (self.cfg.get("auto_copy") and folder and os.path.isdir(folder)):
+            if folder:
+                self._log(f"• Map runner kept in the app's output folder — "
+                          f"copy it to {folder} to use it")
+            return
+        try:
+            dst = os.path.join(folder, name)
+            if os.path.isfile(dst):                      # keep the previous one
+                bdir = os.path.join(OUTPUT_DIR, "backups")
+                os.makedirs(bdir, exist_ok=True)
+                shutil.copy2(dst, os.path.join(
+                    bdir, f"{name[:-4]}-{time.strftime('%Y%m%d-%H%M%S')}.ipd"))
+            shutil.copy2(local, dst + ".tmp")
+            os.replace(dst + ".tmp", dst)
+            self._log(f"✓ Map runner copied to {folder}")
+            profile = name[:-4]
+            if self._map_profile_name() != profile:
+                self._log(f"⚠ The bot still runs map profile "
+                          f"'{self._map_profile_name() or 'default'}'. Set "
+                          f"map_profile={profile} in Configuration/<profile>/config.ini "
+                          f"to use this file.")
+        except OSError as e:
+            self._log(f"✗ Map runner copy failed ({e})")
+
+    def _map_profile_name(self) -> str:
+        """Which map profile the bot's config.ini currently selects."""
+        folder = (self.maps_folder() or {}).get("path") or ""
+        if not folder:
+            return ""
+        ini = os.path.join(os.path.dirname(folder), "config.ini")
+        try:
+            with open(ini, encoding="utf-8", errors="replace") as f:
+                for raw in f:
+                    line = raw.strip()
+                    if line.lower().startswith("map_profile") and "=" in line:
+                        return line.split("=", 1)[1].strip()
+        except OSError:
+            pass
+        return ""
 
     def maps_folder(self):
         """Where THIS install keeps Exiled Bot's map-runner configs.
