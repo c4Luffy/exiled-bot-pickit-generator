@@ -6,6 +6,23 @@ download lives.
 
 ---
 
+## [v4.48.0] — 2026-07-27 — Map tier upgrading, and the bot's own switches checked
+
+- **The map runner upgrades the tiers you don't run.** Every tier below your
+  selection now gets an `[UpgradeMapTier]` rule, so low maps are traded up toward
+  the ones you actually farm rather than filling a tab. Exiled Bot ships about
+  twenty upgrade examples in its own map file, but every one is commented out
+  *and* names a pre-3.28 base (`Arena Map`, `Barrows Map`, …) that no longer
+  exists — the same dead-name trap as the pickup rules — so they would match
+  nothing even uncommented. Ours name the current `Map (Tier N)` base.
+- **The Maps page checks the bot's own settings.** Writing the file is only half
+  the job: the bot chooses its map file by `map_profile` in `config.ini`, and tier
+  upgrading needs `enable_map_tier_upgrading=true` (it ships `false`). Both are
+  now read from your install and shown with a tick or a warning and the exact
+  value to set, rather than leaving a correctly generated file silently unread.
+  It also shows `minimum_map_number_to_upgrade_tier`, the count the bot needs
+  before it will trade a tier up.
+
 ## [v4.47.3] — 2026-07-27 — Click anywhere on an Economy row again
 
 - **A click anywhere on a row turns that rule on or off, in both games.** It used

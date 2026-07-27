@@ -791,5 +791,25 @@ def build_poe1_map_runner_lines(tiers, league: str = "", version: str = "") -> l
     lines += ["", "// 4 Dangerous mods — skip the map outright when it is rare"]
     for stat, note in MAP_DANGER_MODS:
         lines.append(f'[{stat}] >= "1" && [Rarity] == "Rare" # [IgnoreMap] == "true" // {note}')
+
+    # Tier upgrading: turn the maps you do NOT want to run into ones you do.
+    # Two things are needed and the bot ships neither working: this rule, AND
+    # enable_map_tier_upgrading=true in config.ini (it defaults to false). The
+    # bot's own default.ipd has ~20 examples but every one is commented out AND
+    # names a pre-3.28 base (Arena Map, Barrows Map…) that no longer exists, so
+    # they would match nothing even if uncommented.
+    picked = normalise_map_tiers(tiers)
+    low = list(range(1, min(picked))) if picked else []
+    lines += ["", "// 5 Tier upgrading — trade the tiers you don't run up towards the ones you do."]
+    if low:
+        lines.append("//   Needs enable_map_tier_upgrading=true in the bot's config.ini")
+        lines.append("//   (it ships false), and at least minimum_map_number_to_upgrade_tier maps.")
+        for t in low:
+            lines.append(f'[Type] == "Map (Tier {t})" && [Rarity] != "Unique"'
+                         f' # [UpgradeMapTier] == "true"')
+    elif picked:
+        lines.append("//   Nothing to upgrade: tier 1 is selected, so every map is one you run.")
+    else:
+        lines.append("//   No tiers selected, so nothing is marked for upgrading.")
     lines.append("")
     return lines

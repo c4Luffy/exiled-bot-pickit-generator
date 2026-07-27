@@ -1408,6 +1408,7 @@
       <button class="ghost mini" id="mapFolderOpen">📂 Open</button>
     </div>
     <div class="hint" style="margin:8px 0 0" id="mapFolderFiles"></div>
+    <div id="mapBotFlags" style="margin-top:12px"></div>
   </div>
 </div>
 
@@ -2515,6 +2516,25 @@ async function loadMapsInfo(){
     $("mapFolderFiles").textContent=(f.files&&f.files.length)
       ? `Profile "${f.profile}" · ${f.files.length} map file(s): ${f.files.join(", ")}`
       : (f.path?"No .ipd files in that folder yet.":"");
+    // What the BOT is actually set to — writing the file is only half the job.
+    const b=i.bot||{}, want=(i.runner_name||"").replace(/\.ipd$/,"");
+    const row=(ok,label,val,fix)=>
+      `<div class="hint" style="margin:0 0 6px;display:flex;gap:8px;align-items:flex-start">`+
+      `<b style="color:${ok?"var(--ok)":"var(--warn)"}">${ok?"✓":"⚠"}</b>`+
+      `<span><b>${esc(label)}</b> = <span class="kbd">${esc(val||"not set")}</span>`+
+      (ok?"":` — ${fix}`)+`</span></div>`;
+    let html="";
+    if(f.path){
+      const profOk=want&&b.map_profile===want;
+      html+=row(profOk,"map_profile",b.map_profile,
+        `set it to <span class="kbd">${esc(want)}</span> in the bot's config.ini, or it keeps running its own file`);
+      const upOk=String(b.upgrading).toLowerCase()==="true";
+      html+=row(upOk,"enable_map_tier_upgrading",b.upgrading,
+        "set it to <span class=\"kbd\">true</span> to let the bot trade low tiers up (the rules are already written below your selection)");
+      if(upOk&&b.min_to_upgrade)
+        html+=`<div class="hint" style="margin:0">Needs at least <b>${esc(b.min_to_upgrade)}</b> maps of a tier before it upgrades them.</div>`;
+    }
+    $("mapBotFlags").innerHTML=html;
     $("mapPreview").innerHTML=(i.lines&&i.lines.length)
       ? i.lines.map(mapLineHtml).join("")
       : `<span class="hint">${esc(i.error||"Prices aren't loaded yet — open Economy once.")}</span>`;

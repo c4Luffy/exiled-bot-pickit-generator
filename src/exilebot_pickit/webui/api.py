@@ -3091,6 +3091,22 @@ class AppApi:
         except OSError as e:
             self._log(f"✗ Map runner copy failed ({e})")
 
+    def _bot_ini_flag(self, key: str) -> str:
+        """Read one key out of the bot's config.ini (map upgrading, etc.)."""
+        folder = (self.maps_folder() or {}).get("path") or ""
+        if not folder:
+            return ""
+        ini = os.path.join(os.path.dirname(folder), "config.ini")
+        try:
+            with open(ini, encoding="utf-8", errors="replace") as f:
+                for raw in f:
+                    line = raw.strip()
+                    if line.lower().startswith(key.lower()) and "=" in line:
+                        return line.split("=", 1)[1].strip()
+        except OSError:
+            pass
+        return ""
+
     def _map_profile_name(self) -> str:
         """Which map profile the bot's config.ini currently selects."""
         folder = (self.maps_folder() or {}).get("path") or ""
@@ -3173,6 +3189,10 @@ class AppApi:
             "presets": [{"key": k, "label": lb, "tiers": list(ts)}
                         for k, lb, ts in asm.MAP_TIER_PRESETS],
             "folder": self.maps_folder(),
+            "runner_name": f"{self.cfg.get('output_base', 'poe1_pickit')}_maps.ipd",
+            "bot": {"map_profile": self._map_profile_name(),
+                    "upgrading": self._bot_ini_flag("enable_map_tier_upgrading"),
+                    "min_to_upgrade": self._bot_ini_flag("minimum_map_number_to_upgrade_tier")},
             "named": [], "buckets": 0, "rows": 0, "floor": 0.0, "lines": [], "error": "",
         }
         try:

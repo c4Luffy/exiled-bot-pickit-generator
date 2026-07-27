@@ -1,10 +1,15 @@
 """Single source of truth for the app version."""
-VERSION = "4.47.3"
+VERSION = "4.48.0"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• The map runner now upgrades the tiers you don't run. Every tier below your selection gets an [UpgradeMapTier] rule, so low maps get traded up towards the ones you actually farm instead of rotting in a tab. Exiled Bot ships ~20 upgrade examples in its own map file, but every one of them is commented out AND names a pre-3.28 base (Arena Map, Barrows Map...) that no longer exists, so they would match nothing even if you uncommented them.
+
+• The Maps page reads your bot's own settings and says whether it will actually work. Writing the file is only half the job: the bot picks its map file by map_profile in config.ini, and tier upgrading needs enable_map_tier_upgrading=true (it ships false). Both are shown with a tick or a warning and the exact value to set, instead of leaving you to find out that a correctly generated file was never being read.
+
+Also in 4.47.3:
 • Clicking anywhere on an Economy row turns it on or off again — in both games. That used to toggle by accident, because clicking was also how you made the detail card stay put, so it was narrowed to the keep/skip pill only. Now that the card is docked and hovering already shows everything, the click is free to do the obvious thing. The copy button and the pill still do their own jobs, and right-click still copies the rule.
 
 Also in 4.47.2:

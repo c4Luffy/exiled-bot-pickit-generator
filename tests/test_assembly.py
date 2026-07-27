@@ -417,3 +417,23 @@ def test_map_runner_never_writes_an_empty_run_rule():
     out = asm.build_poe1_map_runner_lines([])
     runs = [ln for ln in out if "[RunMap]" in ln and not ln.startswith("//")]
     assert runs == ['[MapTier] >= "1" && [MapTier] <= "16" # [RunMap] == "true"'], runs
+
+
+def test_map_runner_upgrades_the_tiers_you_do_not_run():
+    """Tiers below the selection are traded up, and they name the CURRENT base
+    (`Map (Tier N)`). The bot's own examples name pre-3.28 bases like "Arena Map"
+    that no longer exist, so they'd match nothing even uncommented."""
+    out = asm.build_poe1_map_runner_lines([14, 15, 16])
+    ups = [ln for ln in out if "UpgradeMapTier" in ln and not ln.startswith("//")]
+    assert len(ups) == 13                      # tiers 1..13
+    assert ups[0] == ('[Type] == "Map (Tier 1)" && [Rarity] != "Unique" '
+                      '# [UpgradeMapTier] == "true"')
+    assert all('[Rarity] != "Unique"' in u for u in ups)
+    # never marks a tier you actually run for upgrading
+    assert not any('(Tier 14)' in u or '(Tier 15)' in u or '(Tier 16)' in u for u in ups)
+
+
+def test_map_runner_has_nothing_to_upgrade_when_every_tier_runs():
+    out = asm.build_poe1_map_runner_lines(list(range(1, 17)))
+    assert not [ln for ln in out if "UpgradeMapTier" in ln and not ln.startswith("//")]
+    assert any("Nothing to upgrade" in ln for ln in out)
