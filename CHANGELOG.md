@@ -6,6 +6,29 @@ download lives.
 
 ---
 
+## [v4.47.0] — 2026-07-27 — Path of Exile 1 map pickup actually works
+
+- **The map rules v4.45.0/v4.46.0 generated matched nothing.** Since 3.28's Atlas
+  rework every ordinary map of a tier shares one base, literally named
+  `Map (Tier N)` — the old named bases (Strand Map, Cemetery Map, …) are gone —
+  and **Exiled Bot v0.102 does not resolve `[MapTier]` on those bases**. So the
+  `[Category] == "Map" && [MapTier] >= "N"` rule the app wrote could never match a
+  map. The bot's own `default.ipd` documents exactly this trap and ships `[Type]`
+  lines as the fix; the app now does the same, naming the base directly:
+  `[Type] == "Map (Tier 16)"`. The `[MapTier]` rules are still written alongside —
+  they cost nothing and still catch named bases that do carry a tier. **Regenerate
+  any PoE 1 pickit built on 4.45 or 4.46.**
+  Found because the generated rules were checked against a real Exiled Bot
+  install's own pickit rather than assumed correct.
+- **Path of Exile 1 drops the loot-filter features.** PoE 1 writes only the pickit,
+  so "Create your filter" and Settings → In-game filter are hidden in PoE 1 rather
+  than sitting there explaining why they do nothing. PoE 1 is 8 tabs again.
+- **Switching games no longer shows the other game's run.** The Generate page kept
+  the previous game's rule counts, validation state, price-move lines and
+  freshness pill, so flipping to PoE 1 displayed PoE 2's numbers for a pickit PoE 1
+  never built. The run summary is reset on switch and restored from that game's
+  own history.
+
 ## [v4.46.0] — 2026-07-27 — Pick any map tiers, and the wizard covers both games
 
 - **`[MapTier]` was reported as an invalid mod.** The validator's list of pickit

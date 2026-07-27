@@ -1062,7 +1062,7 @@
   <div class="nav-btn on" data-p="gen">⚡ Generate</div>
   <div class="nav-btn" data-p="prev">📜 Preview</div>
   <div class="nav-btn g2only" data-p="item">🔍 Item Check</div>
-  <div class="nav-btn" data-p="mypk">📥 Create your filter</div>
+  <div class="nav-btn g2only" data-p="mypk">📥 Create your filter</div>
   <div class="nav-btn" data-p="hist">🕰️ History</div>
   </div>
   <div class="nav-groups">
@@ -1374,8 +1374,8 @@
 
   <div class="card" style="margin-top:14px">
     <h2>Named maps <span class="badge" id="mapNamedCount" style="background:var(--bg3);color:var(--dim)"></span></h2>
-    <div class="hint" style="margin:0 0 10px">These price under a real base type, so each gets its own
-      <span class="kbd">[Type]</span> rule and is taken even when it drops below your tier. Influenced copies
+    <div class="hint" style="margin:0 0 10px">These keep their own base name rather than the generic <span class="kbd">Map (Tier N)</span>, so each gets its
+      own <span class="kbd">[Type]</span> rule and is taken whatever tiers you selected. Influenced copies
       collapse into their base — Baran, Drox and the plain version become one
       <span class="kbd">Vaal Temple Map</span> rule at the highest price.</div>
     <table class="ltbl" style="width:100%"><thead><tr>
@@ -2037,7 +2037,7 @@ async function copyText(t){
 let info={}, divRate=0, eco=null, ecoCat=null, ecoSort="ex", ecoDir=-1, running=false;
 // Dual-game (PoE1 / PoE2). ECON_ONLY hides the rare-gear pages; G2_ONLY lists them.
 let ACTIVE_GAME="poe2", ECON_ONLY=false, GAME_UNIT="Exalt", GAME_UNITS="ex";
-const G2_ONLY=new Set(["chance","craft","exc","fracture","rare","item"]);
+const G2_ONLY=new Set(["mypk","chance","craft","exc","fracture","rare","item"]);
 // Rewrite the "ex" unit in static preset/summary text to the active game's unit
 // ("ex" for PoE2 — no change; "c" for PoE1). GAME_UNITS is set in applyGameUI.
 const funit=s=>String(s).replace(/ ex\b/g," "+GAME_UNITS);
@@ -2155,6 +2155,21 @@ async function loadLeaguesForGame(){
   sideMark(true);updMktLeague&&updMktLeague();
   if(sel.value)setTimeout(()=>{try{api().economy_start(sel.value);}catch(_){}},400);
 }
+/* Every Generate-page field that describes a RUN. Each game keeps its own
+   league, floors, history and output file, so its run summary has to be its own
+   too — otherwise switching to PoE 1 shows the PoE 2 numbers that are still on
+   screen, which is the one place the two games must never blur together. */
+function resetRunPanel(){
+  const blank=["sActive","sSkip","lrRules","sDiv","sSecs","sVal","sCats"];
+  blank.forEach(id=>{const e=$(id);if(e)e.textContent="\u2013";});
+  ["sDiff","sMoves"].forEach(id=>{const e=$(id);if(e)e.textContent="";});
+  const sum=$("sum");   if(sum)sum.style.display="none";
+  const fr=$("fresh");  if(fr)fr.style.display="none";
+  _freshAt=0;
+  ["covBanner","offBanner"].forEach(id=>{
+    const b=$(id); if(b){b.classList.remove("on");b.style.display="none";}});
+  setSeal("idle","Ready to run","Press Generate to build today's pickit");
+}
 async function setGame(id){
   if(id===ACTIVE_GAME)return;
   const r=await api().set_game(id);
@@ -2165,8 +2180,10 @@ async function setGame(id){
   info=await api().app_info();
   applyInfo(info);applyGameUI(info);
   eco=null;ecoCat=null;                       // drop the other game's economy cache
+  resetRunPanel();                            // ...and its run summary
   if(PRESETS.length)renderPresets(info.active_preset||"");
   await loadLeaguesForGame();                 // repopulate leagues for the new game
+  initFresh();                                // this game's own last run, if any
   openPage("gen");
   toast(id==="poe1"?"Switched to Path of Exile 1":"Switched to Path of Exile 2");
 }
@@ -2502,8 +2519,8 @@ async function loadMapsInfo(){
             :'<span class="hint" style="margin:0">below floor</span>'}</td></tr>`).join("")
       : `<tr><td colspan="3" class="hint">${esc(i.error||"No named maps priced right now.")}</td></tr>`;
     $("mapBucketNote").textContent=i.buckets
-      ? `${i.buckets} more priced rows are influence buckets ("Drox Map (Tier 16)" and similar) — `
-        +"poe.ninja prices the influence, not a base type, so the tier rule is what picks those up."
+      ? `${i.buckets} more priced rows are ordinary or influence-marked maps ("Drox Map (Tier 16)" `
+        +`and similar) — same "Map (Tier N)" base, so the tier rules already pick them up.`
       : "";
   }catch(e){ $("mapPreview").innerHTML=`<span class="hint">${esc(String(e))}</span>`; }
   finally{ _mapsBusy=false; }
@@ -4135,14 +4152,23 @@ $("histClear").onclick=async()=>{
 
 
 /* -- settings rail: sections + live status --------------------------------- */
-const SET_SECS=[["Your bot",[["bot","🤖 Bot connection"],["data","🩺 Game data"]]],
+/* PoE 1 writes only the pickit — there is no in-game filter to configure, so the
+   whole Advanced section is dropped rather than left explaining its own absence. */
+const SET_SECS_ALL=[["Your bot",[["bot","🤖 Bot connection"],["data","🩺 Game data"]]],
                 ["This app",[["out","💾 Output & backups"],["app","⚙️ App & maintenance"]]],
                 ["Advanced",[["filter","🎮 In-game filter"]]]];
+const SET_SECS=()=>ECON_ONLY
+  ? SET_SECS_ALL.filter(([grp])=>grp!=="Advanced")
+  : SET_SECS_ALL;
 let setSel="bot";
+/* Guard: switching to PoE 1 while the (now hidden) filter section was
+   selected would render an empty Settings page. */
+function setSelValid(){if(ECON_ONLY&&setSel==="filter")setSel="bot";}
 const _setStatus={};                 // key -> {mark, color, title}
 function renderSetNav(){
+  setSelValid();
   const s=$("setSide");s.innerHTML="";
-  for(const [grp,items] of SET_SECS){
+  for(const [grp,items] of SET_SECS()){
     const l=document.createElement("div");l.className="csgrp";l.textContent=grp;s.appendChild(l);
     for(const [key,label] of items){
       const b=document.createElement("button");

@@ -3127,7 +3127,7 @@ class AppApi:
                 base = line.get("baseType") or line.get("name")
                 if not base:
                     continue
-                if asm._MAP_TIER_BUCKET.match(base):
+                if asm._MAP_TIER_ANY.search(base):
                     info["buckets"] += 1
                     continue
                 val = float(line.get("primaryValue") or 0.0)

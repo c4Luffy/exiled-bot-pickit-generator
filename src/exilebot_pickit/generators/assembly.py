@@ -437,12 +437,12 @@ def build_poe1_stash_lines(payload: dict, min_exalt: float,
     return [rule for _, rule in rows]
 
 
-# poe.ninja prices a conqueror/guardian map as "<Boss> Map (Tier N)" — a PRICE
-# BUCKET meaning "any tier-N map carrying that influence", not an item you can
-# name. There is no base type called "Drox Map (Tier 16)", so writing it as a
-# [Type] rule would match nothing. 24 of the 30 priced PoE1 map rows are these;
-# the tier rule below is what actually picks them up.
-_MAP_TIER_BUCKET = re.compile(r"^.*\bMap \(Tier \d+\)$")
+# Since Path of Exile 3.28's Atlas rework the generic map base IS literally named
+# "Map (Tier N)" — the old named bases (Strand Map, Cemetery Map, …) are gone.
+# poe.ninja reports it as the baseType, and Exiled Bot matches it by [Type].
+# A conqueror variant ("Drox Map (Tier 16)") is that same base with influence, so
+# it is covered by the tier's [Type] rule and needs no rule of its own.
+_MAP_TIER_ANY = re.compile(r"Map \(Tier \d+\)\Z")
 
 MAX_MAP_TIER = 16
 
@@ -480,7 +480,7 @@ def normalise_map_tiers(tiers) -> list[int]:
 
 def map_tier_runs(tiers) -> list[tuple[int, int]]:
     """Collapse selected tiers into contiguous runs: [14,15,16] -> [(14,16)],
-    [14,16] -> [(14,14),(16,16)]. Fewer, clearer rules than one line per tier."""
+    [14,16] -> [(14,14),(16,16)]. Used for the secondary [MapTier] rules."""
     runs: list[list[int]] = []
     for t in normalise_map_tiers(tiers):
         if runs and t == runs[-1][1] + 1:
@@ -491,12 +491,11 @@ def map_tier_runs(tiers) -> list[tuple[int, int]]:
 
 
 def map_tier_rule(lo: int, hi: int) -> str:
-    """One tier run -> one Exiled Bot rule, in its simplest correct form.
+    """One tier run -> one [MapTier] rule, in its simplest correct form.
 
-    A run that reaches the top of the ladder stays OPEN-ENDED (``>=``) rather
-    than pinned with ``==``/``<=``: Exiled Bot's own default.ipd notes that
-    "Conquer/Boss maps can drop T14-18", so tiers above the 16 you can pick do
-    exist and an exact top bound would silently walk past them.
+    A run that reaches the top of the ladder stays OPEN-ENDED (``>=``): Exiled
+    Bot's own default.ipd notes "Conquer/Boss maps can drop T14-18", so tiers
+    above the 16 you can pick do exist.
     """
     if hi >= MAX_MAP_TIER:
         cond = f'[MapTier] >= "{lo}"'
@@ -507,45 +506,55 @@ def map_tier_rule(lo: int, hi: int) -> str:
     return f'[Category] == "Map" && {cond} # [StashItem] == "true"'
 
 
+def map_base_rule(tier: int) -> str:
+    """The rule that actually picks a map up on the current patch."""
+    return f'[Type] == "Map (Tier {int(tier)})" # [StashItem] == "true"'
+
+
 def build_poe1_map_lines(payload: dict, min_chaos: float, tiers,
                          disabled: set | None = None) -> list[str]:
     """Rules for Path of Exile 1 maps.
 
-    Maps are picked up by TIER, not by name — there are ~120 map bases and a
-    pickit naming each would be unmaintainable, so Exiled Bot's own default.ipd
-    uses ``[Category] == "Map" && [MapTier] >= "N"``. This mirrors that, but the
-    selection is a SET of tiers: pick T14 and T16 without the T15 in between and
-    you get two rules, pick a contiguous block and you get one.
+    Since 3.28 every ordinary map shares ONE base per tier, literally named
+    ``Map (Tier N)`` — so a tier is picked up by naming that base. Exiled Bot
+    v0.102 does not resolve ``[MapTier]`` on those bases (its own default.ipd
+    says so and ships the same ``[Type]`` lines as the fix), which is why the
+    ``[Type]`` rules below are the ones that do the work. The ``[MapTier]`` rules
+    are kept alongside them: they cost nothing and still catch the named bases
+    that do carry a tier, and newer bot builds may resolve it.
 
-    Named maps poe.ninja prices under a real base type get their own ``[Type]``
-    rule so they are taken even when they fall outside the tier selection.
+    Named maps poe.ninja prices under their own base (Vaal Temple, Nightmare,
+    Shaper Guardian) get a rule each. An influenced map like "Drox Map (Tier 16)"
+    is base ``Map (Tier 16)`` with influence, so the tier rule already covers it.
 
-    An empty selection means "no tier rule" — named maps only. Pure: no I/O.
+    An empty selection means no tier rules — named maps only. Pure: no I/O.
     """
     dis = set(disabled or ())
-    runs = map_tier_runs(tiers)
+    picked = normalise_map_tiers(tiers)
     lines: list[str] = []
 
-    if runs:
-        for lo, hi in runs:
+    if picked:
+        lines.append("// Every ordinary map of the selected tiers. Since 3.28 the base is")
+        lines.append('// literally called "Map (Tier N)", and this is what the bot matches on.')
+        for t in sorted(picked, reverse=True):
+            lines.append(map_base_rule(t))
+        lines.append("")
+        lines.append("// Belt and braces: the same tiers expressed with [MapTier], which still")
+        lines.append("// catches older named bases that carry a tier.")
+        for lo, hi in map_tier_runs(picked):
             lines.append(map_tier_rule(lo, hi))
-        picked = normalise_map_tiers(tiers)
-        lines.append(f"// ^ {len(picked)} map tier(s) selected: "
-                     f"{_tier_summary(runs)}. Change it on the app's Maps page.")
     else:
         lines.append("// No tier selected — only the named maps below are taken.")
     lines.append("")
 
     rate = gen.exalted_rate(payload)
-    rows, seen, buckets = [], set(), 0
+    rows, seen, covered = [], set(), 0
     for line in payload.get("lines", []):
-        # baseType is the real item ("Vaal Temple Map"); name carries the
-        # influence prefix ("Baran Vaal Temple Map"), which is not a base type.
         base = line.get("baseType") or line.get("name")
         if not base:
             continue
-        if _MAP_TIER_BUCKET.match(base):
-            buckets += 1
+        if _MAP_TIER_ANY.search(base):
+            covered += 1          # an ordinary/influenced map — the tier rules have it
             continue
         if base in seen:
             continue
@@ -558,18 +567,11 @@ def build_poe1_map_lines(payload: dict, min_chaos: float, tiers,
         rows.append((ev, rule if keep else f"//{rule}"))
     rows.sort(key=lambda r: r[0], reverse=True)
     lines += [rule for _, rule in rows]
-    if buckets:
-        lines.append(f"// {buckets} more priced rows are influence buckets"
-                     ' ("Drox Map (Tier 16)" and similar) — poe.ninja prices the'
-                     " influence, not a base type, so the tier rules above are what"
-                     " picks those up.")
+    if covered:
+        lines.append(f"// {covered} more priced rows are ordinary or influence-marked maps"
+                     ' ("Drox Map (Tier 16)" and similar) — same "Map (Tier N)" base, so'
+                     " the tier rules above already pick them up.")
     return lines
-
-
-def _tier_summary(runs: list[tuple[int, int]]) -> str:
-    return ", ".join(f"T{a}" if a == b else
-                     (f"T{a}+" if b >= MAX_MAP_TIER else f"T{a}-T{b}")
-                     for a, b in runs)
 
 
 def build_poe1_economy_lines(league: str, categories: list, payloads: dict,

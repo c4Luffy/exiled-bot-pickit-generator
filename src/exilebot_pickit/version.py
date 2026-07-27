@@ -1,10 +1,17 @@
 """Single source of truth for the app version."""
-VERSION = "4.46.0"
+VERSION = "4.47.0"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• PATH OF EXILE 1 MAP PICKUP ACTUALLY WORKS NOW. The rules the last release wrote matched NOTHING. Since 3.28's Atlas rework every ordinary map of a tier shares one base literally named "Map (Tier N)" — the old named bases (Strand Map, Cemetery Map...) are gone — and Exiled Bot v0.102 does not resolve [MapTier] on those bases at all. So the [Category] == "Map" && [MapTier] rule it generated could never match a map. The pickit now names the base directly, [Type] == "Map (Tier 16)", which is exactly what Exiled Bot's own default.ipd does and says (its comment spells out the same trap). The [MapTier] rules are still written alongside, since they cost nothing and still catch named bases that do carry a tier. If you generated a PoE 1 pickit on 4.45 or 4.46, regenerate it.
+
+• Path of Exile 1 drops the loot-filter features entirely. PoE 1 writes only the pickit, so "Create your filter" and the Settings > In-game filter section are gone in PoE 1 instead of being present and explaining why they do nothing.
+
+• Switching games no longer leaves the other game's run on screen. The Generate page kept the previous game's rule counts, validation state and freshness pill — so flipping to PoE 1 showed PoE 2's numbers for a pickit PoE 1 never built. Each game's run summary is now its own, restored from that game's own history.
+
+Also in 4.46.0:
 • Map tiers are a multi-select. It was one "this tier and up" floor, so "T16 and T14, nothing in between" was impossible. Pick any set of tiers — each run of neighbouring tiers collapses into one rule, gaps become separate rules — with quick presets (T16 only, T14 and up, Red, Yellow, Every map, None) that just set a selection. A run reaching the top stays open-ended (>= 16, not == 16) because conqueror and boss maps drop T14-18.
 
 • [MapTier] was being reported as an invalid mod. The validator's list of pickit KEYS was PoE 2-only — it had WaystoneTier but not PoE 1's MapTier — so every map rule the last release wrote came back as a validation error on a perfectly correct file. Fixed, along with the rest of Exiled Bot 1's key vocabulary.

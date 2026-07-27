@@ -54,7 +54,7 @@ PAGES = [
     ("gen",      "generate",           True),
     ("prev",     "preview",            True),
     ("item",     "item-check",         False),
-    ("mypk",     "create-your-filter", True),
+    ("mypk",     "create-your-filter", False),   # PoE 2 only: PoE 1 has no filter
     ("hist",     "history",            True),
     ("eco",      "economy",            True),
     ("maps",     "maps",               True),     # PoE 1 only (g1only)
@@ -222,12 +222,18 @@ def switch_game(window, game, timeout=60):
     shot under a poe2 name — and nothing noticed. ECON_ONLY is the app's own
     flag for 'this game is economy-only' (true for PoE 1), so poll that.
     """
-    want = (game == "poe1")
+    # Check the SIDEBAR, not a JS variable: ECON_ONLY starts life as false
+    # ("poe2") and only becomes true once the saved game is applied, so polling
+    # it passed instantly at launch while the app was still becoming PoE 1 —
+    # and the whole "poe2" pass was captured in PoE 1.
+    probe = "maps" if game == "poe1" else "chance"
+    check = (f"""(function(){{var b=document.querySelector('.nav-btn[data-p="{probe}"]');"""
+             "return !!(b && b.offsetParent !== null);})()")
     end = time.time() + timeout
     while time.time() < end:
         js(window, f'setGame("{game}")')
         time.sleep(4)
-        if js(window, "typeof ECON_ONLY!=='undefined'?ECON_ONLY:null") == want:
+        if js(window, check) is True:
             time.sleep(4)               # let lists reload and the toast fade
             return True
     log(f"!! could not switch to {game} — the pass would capture the wrong game")

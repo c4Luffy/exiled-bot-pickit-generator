@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.46.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.46.0 for Windows" src="https://img.shields.io/badge/Download-v4.46.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.47.0 for Windows" src="https://img.shields.io/badge/Download-v4.47.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,15 +20,15 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.46.0">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.0">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
 </p>
 
-![Real Exiled Bot Pickit Generator v4.45.0 — Path of Exile 1 Generate screen](docs/shots/poe1-01-generate-v4450.png)
+![Real Exiled Bot Pickit Generator v4.47.0 — Path of Exile 1 Generate screen](docs/shots/poe1-01-generate-v4470.png)
 
-<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.45.0 · <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/#top">see all 23 tabs of both games</a></sub></p>
+<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.47.0 · <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/#top">see all 22 tabs of both games</a></sub></p>
 
 ## Start here
 
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.46.0/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.0/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,9 +121,15 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.46.0
+## Current release: v4.47.0
 
-### Pick any map tiers, and the wizard covers both games
+### Path of Exile 1 map pickup actually works
+
+- **The map rules v4.45/v4.46 generated matched nothing.** Since 3.28's Atlas rework every ordinary map of a tier shares one base, literally named `Map (Tier N)`, and **Exiled Bot v0.102 doesn't resolve `[MapTier]` on those bases** — so the `[Category] == "Map" && [MapTier]` rule could never match a map. The pickit now names the base directly (`[Type] == "Map (Tier 16)"`), which is exactly what the bot's own `default.ipd` does and documents. **Regenerate any PoE 1 pickit built on 4.45 or 4.46.**
+- **Path of Exile 1 drops the loot-filter features.** PoE 1 writes only the pickit, so "Create your filter" and Settings → In-game filter are hidden there rather than explaining why they do nothing.
+- **Switching games no longer shows the other game's run.** The Generate page kept the previous game's rule counts and validation state, so flipping to PoE 1 displayed PoE 2's numbers for a pickit it never built.
+
+### v4.46.0 — Pick any map tiers, and the wizard covers both games
 
 - **`[MapTier]` was reported as an invalid mod.** The validator's list of pickit *keys* was PoE 2-only (it had `WaystoneTier` but not PoE 1's `MapTier`), so every map rule v4.45.0 generated came back as a validation **error** on a correct file. Fixed, along with the rest of Exiled Bot 1's key vocabulary.
 - **Map tiers are a multi-select.** It was one "this tier and up" floor, so "T16 and T14, nothing in between" was impossible. Pick any set — neighbouring tiers collapse into one rule, gaps become separate rules — with quick presets that just set a selection. A run reaching the top stays open-ended (`>= 16`, not `== 16`) because conqueror and boss maps drop T14–18.
@@ -145,6 +151,9 @@ Windows SmartScreen may ask for confirmation because this free community executa
 
 **From here the work is bug hunting and new features.** Hit something? [Say so on Discord](https://discord.gg/T7DU3Afve6) and it gets fixed.
 
+<details>
+<summary><strong>Older releases</strong></summary>
+
 ### v4.43.0 — Every tab of both games, and an empty category stops crying wolf
 
 - **The website now shows a real capture of all 22 tabs — 14 in Path of Exile 2, 8 in Path of Exile 1 —**
@@ -158,9 +167,6 @@ Windows SmartScreen may ask for confirmation because this free community executa
   never meant a rename. It now says the league prices none of them, and to report it only if they sell there.
 - **The release tool now points the website at the release it just cut** — nothing did, so the landing page
   advertised v4.42.0, and every Download button on it served that build, while v4.42.4 was out.
-
-<details>
-<summary><strong>Older releases</strong></summary>
 
 ### v4.42.0–v4.42.4 — Path of Exile 1 support: one app for both games
 
@@ -245,7 +251,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.46.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.46.0) · [full changelog](CHANGELOG.md)
+[Read the complete v4.47.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.0) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

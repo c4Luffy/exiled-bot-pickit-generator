@@ -1,4 +1,4 @@
-﻿"""Unit tests for pickit_assembly — the pure rule-assembly logic lifted out of the
+"""Unit tests for pickit_assembly — the pure rule-assembly logic lifted out of the
 GUI's ``_generate``. These run with no display, no network, no file I/O, so the
 generation pipeline is finally testable on its own.
 
@@ -277,13 +277,20 @@ def test_poe1_maps_emit_one_active_tier_rule():
                      '# [StashItem] == "true"'], conds
 
 
-def test_poe1_maps_never_write_a_tier_bucket_as_a_type():
+def test_poe1_maps_name_the_generic_tier_base():
+    """Since 3.28 the generic map base IS "Map (Tier N)" — naming it is how the
+    bot matches a map. An earlier version treated it as a poe.ninja price bucket
+    and threw it away, which left PoE 1 map pickup matching nothing at all:
+    Exiled Bot v0.102 does not resolve [MapTier] on those bases (its own
+    default.ipd says so and ships these same [Type] lines as the fix)."""
     lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tiers=[16])
-    joined = "\n".join(ln for ln in lines if ln.startswith("["))
-    assert "Map (Tier 16)" not in joined
+    active = [ln for ln in lines if ln.startswith("[")]
+    assert '[Type] == "Map (Tier 16)" # [StashItem] == "true"' in active
+    # the influence-marked variants share that base, so they get no rule of
+    # their own — and their names are never written as a [Type]
+    joined = " | ".join(active)
     assert "Drox" not in joined and "Veritania" not in joined
-    # they are accounted for, not silently dropped
-    assert any("influence buckets" in ln for ln in lines)
+    assert any("already pick them up" in ln for ln in lines)
 
 
 def test_poe1_maps_dedupe_influenced_variants_to_one_base():
