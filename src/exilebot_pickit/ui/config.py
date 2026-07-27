@@ -135,11 +135,11 @@ DEFAULT_CONFIG = {
     "filter_hide_rest": False,
     "base_quality": 21,
     "base_min_level": 79,
-    # PoE 1 maps: lowest map tier the bot picks up. Maps are taken by tier, not
-    # by name (~120 bases), so this one number is the whole map rule. 16 matches
-    # what the community's generated PoE1 pickits ship; 0 turns the tier rule off
-    # and keeps only the maps poe.ninja prices under a real base name.
-    "poe1_map_tier": 16,
+    # PoE 1 maps: which map tiers the bot picks up. Maps are taken by tier, not
+    # by name (~120 bases), so this selection IS the map rule. A set rather than
+    # a floor, so "T16 and T14 but nothing between" is expressible. Empty = no
+    # tier rule, keeping only maps poe.ninja prices under a real base name.
+    "poe1_map_tiers": [16],
     "item_states":  {},
     "last_gen_prices": {},
     # App version that produced the current .ipd — Preview warns when it no

@@ -6,6 +6,31 @@ download lives.
 
 ---
 
+## [v4.46.0] — 2026-07-27 — Pick any map tiers, and the wizard covers both games
+
+- **`[MapTier]` was reported as an invalid mod.** The validator's list of pickit
+  *keys* (as opposed to item mods) was PoE 2-only — it carried `WaystoneTier` but
+  not PoE 1's `MapTier` — so every map rule the previous release generated came
+  back as `Invalid mod: "MapTier"`, a validation **error** on a correct file. The
+  key list now covers Exiled Bot 1's documented vocabulary as well (`MapTier`,
+  `Linked`, `Influence`, `ForceSellItem`, the Armor/Evasion/Energy Shield family)
+  plus the map-runner actions an imported pickit can carry.
+- **Map tiers are a multi-select now.** It was one "this tier and up" floor, so
+  "T16 and T14, nothing in between" was impossible. Pick any set of tiers: each
+  contiguous run collapses into one rule (`T11–T13` → one `>=`/`<=` rule) and gaps
+  become separate rules. Quick presets (T16 only, T14 and up, Red, Yellow, Every
+  map, None) just set a selection, so they and a hand-picked set are the same
+  thing to the builder. Configs written before this still work — the old integer
+  is read as "that tier and above".
+- **The top of the ladder stays open-ended.** A run reaching the highest tier
+  emits `[MapTier] >= "16"` rather than `== "16"`: Exiled Bot's own `default.ipd`
+  notes conqueror and boss maps drop **T14–18**, so an exact top bound would have
+  silently walked past T17 and T18.
+- **The first-run wizard asks which game.** It only ever set up whichever game was
+  active — PoE 2 on a fresh install — and `setup_done` is global, so a Path of
+  Exile 1 player was never guided and never would be. It now opens with a
+  game choice and the league step follows the game you picked.
+
 ## [v4.45.1] — 2026-07-27 — The .exe finally says which version it is
 
 - **A downloaded update looked identical to the copy it replaced.** The exe's

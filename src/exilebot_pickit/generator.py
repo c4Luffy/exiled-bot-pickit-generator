@@ -186,7 +186,19 @@ _VAL_UNIQUE_RE = re.compile(r'\[UniqueName\]\s*==\s*"((?:[^"\\]|\\.)*)"')
 # directly, plus its computed/aggregate values. Anything in [ ] that isn't one
 # of these (and isn't inside a WeightedSum) must be a real mod id from the bot's
 # ModsList — validated against data/bot_stat_ids.BOT_STAT_IDS.
+# Structural pickit KEYS — the language's own vocabulary, not item mods. Anything
+# bracketed that isn't in here is looked up in the bot's stat list, so a missing
+# key is reported to the user as `Invalid mod: "X"`.
+#
+# This was a PoE 2-only list: it carried WaystoneTier (PoE 2's map tier) but not
+# MapTier (PoE 1's), so every PoE 1 map rule was flagged as an invalid mod. The
+# PoE 1 names below are taken from Exiled Bot 1's own generated pickit header
+# ("Key List: Type, ItemLevel, MapTier, Armor, Evasion, Energy Shield, Computed
+# Armor, Computed Evasion, Computed Energy Shield, Rarity, Quality, Sockets,
+# Linked …" plus its documented [Influence] tag), and the map-runner actions from
+# the bot's own Maps/*.ipd.
 _NON_MOD_TOKENS: frozenset = frozenset({
+    # shared
     "Type", "Category", "WeaponCategory", "Rarity", "Quality", "Sockets",
     "ItemLevel", "GemLevel", "UniqueName", "ItemTier", "WaystoneTier",
     "StashItem", "StashUnid", "Salvage", "IgnoreRitual",
@@ -194,6 +206,15 @@ _NON_MOD_TOKENS: frozenset = frozenset({
     "DPS", "ElementalDPS", "PhysicalDPS",
     "TotalSpellElementalDamage", "TotalFireSpellDamage",
     "TotalColdSpellDamage", "TotalLightningSpellDamage",
+    # Path of Exile 1 (Exiled Bot 1)
+    "MapTier", "Linked", "Influence", "ForceSellItem",
+    "Armor", "Evasion", "Energy Shield",
+    "Computed Armor", "Computed Evasion", "Computed Energy Shield",
+    "Elemental DPS", "Physical DPS",
+    # map-runner actions (Maps/*.ipd) — this app doesn't write them, but an
+    # imported pickit can carry them and they are keys, not mods.
+    "RunMap", "IgnoreMap", "RerollMods", "UpgradeToRare", "UpgradeToMagic",
+    "AugmentIfPossible", "UpgradeQuality",
 })
 _VAL_BRACKET_RE = re.compile(r'\[([^\]]+)\]')
 _VAL_WSUM_RE = re.compile(r'WeightedSum\(([^)]*)\)')

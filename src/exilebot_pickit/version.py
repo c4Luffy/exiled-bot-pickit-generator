@@ -1,10 +1,17 @@
 """Single source of truth for the app version."""
-VERSION = "4.45.1"
+VERSION = "4.46.0"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• Map tiers are a multi-select. It was one "this tier and up" floor, so "T16 and T14, nothing in between" was impossible. Pick any set of tiers — each run of neighbouring tiers collapses into one rule, gaps become separate rules — with quick presets (T16 only, T14 and up, Red, Yellow, Every map, None) that just set a selection. A run reaching the top stays open-ended (>= 16, not == 16) because conqueror and boss maps drop T14-18.
+
+• [MapTier] was being reported as an invalid mod. The validator's list of pickit KEYS was PoE 2-only — it had WaystoneTier but not PoE 1's MapTier — so every map rule the last release wrote came back as a validation error on a perfectly correct file. Fixed, along with the rest of Exiled Bot 1's key vocabulary.
+
+• The first-run wizard asks which game. It only ever set up whichever game was active (PoE 2 on a fresh install), and the 'setup done' flag is global — so a Path of Exile 1 player was never guided, and never would be.
+
+Also in 4.45.1:
 • The .exe finally says which version it is. Its filename never changes (the in-app updater depends on that), so Windows' version resource is the only thing that can tell two builds apart in Explorer — and it was never written: right-click → Properties → Details was blank on every release ever shipped, so an updated copy looked identical to the one it replaced. It is now generated from this file at build time, so the version in the exe's properties always matches the release.
 
 Also in 4.45.0:

@@ -689,16 +689,19 @@
   .ubar .prog i{display:block;height:100%;width:0;border-radius:99px;background:var(--gold);transition:width .25s}
   .ubar .pt{font-size:12px;color:var(--dim);margin-top:6px;font-variant-numeric:tabular-nums}
   /* ── Maps page ── */
-  .mapgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:10px;margin:0 0 4px}
-  .mapcard{padding:12px 13px;border:1px solid var(--border);border-radius:12px;background:var(--bg2);
-        cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
-  .mapcard:hover{border-color:var(--gold-dim);transform:translateY(-1px)}
-  .mapcard.on{border-color:var(--gold);background:var(--bg3);box-shadow:inset 0 0 0 1px var(--gold-dim)}
-  .mapcard-t{font-weight:700;font-size:13.5px;color:var(--fg)}
-  .mapcard.on .mapcard-t{color:var(--gold)}
-  .mapcard-n{font:11px/1.4 Consolas,ui-monospace,monospace;color:var(--dim);margin:2px 0 6px}
-  .mapcard-d{font-size:11.5px;line-height:1.55;color:var(--dim)}
-  .mapcard-w{margin-top:8px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-dim)}
+  .mappresets{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 12px}
+  .mappreset{padding:7px 13px;border:1px solid var(--border);border-radius:999px;background:var(--bg2);
+        color:var(--dim);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+  .mappreset:hover{border-color:var(--gold-dim);color:var(--fg)}
+  .mappreset.on{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
+  .tiergrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(58px,1fr));gap:7px}
+  .tchip{display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 4px;border:1px solid var(--border);
+        border-radius:10px;background:var(--bg2);cursor:pointer;transition:all .15s;user-select:none}
+  .tchip:hover{border-color:var(--gold-dim);transform:translateY(-1px)}
+  .tchip.on{border-color:var(--gold);background:var(--bg3);box-shadow:inset 0 0 0 1px var(--gold-dim)}
+  .tchip b{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .tchip.on b{color:var(--gold)}
+  .tchip span{font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);opacity:.75}
   .mapcols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
   @media (max-width:900px){.mapcols{grid-template-columns:1fr}}
   .maplist{margin:0;padding-left:18px}
@@ -1007,8 +1010,8 @@
      740px inside a 600px modal. In here the grid does the sizing. min-width:0 on the
      grid itself too: it is a flex child of .modal-bd, and flex items refuse to shrink
      below their content without it. */
-  #wzPick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;min-width:0}
-  #wzPick .pcard{min-width:0}
+  #wzPick,#wzGame{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;min-width:0}
+  #wzPick .pcard,#wzGame .pcard{min-width:0}
   #wzLeague{width:100%;padding:11px 12px}
   #ver{cursor:pointer}
   #ver:hover{color:var(--gold);text-decoration:underline}
@@ -1315,48 +1318,19 @@
 <!-- ══ MAPS (PoE 1) ══ -->
 <div class="page" id="p-maps">
   <h1>Maps</h1>
-  <div class="sub">Path of Exile 1 maps are picked up by <b class="sub-tip">tier</b>, not by name — one rule
-    covers every map base at or above the tier you pick. Choose how greedy you want to be.</div>
+  <div class="sub">Path of Exile 1 maps are picked up by <b class="sub-tip">tier</b>, not by name — pick the
+    tiers you want and each run of them becomes one rule covering every map base at that tier.</div>
 
-  <div class="mapgrid" id="mapTierCards">
-    <div class="mapcard" data-tier="16">
-      <div class="mapcard-t">T16 only</div>
-      <div class="mapcard-n">tier 16 +</div>
-      <div class="mapcard-d">Only the maps that actually sell. Smallest stash footprint.</div>
-      <div class="mapcard-w">Best if you buy your maps</div>
-    </div>
-    <div class="mapcard" data-tier="14">
-      <div class="mapcard-t">T14 and up</div>
-      <div class="mapcard-n">tier 14 +</div>
-      <div class="mapcard-d">Red-tier sustain without hoarding. Conqueror and boss maps drop T14–16.</div>
-      <div class="mapcard-w">Best all-round choice</div>
-    </div>
-    <div class="mapcard" data-tier="11">
-      <div class="mapcard-t">Red maps</div>
-      <div class="mapcard-n">tier 11 +</div>
-      <div class="mapcard-d">Everything red. Useful while you are still pushing the atlas.</div>
-      <div class="mapcard-w">Good while progressing</div>
-    </div>
-    <div class="mapcard" data-tier="6">
-      <div class="mapcard-t">Yellow and up</div>
-      <div class="mapcard-n">tier 6 +</div>
-      <div class="mapcard-d">Mid-tier sustain. Expect a lot of low-value maps in the stash.</div>
-      <div class="mapcard-w">Early league only</div>
-    </div>
-    <div class="mapcard" data-tier="1">
-      <div class="mapcard-t">Every map</div>
-      <div class="mapcard-n">tier 1 +</div>
-      <div class="mapcard-d">Takes every map that drops. Fills tabs fast; most of it is worth nothing.</div>
-      <div class="mapcard-w">Fresh league start</div>
-    </div>
-    <div class="mapcard" data-tier="0">
-      <div class="mapcard-t">Off</div>
-      <div class="mapcard-n">named only</div>
-      <div class="mapcard-d">No tier rule at all — only maps poe.ninja prices under a real base name.</div>
-      <div class="mapcard-w">You run bought maps</div>
-    </div>
+  <div class="card">
+    <h2>Which tiers to pick up <span class="badge" id="mapTierCount"
+        style="background:var(--bg3);color:var(--dim)"></span></h2>
+    <div class="hint" style="margin:0 0 10px">Tap a tier to switch it on or off — pick as many as you
+      like. They don't have to be next to each other: <b>T16 and T14 with nothing in between</b> is
+      two rules, and a run like T11–T13 collapses into one.</div>
+    <div class="mappresets" id="mapPresets"></div>
+    <div class="tiergrid" id="mapTierGrid"></div>
+    <div class="hint" style="margin:10px 2px 0" id="mapTierNote"></div>
   </div>
-  <div class="hint" style="margin:10px 2px 0" id="mapTierNote"></div>
 
   <div class="mapcols">
     <div class="card">
@@ -2436,18 +2410,56 @@ async function previewAutoFloor(){
       `(keeps top ${r.keep_pct}%). Nothing applied — flip the switch to use it.`;
   }catch(_){$("autoHint").textContent="Couldn't preview floors — check the connection.";}}
 $("genDocs").onclick=()=>api().open_url("https://github.com/c4Luffy/exiled-bot-pickit-generator#readme");
-const MAP_PRESETS=[[1,"every map"],[6,"yellow maps and up"],[11,"red maps and up"],
-                   [14,"T14 and up"],[16,"T16 only"]];
-let MAP_TIER=16;
-function mapTierNote(){
-  document.querySelectorAll(".mapcard").forEach(c=>
-    c.classList.toggle("on",parseInt(c.dataset.tier)===MAP_TIER));
-  const el=$("mapTierNote");
-  if(el)el.textContent=MAP_TIER>0
-    ? `Your pickit will take every map of tier ${MAP_TIER} and above, plus any named map above your Economy floor.`
-    : "No tier rule — only maps poe.ninja prices under a real base name are taken.";
-  loadMapsInfo();}
-
+// Which map tiers are selected, and the presets offered above the grid. Both
+// come from the engine (maps_info) so the page can't drift from the builder.
+let MAP_TIERS=[], MAP_PRESETS=[], MAP_MAX=16;
+const TIER_BAND=t=>t>=16?"":(t>=11?"red":(t>=6?"yellow":"white"));
+function mapTiersRender(){
+  const grid=$("mapTierGrid"); if(!grid)return;
+  grid.innerHTML="";
+  for(let t=MAP_MAX;t>=1;t--){
+    const on=MAP_TIERS.includes(t);
+    const el=document.createElement("div");
+    el.className="tchip"+(on?" on":"");
+    el.innerHTML=`<b>T${t}</b><span>${t>=16?"top":TIER_BAND(t)}</span>`;
+    el.onclick=()=>mapTierToggle(t);
+    grid.appendChild(el);
+  }
+  const pr=$("mapPresets");
+  if(pr){pr.innerHTML="";
+    MAP_PRESETS.forEach(p=>{
+      const same=p.tiers.length===MAP_TIERS.length&&p.tiers.every(t=>MAP_TIERS.includes(t));
+      const b=document.createElement("button");
+      b.type="button"; b.className="mappreset"+(same?" on":"");
+      b.textContent=p.label;
+      b.onclick=()=>mapTiersSet(p.tiers.slice());
+      pr.appendChild(b);});
+    const clr=document.createElement("button");
+    clr.type="button"; clr.className="mappreset"+(MAP_TIERS.length?"":" on");
+    clr.textContent="None";
+    clr.onclick=()=>mapTiersSet([]);
+    pr.appendChild(clr);}
+  $("mapTierCount").textContent=MAP_TIERS.length?`${MAP_TIERS.length} selected`:"none";
+  const note=$("mapTierNote");
+  if(note)note.textContent=MAP_TIERS.length
+    ? `Your pickit takes ${mapTierSummary()}, plus any named map above your Economy floor.`
+    : "No tier selected — only maps priced under a real base name are taken.";
+}
+function mapTierSummary(){
+  const ts=[...MAP_TIERS].sort((a,b)=>a-b), runs=[];
+  ts.forEach(t=>{ if(runs.length&&t===runs[runs.length-1][1]+1)runs[runs.length-1][1]=t;
+                  else runs.push([t,t]); });
+  return runs.map(([a,b])=>b>=MAP_MAX?`T${a} and up`:(a===b?`T${a}`:`T${a}–T${b}`)).join(", ");
+}
+async function mapTiersSet(tiers){
+  MAP_TIERS=[...new Set(tiers)].filter(t=>t>=1&&t<=MAP_MAX).sort((a,b)=>a-b);
+  mapTiersRender();
+  await api().set_setting("poe1_map_tiers",MAP_TIERS);
+  loadMapsInfo();
+}
+function mapTierToggle(t){
+  mapTiersSet(MAP_TIERS.includes(t)?MAP_TIERS.filter(x=>x!==t):MAP_TIERS.concat(t));
+}
 // One generated line -> coloured HTML. [Keys] gold, "values" green, trailing
 // comment dim. A commented line that carries a value is below the floor; the
 // other commented lines are the deliberate tier alternatives.
@@ -2468,6 +2480,10 @@ async function loadMapsInfo(){
   if(_mapsBusy||!$("mapPreview"))return; _mapsBusy=true;
   try{
     const i=await api().maps_info();
+    if(Array.isArray(i.tiers)){MAP_TIERS=i.tiers.slice();}
+    if(Array.isArray(i.presets)){MAP_PRESETS=i.presets;}
+    if(i.max_tier)MAP_MAX=i.max_tier;
+    mapTiersRender();
     const f=i.folder||{};
     $("mapFolderPath").textContent=f.path||"Not found — set your Exiled Bot folder in Settings.";
     $("mapFolderFiles").textContent=(f.files&&f.files.length)
@@ -2492,10 +2508,6 @@ async function loadMapsInfo(){
   }catch(e){ $("mapPreview").innerHTML=`<span class="hint">${esc(String(e))}</span>`; }
   finally{ _mapsBusy=false; }
 }
-document.querySelectorAll(".mapcard").forEach(c=>c.onclick=()=>{
-  MAP_TIER=parseInt(c.dataset.tier)||0;
-  api().set_setting("poe1_map_tier",MAP_TIER);mapTierNote();
-  toast(MAP_TIER>0?`Maps: tier ${MAP_TIER} and above`:"Maps: tier rule off");});
 if($("mapFolderOpen")){
   $("mapFolderOpen").onclick=async()=>{const r=await api().open_maps_folder();
     if(r&&r.error)toast("✗ "+r.error);};
@@ -5014,11 +5026,6 @@ function applyInfo(i){
   $("bqGen").value=_bq;$("blGen").value=_bl;
   updTracks();
   // PoE1 map tier: one number that becomes the whole [MapTier] rule.
-  if(document.querySelector(".mapcard")){
-    const _mt=parseInt(i.poe1_map_tier);
-    MAP_TIER=(_mt>=0&&!isNaN(_mt))?_mt:16;
-    mapTierNote();
-  }
   $("swAuto").classList.toggle("on",!!i.auto_floor);
   $("keepPct").value=String(i.auto_floor_pct||40);
   setAutoPill(!!i.auto_floor);
@@ -5133,15 +5140,36 @@ const WZ_FIND=`<div style="display:flex;gap:8px">
            <button class="ghost mini" id="wzFind">🔍 Search again</button>
            <button class="primary" id="wzBrowse" style="padding:7px 14px">Browse\u2026</button></div>`;
 const WZ=[
- {ic:"👋", t:"Welcome", build:()=>{
+ {ic:"👋", t:"Welcome", build:()=>
+   `<div class="wz-lead">This turns <b>live poe.ninja prices</b> into a pickit file
+     your bot reads — so it only stops for loot that's actually worth money today.</div>
+    <div class="hint">A few questions and you're done.</div>
+    <div><b>Which game are you botting?</b>
+      <div class="hint" style="margin:2px 0 7px">It works for both, and each game keeps its own
+        league, floors and output file.</div></div>
+    <div id="wzGame">
+      <button class="pcard${ACTIVE_GAME==="poe1"?" on":""}" data-g="poe1">
+        <span class="p-ic">🏹</span><span class="p-name">Path of Exile 1</span>
+        <span class="p-tag">Prices in Chaos · economy only</span></button>
+      <button class="pcard${ACTIVE_GAME==="poe2"?" on":""}" data-g="poe2">
+        <span class="p-ic">⚔️</span><span class="p-name">Path of Exile 2</span>
+        <span class="p-tag">Prices in Exalt · adds rare gear, craft, chance</span></button>
+    </div>
+    <div class="hint">You can switch any time with the <b>PoE 1 / PoE 2</b> buttons at the top
+      of the sidebar.</div>`,
+   wire:()=>{$("wzGame").querySelectorAll(".pcard").forEach(b=>{
+     b.onclick=async()=>{await setGame(b.dataset.g);wzRender();};});}},
+
+ {ic:"🌍", t:"Your league",
+   /* Its own step because the league list is per game — switching on the step
+      before repopulates this dropdown. */
+   build:()=>{
    const opts=[...$("league").options].map(o=>
      `<option value="${esc(o.value)}"${o.value===$("league").value?" selected":""}>${esc(o.textContent)}</option>`).join("");
-   return `<div class="wz-lead">This turns <b>live poe.ninja prices</b> into a pickit file
-     your bot reads — so it only stops for loot that's actually worth money today.</div>
-     <div class="hint">Four questions and you're done.</div>
-     <div><b>Which league are you farming?</b>
-       <div class="hint" style="margin:2px 0 7px">Prices are pulled for this league.</div>
-       <select id="wzLeague">${opts}</select></div>`;},
+   return `<div class="wz-lead">Which league are you farming in
+     <b>${ACTIVE_GAME==="poe1"?"Path of Exile 1":"Path of Exile 2"}</b>?</div>
+     <div class="hint" style="margin:2px 0 7px">Prices are pulled for this league.</div>
+     <select id="wzLeague">${opts}</select>`;},
    wire:()=>{$("wzLeague").onchange=()=>{
      const s=$("league");s.value=$("wzLeague").value;s.onchange();};}},
 

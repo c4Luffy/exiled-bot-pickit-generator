@@ -39,7 +39,7 @@ _SETTABLE = {
     "rare_strictness", "rare_strictness_slots",
     "filter_hide_rest",
     "setup_done",
-    "poe1_map_tier",
+    "poe1_map_tiers",
 }
 
 
@@ -224,7 +224,7 @@ class AppApi:
             "auto_floor_pct": int(c.get("auto_floor_pct", 40) or 40),
             "base_quality": int(c.get("base_quality", 25)),
             "base_min_level": int(c.get("base_min_level", 82)),
-            "poe1_map_tier": int(c.get("poe1_map_tier", 16) or 0),
+            "poe1_map_tiers": self._map_tiers(),
             "copy_filter_to_game": bool(c.get("copy_filter_to_game", False)),
             "poe2_filter_dir": c.get("poe2_filter_dir", "") or _default_dir(),
             "backup_count": int(c.get("backup_count", 5)),
@@ -2484,7 +2484,7 @@ class AppApi:
                 "item_states": self.cfg.get("item_states", {}) or {},
                 "category_enabled": {c[0]: enabled_cfg.get(c[0], True) for c in g.all_categories},
                 # Maps are taken by tier, not by name — see build_poe1_map_lines.
-                "poe1_map_tier": int(self.cfg.get("poe1_map_tier", 16) or 0),
+                "poe1_map_tiers": self._map_tiers(),
             }
             self._log(f"Fetching live PoE1 prices for {league}…")
             stale: set = set()
@@ -3032,6 +3032,14 @@ class AppApi:
 
         return {"found": bool(hits), "path": hits[0] if hits else "", "all": hits}
 
+    def _map_tiers(self) -> list:
+        """Selected PoE 1 map tiers. Falls back to the pre-multi-select integer
+        setting, which meant "this tier and above"."""
+        cfg = self.cfg
+        if "poe1_map_tiers" in cfg:
+            return asm.normalise_map_tiers(cfg.get("poe1_map_tiers"))
+        return asm.normalise_map_tiers(cfg.get("poe1_map_tier", 16))
+
     def maps_folder(self):
         """Where THIS install keeps Exiled Bot's map-runner configs.
 
@@ -3090,12 +3098,13 @@ class AppApi:
         Best-effort — prices come from the shared 15-minute cache the Economy
         tab already warms, and any failure degrades to the folder info alone.
         """
-        tier = int(self.cfg.get("poe1_map_tier", 16) or 0)
+        tiers = self._map_tiers()
         info = {
-            "tier": tier,
-            "rule": (f'[Category] == "Map" && [MapTier] >= "{tier}" # [StashItem] == "true"'
-                     if tier > 0 else ""),
-            "presets": [{"tier": t, "note": n} for t, n in asm.MAP_TIER_PRESETS],
+            "tiers": tiers,
+            "max_tier": asm.MAX_MAP_TIER,
+            "rules": [asm.map_tier_rule(lo, hi) for lo, hi in asm.map_tier_runs(tiers)],
+            "presets": [{"key": k, "label": lb, "tiers": list(ts)}
+                        for k, lb, ts in asm.MAP_TIER_PRESETS],
             "folder": self.maps_folder(),
             "named": [], "buckets": 0, "rows": 0, "floor": 0.0, "lines": [], "error": "",
         }
@@ -3130,7 +3139,7 @@ class AppApi:
             # .ipd cannot disagree.
             dis = {n for n, st in (self.cfg.get("item_states", {}) or {})
                    .get("maps", {}).items() if not st.get("enabled", True)}
-            info["lines"] = asm.build_poe1_map_lines(payload, floor, tier, dis)
+            info["lines"] = asm.build_poe1_map_lines(payload, floor, tiers, dis)
         except Exception as e:
             info["error"] = str(e)
         return info

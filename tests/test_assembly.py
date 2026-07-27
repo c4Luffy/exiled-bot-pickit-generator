@@ -261,17 +261,24 @@ def _map_payload():
 
 
 def test_poe1_maps_emit_one_active_tier_rule():
-    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=5.0, tier=16)
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=5.0, tiers=[16])
     active = [ln for ln in lines if ln.startswith("[")]
     tier_rules = [ln for ln in active if "[MapTier]" in ln]
     assert tier_rules == ['[Category] == "Map" && [MapTier] >= "16" # [StashItem] == "true"']
-    # the other presets are offered, but commented out
-    for preset in (1, 6, 11, 14):
-        assert any(ln.startswith("//") and f'>= "{preset}"' in ln for ln in lines)
+    # a non-contiguous pick becomes two rules, not a bogus range
+    two = asm.build_poe1_map_lines(_map_payload(), min_chaos=5.0, tiers=[14, 16])
+    conds = [ln for ln in two if ln.startswith("[Category]")]
+    assert conds == ['[Category] == "Map" && [MapTier] == "14" # [StashItem] == "true"',
+                     '[Category] == "Map" && [MapTier] >= "16" # [StashItem] == "true"'], conds
+    # a contiguous block collapses into ONE rule
+    block = asm.build_poe1_map_lines(_map_payload(), min_chaos=5.0, tiers=[11, 12, 13])
+    conds = [ln for ln in block if ln.startswith("[Category]")]
+    assert conds == ['[Category] == "Map" && [MapTier] >= "11" && [MapTier] <= "13" '
+                     '# [StashItem] == "true"'], conds
 
 
 def test_poe1_maps_never_write_a_tier_bucket_as_a_type():
-    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=16)
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tiers=[16])
     joined = "\n".join(ln for ln in lines if ln.startswith("["))
     assert "Map (Tier 16)" not in joined
     assert "Drox" not in joined and "Veritania" not in joined
@@ -280,7 +287,7 @@ def test_poe1_maps_never_write_a_tier_bucket_as_a_type():
 
 
 def test_poe1_maps_dedupe_influenced_variants_to_one_base():
-    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=16)
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tiers=[16])
     vaal = [ln for ln in lines if "Vaal Temple Map" in ln]
     assert len(vaal) == 1, vaal
     assert vaal[0].startswith('[Type] == "Vaal Temple Map"')
@@ -289,19 +296,19 @@ def test_poe1_maps_dedupe_influenced_variants_to_one_base():
 
 
 def test_poe1_maps_respect_the_floor_and_disabled_names():
-    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=5.0, tier=16)
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=5.0, tiers=[16])
     assert any(ln.startswith('[Type] == "Nightmare Map"') for ln in lines)
     assert any(ln.startswith('//[Type] == "Shaper Guardian Map"') for ln in lines)
 
-    off = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=16,
+    off = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tiers=[16],
                                    disabled={"Nightmare Map"})
     assert any(ln.startswith('//[Type] == "Nightmare Map"') for ln in off)
 
 
-def test_poe1_map_tier_zero_writes_no_tier_rule():
-    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=0)
+def test_poe1_empty_tier_selection_writes_no_tier_rule():
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tiers=[])
     assert not any(ln.startswith("[Category]") for ln in lines)
-    assert any("Tier rule off" in ln for ln in lines)
+    assert any("No tier selected" in ln for ln in lines)
     # named maps still come through
     assert any(ln.startswith('[Type] == "Nightmare Map"') for ln in lines)
 
@@ -317,7 +324,7 @@ def test_poe1_runegrafts_are_fetched():
 def test_poe1_map_rules_are_never_typeless():
     """A [StashItem] rule with no [Type]/[Category] matches EVERYTHING on the
     ground — the audit's standing rule, checked here for the map builder too."""
-    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tier=16)
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0, tiers=[16])
     for ln in lines:
         if ln.startswith("//") or "[StashItem]" not in ln:
             continue
@@ -328,9 +335,45 @@ def test_poe1_map_names_are_quote_escaped():
     """A map name holding a literal quote must not unbalance its rule — the
     v4.41.28 failure mode, checked for this builder too."""
     payload = {"lines": [{"name": 'Weird " Map', "primaryValue": 99.0}]}
-    lines = asm.build_poe1_map_lines(payload, min_chaos=0.0, tier=0)
+    lines = asm.build_poe1_map_lines(payload, min_chaos=0.0, tiers=[])
     rule = next(ln for ln in lines if ln.startswith("[Type]"))
     assert '\\"' in rule, rule                      # the name's quote is escaped
     # structural quotes (the unescaped ones) must still pair up
     unescaped = len(re.findall(r'(?<!\\)"', rule))
     assert unescaped % 2 == 0, rule
+
+
+def test_poe1_map_rules_pass_the_validator():
+    """[MapTier] is a pickit KEY, not an item mod. The validator's key list was
+    PoE2-only (WaystoneTier but no MapTier), so every generated PoE 1 map rule
+    came back as `Invalid mod: "MapTier"` — a validation error on a correct file."""
+    lines = asm.build_poe1_map_lines(_map_payload(), min_chaos=0.0,
+                                     tiers=[14, 16])
+    active = [ln for ln in lines if ln and not ln.startswith("//")]
+    report = gen.validate_pickit(active)
+    assert report["errors"] == [], report["errors"]
+    assert report["warnings"] == [], report["warnings"]
+
+
+def test_map_tier_runs_collapse_and_split():
+    assert asm.map_tier_runs([14, 15, 16]) == [(14, 16)]
+    assert asm.map_tier_runs([14, 16]) == [(14, 14), (16, 16)]
+    assert asm.map_tier_runs([1]) == [(1, 1)]
+    assert asm.map_tier_runs([]) == []
+    assert asm.map_tier_runs([16, 14, 15, 14]) == [(14, 16)]     # unsorted + dupes
+    assert asm.map_tier_runs([0, 99, "x", None, 5]) == [(5, 5)]  # junk dropped
+
+
+def test_legacy_single_tier_setting_still_means_that_tier_and_up():
+    """Configs written before multi-select hold one int meaning ">= N"."""
+    assert asm.normalise_map_tiers(14) == [14, 15, 16]
+    assert asm.normalise_map_tiers(16) == [16]
+    assert asm.normalise_map_tiers(0) == []
+
+
+def test_top_of_the_ladder_stays_open_ended():
+    """Conqueror/boss maps drop up to T18, so the top run must not be pinned."""
+    assert '[MapTier] >= "16"' in asm.map_tier_rule(16, 16)
+    assert "<=" not in asm.map_tier_rule(14, 16)
+    assert asm.map_tier_rule(3, 3) == ('[Category] == "Map" && [MapTier] == "3" '
+                                       '# [StashItem] == "true"')

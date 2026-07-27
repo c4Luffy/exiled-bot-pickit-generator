@@ -444,38 +444,96 @@ def build_poe1_stash_lines(payload: dict, min_exalt: float,
 # the tier rule below is what actually picks them up.
 _MAP_TIER_BUCKET = re.compile(r"^.*\bMap \(Tier \d+\)$")
 
-# Offered in the Economy tab. Same ladder Exiled Bot's own default.ipd ships.
-MAP_TIER_PRESETS = ((1, "every map"), (6, "yellow maps and up"),
-                    (11, "red maps and up"), (14, "T14 and up"), (16, "T16 only"))
+MAX_MAP_TIER = 16
+
+# Quick presets on the Maps page. Each is just a SET of tiers, so a preset and a
+# hand-picked selection are the same thing to the builder.
+MAP_TIER_PRESETS = (
+    ("t16", "T16 only", (16,)),
+    ("t14", "T14 and up", (14, 15, 16)),
+    ("red", "Red maps", tuple(range(11, 17))),
+    ("yellow", "Yellow and up", tuple(range(6, 17))),
+    ("all", "Every map", tuple(range(1, 17))),
+)
 
 
-def build_poe1_map_lines(payload: dict, min_chaos: float, tier: int,
+def normalise_map_tiers(tiers) -> list[int]:
+    """Accept a set/list of tiers, or a legacy ``>= N`` integer, -> sorted list.
+
+    The setting used to be one integer meaning "this tier and above". Configs
+    written before multi-select still hold that, so an int is expanded to the
+    range it used to mean rather than being read as a single tier.
+    """
+    if isinstance(tiers, (int, float)) and not isinstance(tiers, bool):
+        n = int(tiers)
+        return list(range(n, MAX_MAP_TIER + 1)) if 1 <= n <= MAX_MAP_TIER else []
+    out = set()
+    for t in tiers or ():
+        try:
+            n = int(t)
+        except (TypeError, ValueError):
+            continue
+        if 1 <= n <= MAX_MAP_TIER:
+            out.add(n)
+    return sorted(out)
+
+
+def map_tier_runs(tiers) -> list[tuple[int, int]]:
+    """Collapse selected tiers into contiguous runs: [14,15,16] -> [(14,16)],
+    [14,16] -> [(14,14),(16,16)]. Fewer, clearer rules than one line per tier."""
+    runs: list[list[int]] = []
+    for t in normalise_map_tiers(tiers):
+        if runs and t == runs[-1][1] + 1:
+            runs[-1][1] = t
+        else:
+            runs.append([t, t])
+    return [(a, b) for a, b in runs]
+
+
+def map_tier_rule(lo: int, hi: int) -> str:
+    """One tier run -> one Exiled Bot rule, in its simplest correct form.
+
+    A run that reaches the top of the ladder stays OPEN-ENDED (``>=``) rather
+    than pinned with ``==``/``<=``: Exiled Bot's own default.ipd notes that
+    "Conquer/Boss maps can drop T14-18", so tiers above the 16 you can pick do
+    exist and an exact top bound would silently walk past them.
+    """
+    if hi >= MAX_MAP_TIER:
+        cond = f'[MapTier] >= "{lo}"'
+    elif lo == hi:
+        cond = f'[MapTier] == "{lo}"'
+    else:
+        cond = f'[MapTier] >= "{lo}" && [MapTier] <= "{hi}"'
+    return f'[Category] == "Map" && {cond} # [StashItem] == "true"'
+
+
+def build_poe1_map_lines(payload: dict, min_chaos: float, tiers,
                          disabled: set | None = None) -> list[str]:
     """Rules for Path of Exile 1 maps.
 
     Maps are picked up by TIER, not by name — there are ~120 map bases and a
     pickit naming each would be unmaintainable, so Exiled Bot's own default.ipd
-    uses one ``[Category] == "Map" && [MapTier] >= "N"`` line. This mirrors that,
-    then adds ``[Type]`` rules for the few maps poe.ninja prices under a real
-    base name (Vaal Temple, Nightmare, …) so those are taken even when they drop
-    below the tier gate.
+    uses ``[Category] == "Map" && [MapTier] >= "N"``. This mirrors that, but the
+    selection is a SET of tiers: pick T14 and T16 without the T15 in between and
+    you get two rules, pick a contiguous block and you get one.
 
-    ``tier`` of 0 means "no tier rule" — named maps only. Pure: no I/O.
+    Named maps poe.ninja prices under a real base type get their own ``[Type]``
+    rule so they are taken even when they fall outside the tier selection.
+
+    An empty selection means "no tier rule" — named maps only. Pure: no I/O.
     """
     dis = set(disabled or ())
+    runs = map_tier_runs(tiers)
     lines: list[str] = []
 
-    if tier and tier > 0:
-        lines.append(f'[Category] == "Map" && [MapTier] >= "{int(tier)}" '
-                     f'# [StashItem] == "true"')
-        lines.append(f"// ^ every map of tier {int(tier)} and above, whatever its base."
-                     " Change the tier on the app's Maps page.")
-        for preset, note in MAP_TIER_PRESETS:
-            if preset != int(tier):
-                lines.append(f'// [Category] == "Map" && [MapTier] >= "{preset}"'
-                             f' # [StashItem] == "true"   // {note}')
+    if runs:
+        for lo, hi in runs:
+            lines.append(map_tier_rule(lo, hi))
+        picked = normalise_map_tiers(tiers)
+        lines.append(f"// ^ {len(picked)} map tier(s) selected: "
+                     f"{_tier_summary(runs)}. Change it on the app's Maps page.")
     else:
-        lines.append("// Tier rule off — only the named maps below are taken.")
+        lines.append("// No tier selected — only the named maps below are taken.")
     lines.append("")
 
     rate = gen.exalted_rate(payload)
@@ -503,9 +561,15 @@ def build_poe1_map_lines(payload: dict, min_chaos: float, tier: int,
     if buckets:
         lines.append(f"// {buckets} more priced rows are influence buckets"
                      ' ("Drox Map (Tier 16)" and similar) — poe.ninja prices the'
-                     " influence, not a base type, so the tier rule above is what"
+                     " influence, not a base type, so the tier rules above are what"
                      " picks those up.")
     return lines
+
+
+def _tier_summary(runs: list[tuple[int, int]]) -> str:
+    return ", ".join(f"T{a}" if a == b else
+                     (f"T{a}+" if b >= MAX_MAP_TIER else f"T{a}-T{b}")
+                     for a, b in runs)
 
 
 def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
@@ -573,7 +637,8 @@ def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
             eff_min = effective_min(snapshot, key, False, min_gear, min_uniq)
             dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
             cat_lines = build_poe1_map_lines(
-                payload, eff_min, int(snapshot.get("poe1_map_tier", 16) or 0), dis)
+                payload, eff_min,
+                snapshot.get("poe1_map_tiers", snapshot.get("poe1_map_tier", 16)), dis)
         elif is_unique:
             dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
             # Stash-endpoint category. Real uniques (unique_* keys) match by

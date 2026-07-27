@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.45.1/ExileBot2PickitGenerator.exe"><img alt="Download v4.45.1 for Windows" src="https://img.shields.io/badge/Download-v4.45.1-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.46.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.46.0 for Windows" src="https://img.shields.io/badge/Download-v4.46.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.45.1">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.46.0">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.45.1/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.46.0/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,9 +121,19 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.45.1
+## Current release: v4.46.0
 
-### Path of Exile 1 maps, and a whole category that was missing
+### Pick any map tiers, and the wizard covers both games
+
+- **`[MapTier]` was reported as an invalid mod.** The validator's list of pickit *keys* was PoE 2-only (it had `WaystoneTier` but not PoE 1's `MapTier`), so every map rule v4.45.0 generated came back as a validation **error** on a correct file. Fixed, along with the rest of Exiled Bot 1's key vocabulary.
+- **Map tiers are a multi-select.** It was one "this tier and up" floor, so "T16 and T14, nothing in between" was impossible. Pick any set — neighbouring tiers collapse into one rule, gaps become separate rules — with quick presets that just set a selection. A run reaching the top stays open-ended (`>= 16`, not `== 16`) because conqueror and boss maps drop T14–18.
+- **The first-run wizard asks which game.** It only ever set up whichever game was active (PoE 2 on a fresh install), so a Path of Exile 1 player was never guided.
+
+### v4.45.1 — The .exe finally says which version it is
+
+- **A downloaded update looked identical to the copy it replaced.** The exe's filename is deliberately constant, so Windows' version *resource* is the only thing telling two builds apart — and it was never written, leaving Properties → Details blank on every release ever shipped. It's now generated from `version.py` at build time.
+
+### v4.45.0 — Path of Exile 1 maps, and a whole category that was missing
 
 - **Maps are generated for Path of Exile 1**, on their own page under Economy. PoE1 has ~120 map bases and poe.ninja prices most of them as `Drox Map (Tier 16)` — a price for *any* tier-16 map with that influence, not an item you can name. So you pick a tier and the pickit gets one `[Category] == "Map" && [MapTier] >= "N"` rule (what Exiled Bot's own default pickit does), the other tiers written out commented, plus a `[Type]` rule for every map priced under a real base name.
 - **The page shows the real output**, rendered by the same builder that writes the file — with tier cards, a what-to-keep / what-to-skip guide, today's named-map values, and your bot's own map-runner folder (which this app never writes).
@@ -149,6 +159,9 @@ Windows SmartScreen may ask for confirmation because this free community executa
 - **The release tool now points the website at the release it just cut** — nothing did, so the landing page
   advertised v4.42.0, and every Download button on it served that build, while v4.42.4 was out.
 
+<details>
+<summary><strong>Older releases</strong></summary>
+
 ### v4.42.0–v4.42.4 — Path of Exile 1 support: one app for both games
 
 - **A PoE 1 / PoE 2 switch at the top of the sidebar turns this into one app for both games.** Pick PoE 1 and it prices Path of Exile 1 live from poe.ninja — currency, fragments, scarabs, fossils, essences, divination cards, uniques and the rest — and writes a pickit in **Exiled Bot's native PoE1 format**: uniques by `[UniqueName]`, everything else by `[Type]`, verified against a real Exiled Bot install's own generated pickit.
@@ -160,9 +173,6 @@ Windows SmartScreen may ask for confirmation because this free community executa
 ### v4.41.29 — The Economy hover card stops covering a row's keep/copy buttons
 
 - **The detail card that pops up when you hover an Economy row could sit on top of the keep/skip and copy buttons, so you couldn't click them.** It followed the cursor toward the right edge of the table and overlapped the whole action column — worse on a high-DPI or scaled display, where it covered several rows' buttons at once. The card now caps its right edge at the left edge of that action column, so it never overlaps the keep/copy buttons; it still appears beside the cursor as before, hovered or pinned.
-
-<details>
-<summary><strong>Older releases</strong></summary>
 
 ### v4.41.28 — Every rule builder now escapes quotes in item names
 
@@ -235,7 +245,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.45.1 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.45.1) · [full changelog](CHANGELOG.md)
+[Read the complete v4.46.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.46.0) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>
