@@ -831,6 +831,14 @@
     border-right:1.5px solid color-mix(in srgb,var(--gold) 75%,transparent)}
   .valbar .vnum{position:relative;z-index:1}
   tr.item.dis .valbar{opacity:.45}
+  /* Docked detail card — its own column, so it can never cover a row. */
+  .eco-dock{width:290px;flex:0 0 290px;position:sticky;top:6px;order:3}
+  .eco-hover.docked{position:static;width:auto;opacity:1;transform:none;pointer-events:auto;
+    box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .eco-hover.docked .hc-close{display:none}
+  .eco-dock .eco-empty{padding:16px 14px;border:1px dashed var(--border);border-radius:13px;
+    color:var(--dim);font-size:11.5px;line-height:1.6;text-align:center}
+  @media (max-width:1240px){.eco-dock{display:none}}
   /* Economy hover card: rich detail without leaving the table — art, price,
      7-day trend, keep/skip, and the real pickit rule (fetched lazily). */
   .eco-hover{position:fixed;z-index:120;width:280px;pointer-events:none;opacity:0;transform:translateY(6px);
@@ -1284,7 +1292,7 @@
 <!-- ══ ECONOMY ══ -->
 <div class="page" id="p-eco">
   <div class="eco-header">
-    <div><h1>Economy</h1><div class="sub">Pick a category on the left; click the <b class="sub-tip">keep/skip</b> button on a row to turn that rule on or off. Double-click a category to toggle the whole group. <b class="sub-tip">Right-click a row to copy its rule</b> · hover for details, click a row to pin the card.</div></div>
+    <div><h1>Economy</h1><div class="sub">Pick a category on the left; click the <b class="sub-tip">keep/skip</b> button on a row to turn that rule on or off. Double-click a category to toggle the whole group. <b class="sub-tip">Right-click a row to copy its rule</b> · hover a row and its details appear in the panel on the right.</div></div>
     <div class="eco-rate" id="ecoRate" style="display:none"><span class="dot"></span><span class="k">1 Divine</span><span class="v" id="ecoRateV">–</span></div>
   </div>
   <div class="banner warn" id="ecoStale"></div>
@@ -1303,6 +1311,8 @@
 
   <div style="display:flex;gap:12px;align-items:flex-start">
     <div id="ecoChips" class="craft-side" style="width:195px;flex:0 0 195px;position:sticky;top:6px;max-height:calc(90.9vh - 24px);overflow-y:auto"></div>
+    <!-- The detail card lives HERE, not over the table. See .eco-hover.docked. -->
+    <div id="ecoDock" class="eco-dock"></div>
     <div class="card" style="padding:8px 6px;flex:1;min-width:0">
       <table><thead><tr>
         <th data-s="name" style="width:34%">Item<span class="s-ind"></span></th>
@@ -3173,7 +3183,31 @@ function sparkSvg(pts,dir){
 // never leaves a stale rule showing.
 const ecoHover=document.createElement("div");
 ecoHover.className="eco-hover";ecoHover.setAttribute("role","tooltip");
+// Docked when the Economy page has room for its column; only then does it stop
+// chasing the cursor. Falls back to the floating card on a narrow window.
+const ecoDockEl=$("ecoDock");
+let ecoDocked=false;
+const ecoEmpty=document.createElement("div");
+ecoEmpty.className="eco-empty";
+ecoEmpty.textContent="Hover a row for its price, trend and the exact pickit rule it makes.";
+function ecoDockSync(){
+  const room=ecoDockEl&&getComputedStyle(ecoDockEl).display!=="none";
+  ecoDocked=!!room;
+  if(ecoDocked){
+    ecoDockEl.appendChild(ecoEmpty);
+    ecoDockEl.appendChild(ecoHover);
+    ecoHover.classList.add("docked");
+    ecoHover.style.left=ecoHover.style.top="";
+    ecoEmpty.style.display=ecoHover.classList.contains("on")?"none":"";
+  }else{
+    document.body.appendChild(ecoHover);
+    ecoHover.classList.remove("docked");
+    if(ecoEmpty.parentNode)ecoEmpty.remove();
+  }
+}
 document.body.appendChild(ecoHover);
+ecoDockSync();
+window.addEventListener("resize",ecoDockSync);
 let ecoHoverTok=0,ecoHoverTimer=0,ecoShowTimer=0,ecoOpen=false,ecoPinned=false,ecoHoverRule="",ecoHoverRow=null;
 // Cached rule lookup — the bridge call is the slow part of hovering, and the same
 // row is hit over and over. Key includes ex so a price refresh naturally misses.
@@ -3204,6 +3238,7 @@ function ecoHoverRequest(cat,it,e,tr){
 // or the bottom/right clamp is 10% too generous and the card spills off-screen.
 const ecoZoom=()=>parseFloat(getComputedStyle(document.body).zoom)||1;
 function ecoHoverMove(e){
+  if(ecoDocked)return;          // fixed column: nothing to position
   const z=ecoZoom(),vw=window.innerWidth/z,vh=window.innerHeight/z;
   const cw=ecoHover.offsetWidth||280,ch=ecoHover.offsetHeight||0,off=16,pad=10;
   // Keep the card clear of the row's keep/skip + copy buttons on the right edge.
@@ -3227,7 +3262,11 @@ function ecoHoverMove(e){
   top=Math.max(pad,Math.min(top,vh-ch-pad));
   ecoHover.style.left=left+"px";ecoHover.style.top=top+"px";
 }
-function ecoHoverHide(){clearTimeout(ecoShowTimer);ecoHover.classList.remove("on","pinned");ecoHoverTok++;ecoOpen=false;ecoPinned=false;}
+function ecoHoverHide(){clearTimeout(ecoShowTimer);
+  // Docked, the card is a panel, not a tooltip: leaving a row keeps the last
+  // item visible rather than flashing the column empty on every mouse move.
+  if(ecoDocked){ecoPinned=false;ecoHover.classList.remove("pinned");return;}
+  ecoHover.classList.remove("on","pinned");ecoHoverTok++;ecoOpen=false;ecoPinned=false;}
 function ecoHoverHideSoon(){if(ecoPinned)return;clearTimeout(ecoHoverTimer);ecoHoverTimer=setTimeout(ecoHoverHide,220);}
 // Unpinned, the card is a pure INFO tooltip (pointer-events:none in CSS): the
 // mouse passes straight through to the row's keep/copy buttons, so it can never
@@ -3268,6 +3307,7 @@ function ecoHoverShow(cat,it,e,tr){
       <div class="hc-rule">…</div>
       <div class="hc-hint">Click a row to pin · right-click to copy</div></div>`;
   ecoHover.classList.add("on");
+  if(ecoDocked)ecoEmpty.style.display="none";   // real content replaces the prompt
   ecoHoverMove(e);
   // Copy button — grabs the FULL rule (same as the row's copy), not just the
   // single line shown. Disabled until the rule resolves so it can't copy "…".

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.1/ExileBot2PickitGenerator.exe"><img alt="Download v4.47.1 for Windows" src="https://img.shields.io/badge/Download-v4.47.1-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.2/ExileBot2PickitGenerator.exe"><img alt="Download v4.47.2 for Windows" src="https://img.shields.io/badge/Download-v4.47.2-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.1">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.2">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.1/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.47.2/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,9 +121,13 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.47.1
+## Current release: v4.47.2
 
-### The bot's map runner is generated too
+### The Economy detail card stops covering the table
+
+- **The hover card has its own column now.** It was pinned to the cursor, so by construction it sat on top of the rows you were reading — v4.41.29 capped its right edge to keep the keep/copy buttons clickable, but rows above and below were still hidden. It now sits in a sticky column beside the table: never moves, never covers a row, and stays readable while the mouse is elsewhere. Narrow windows fall back to the floating card.
+
+### v4.47.1 — The bot's map runner is generated too
 
 - **Every Path of Exile 1 run now writes the map-runner config as well.** `<output>_maps.ipd` — the file deciding which maps the bot **runs**, rerolls or skips — is written beside the pickit and copied into the bot's `Maps` folder. It follows Exiled Bot's own `Maps/default.ipd` rule for rule: upgrade normal/magic maps, run the tiers you picked, skip uniques, reroll reflect and no-regen mods on magic maps and skip those maps when they're rare.
 - **Your bot's own `default.ipd` is never overwritten** — the app writes its own profile file, so set `map_profile` in the bot's `config.ini` to the new name to use it. The run log says so when it still points elsewhere.
@@ -145,14 +149,14 @@ Windows SmartScreen may ask for confirmation because this free community executa
 
 - **A downloaded update looked identical to the copy it replaced.** The exe's filename is deliberately constant, so Windows' version *resource* is the only thing telling two builds apart — and it was never written, leaving Properties → Details blank on every release ever shipped. It's now generated from `version.py` at build time.
 
+<details>
+<summary><strong>Older releases</strong></summary>
+
 ### v4.45.0 — Path of Exile 1 maps, and a whole category that was missing
 
 - **Maps are generated for Path of Exile 1**, on their own page under Economy. PoE1 has ~120 map bases and poe.ninja prices most of them as `Drox Map (Tier 16)` — a price for *any* tier-16 map with that influence, not an item you can name. So you pick a tier and the pickit gets one `[Category] == "Map" && [MapTier] >= "N"` rule (what Exiled Bot's own default pickit does), the other tiers written out commented, plus a `[Type]` rule for every map priced under a real base name.
 - **The page shows the real output**, rendered by the same builder that writes the file — with tier cards, a what-to-keep / what-to-skip guide, today's named-map values, and your bot's own map-runner folder (which this app never writes).
 - **Runegrafts were never fetched.** 30 price in the current league, all with live trade volume and worth 5c+ — the top three between 450 and 700 chaos — and none had a rule at any floor. The same miss as Verisium.
-
-<details>
-<summary><strong>Older releases</strong></summary>
 
 ### v4.44.0 — Both games are officially done 🎉
 
@@ -257,7 +261,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.47.1 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.1) · [full changelog](CHANGELOG.md)
+[Read the complete v4.47.2 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.47.2) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

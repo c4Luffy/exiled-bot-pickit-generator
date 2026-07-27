@@ -1,10 +1,13 @@
 """Single source of truth for the app version."""
-VERSION = "4.47.1"
+VERSION = "4.47.2"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• The Economy detail card stops covering the table. It was pinned to the cursor, so by construction it sat on top of the rows you were reading — v4.41.29 capped its right edge to keep the keep/copy buttons clickable, but it still covered rows either side. It now has its own column beside the table: it never moves, never hides a row, and stays put while you read it. Hovering a row fills it in; the panel keeps that item until you hover another. On a narrow window there is no room for a third column, so it falls back to the old floating card.
+
+Also in 4.47.1:
 • The bot's MAP RUNNER is generated too. Every Path of Exile 1 run now also writes <output>_maps.ipd — the file that decides which maps the bot RUNS, rerolls or skips — and copies it into your bot's Maps folder beside the pickit. It follows Exiled Bot's own Maps/default.ipd exactly: upgrade normal/magic maps, run the tiers you picked on the Maps page, skip uniques, reroll reflect and no-regen mods on magic maps and skip those maps outright when they are rare. Your bot's own default.ipd is never overwritten — it writes its own profile file — so set map_profile in the bot's config.ini to the new name to use it. The run log tells you if it still points somewhere else.
 
 • Path of Exile 1 has no in-game loot filter, so the last traces are gone: the ".filter" button on Generate and the run summary line that promised one.

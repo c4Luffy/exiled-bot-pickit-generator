@@ -6,6 +6,19 @@ download lives.
 
 ---
 
+## [v4.47.2] — 2026-07-27 — The Economy detail card stops covering the table
+
+- **The hover card had its own column now, instead of floating over the rows.**
+  It was `position:fixed` and placed next to the cursor, so by construction it
+  covered the rows you were reading. v4.41.29 capped its right edge to stop it
+  sitting on the keep/copy buttons, but that only fixed one edge — it still hid
+  rows above and below. It now lives in a sticky third column beside the table:
+  it never moves, never covers anything, and stays readable while the mouse is
+  somewhere else. Hovering a row fills it in and the panel keeps that item until
+  another row is hovered, rather than blanking the moment the cursor leaves.
+- **Falls back to the floating card on a narrow window** (under 1240px), where
+  there is no room for a third column.
+
 ## [v4.47.1] — 2026-07-27 — The bot's map runner is generated too
 
 - **Every Path of Exile 1 run now writes the map-runner config as well.**
