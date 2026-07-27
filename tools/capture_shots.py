@@ -69,6 +69,16 @@ PAGES = [
 ]
 
 
+# The console this runs on is often cp1252, and item names carry glyphs it can't
+# encode (the keep pill's bullet killed a run mid-capture). Same fix the headless
+# --cli/--regenerate modes already carry: wrap stdout as UTF-8 so an exotic glyph
+# degrades instead of aborting the run.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+
 def log(*a):
     print(*a, flush=True)
 

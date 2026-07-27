@@ -1292,7 +1292,7 @@
 <!-- ══ ECONOMY ══ -->
 <div class="page" id="p-eco">
   <div class="eco-header">
-    <div><h1>Economy</h1><div class="sub">Pick a category on the left; click the <b class="sub-tip">keep/skip</b> button on a row to turn that rule on or off. Double-click a category to toggle the whole group. <b class="sub-tip">Right-click a row to copy its rule</b> · hover a row and its details appear in the panel on the right.</div></div>
+    <div><h1>Economy</h1><div class="sub">Pick a category on the left; click <b class="sub-tip">anywhere on a row</b> to turn that rule on or off. Double-click a category to toggle the whole group. <b class="sub-tip">Right-click a row to copy its rule</b> · hover a row and its details appear in the panel on the right.</div></div>
     <div class="eco-rate" id="ecoRate" style="display:none"><span class="dot"></span><span class="k">1 Divine</span><span class="v" id="ecoRateV">–</span></div>
   </div>
   <div class="banner warn" id="ecoStale"></div>
@@ -3409,16 +3409,22 @@ function renderEco(){
       const rule=await ruleFor(cat,it);
       const ok=await copyText(rule);
       toast(ok?"Rule copied":"Clipboard blocked");};
-    // Only the keep/skip pill toggles the rule — a click anywhere else on the row
-    // no longer turns it off by accident.
     tr.querySelector(".pilltog").onclick=async e=>{e.stopPropagation();
       it.enabled=!it.enabled;
       await api().set_item(cat.key,it.name,it.enabled);renderEco();};
     tr.addEventListener("mouseenter",e=>ecoHoverRequest(cat,it,e,tr));
     tr.addEventListener("mouseleave",()=>{clearTimeout(ecoShowTimer);ecoHoverHideSoon();});
-    // Left-click a row (not one of its buttons) pins the detail card; right-click
-    // copies the rule instantly without touching the card.
-    tr.addEventListener("click",e=>{if(e.target.closest("button"))return;ecoPin(cat,it,e,tr);});
+    // Left-click anywhere on a row toggles keep/skip. That used to turn the rule
+    // off by accident, because clicking was also how you got the item's details —
+    // the card had to be PINNED to stay put. Docked, hovering already shows
+    // everything, so the click is free to do the obvious thing. On a narrow
+    // window the card still floats and still needs pinning, so it keeps that.
+    // Right-click copies the rule either way.
+    tr.addEventListener("click",async e=>{
+      if(e.target.closest("button"))return;
+      if(!ecoDocked){ecoPin(cat,it,e,tr);return;}
+      it.enabled=!it.enabled;
+      await api().set_item(cat.key,it.name,it.enabled);renderEco();});
     tr.addEventListener("contextmenu",async e=>{e.preventDefault();
       const rule=await ruleFor(cat,it);
       const ok=await copyText(rule);toast(ok?"Rule copied":"Clipboard blocked");});

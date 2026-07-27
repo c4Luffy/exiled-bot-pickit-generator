@@ -6,6 +6,21 @@ download lives.
 
 ---
 
+## [v4.47.3] — 2026-07-27 — Click anywhere on an Economy row again
+
+- **A click anywhere on a row turns that rule on or off, in both games.** It used
+  to, then it was narrowed to the keep/skip pill because clicking was *also* how
+  you pinned the detail card — so people turned rules off by accident while trying
+  to read one. Now that the card is docked and hovering shows everything, the
+  click has nothing else to do. The copy button and the pill keep their own
+  behaviour (they stop the event), and right-click still copies the rule.
+  On a narrow window the card still floats and still needs pinning, so the row
+  click keeps pinning there.
+- **The screenshot tool's logger survives a non-UTF-8 console.** Printing an item
+  name containing `●` killed a run mid-capture with `UnicodeEncodeError` — the
+  same failure the headless `--cli` / `--regenerate` modes were fixed for in
+  v4.41.27. Its output is wrapped as UTF-8 now.
+
 ## [v4.47.2] — 2026-07-27 — The Economy detail card stops covering the table
 
 - **The hover card had its own column now, instead of floating over the rows.**

@@ -1,10 +1,13 @@
 """Single source of truth for the app version."""
-VERSION = "4.47.2"
+VERSION = "4.47.3"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• Clicking anywhere on an Economy row turns it on or off again — in both games. That used to toggle by accident, because clicking was also how you made the detail card stay put, so it was narrowed to the keep/skip pill only. Now that the card is docked and hovering already shows everything, the click is free to do the obvious thing. The copy button and the pill still do their own jobs, and right-click still copies the rule.
+
+Also in 4.47.2:
 • The Economy detail card stops covering the table. It was pinned to the cursor, so by construction it sat on top of the rows you were reading — v4.41.29 capped its right edge to keep the keep/copy buttons clickable, but it still covered rows either side. It now has its own column beside the table: it never moves, never hides a row, and stays put while you read it. Hovering a row fills it in; the panel keeps that item until you hover another. On a narrow window there is no room for a third column, so it falls back to the old floating card.
 
 Also in 4.47.1:
