@@ -57,10 +57,18 @@ echo.
 echo [5/5] Building EXE (takes ~60 seconds, please wait)...
 echo.
 
+:: The EXE filename never changes (the in-app updater depends on it), so the
+:: Windows version RESOURCE is the only thing that tells two builds apart in
+:: Explorer. Generated from version.py so it can't drift from the release.
+python tools\make_version_file.py build\version_info.txt
+set "VER_ARGS="
+if exist "build\version_info.txt" set VER_ARGS=--version-file build/version_info.txt
+
 python -m PyInstaller ^
     --onefile ^
     --windowed ^
     --name "ExileBot2PickitGenerator" ^
+    %VER_ARGS% ^
     %ICON_ARGS% ^
     --add-data "src/exilebot_pickit/webui/app.html;." ^
     --add-data "src/exilebot_pickit/resources/appicon.png;." ^

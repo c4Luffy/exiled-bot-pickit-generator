@@ -6,6 +6,23 @@ download lives.
 
 ---
 
+## [v4.45.1] — 2026-07-27 — The .exe finally says which version it is
+
+- **A downloaded update looked identical to the copy it replaced.** The exe's
+  filename is deliberately constant (`ExileBot2PickitGenerator.exe` — the in-app
+  updater's download URL depends on it), so Windows' version *resource* is the only
+  thing that can tell two builds apart in Explorer, SmartScreen or Task Manager. It
+  was never being written: PyInstaller was run without `--version-file`, so
+  right-click → Properties → Details was **blank** on every release ever shipped.
+  Verified on the v4.44.0 download — `FileVersion` and `ProductVersion` both empty.
+- **Now generated from `version.py` at build time** by `tools/make_version_file.py`
+  and passed to PyInstaller in both the release workflow and `build.exe.bat`, so the
+  number in the exe's properties cannot drift from the release it was built at. A
+  test build reports `FileVersion 4.45.0`, `ProductVersion 4.45.0`,
+  `ProductName Exiled Bot Pickit Generator`.
+
+No app behaviour changed in this release.
+
 ## [v4.45.0] — 2026-07-26 — Path of Exile 1 maps, and a whole category that was missing
 
 - **Maps are generated for Path of Exile 1, on their own page under Economy.**

@@ -79,9 +79,17 @@ jobs:
           pip install -r requirements.txt "pyinstaller==6.21.0"
           pip install -e .
 
+      # The exe's filename is deliberately constant, so its Windows version
+      # RESOURCE is the only thing that tells two builds apart in Explorer.
+      # Without this the Details tab was blank and an updated copy looked
+      # identical to the old one.
+      - name: Generate the Windows version resource
+        run: python tools/make_version_file.py build/version_info.txt
+
       - name: Build EXE
         run: >
           pyinstaller --onefile --windowed --name ExileBot2PickitGenerator
+          --version-file build/version_info.txt
           --icon src/exilebot_pickit/resources/appicon.ico
           --add-data "src/exilebot_pickit/webui/app.html;."
           --add-data "src/exilebot_pickit/resources/appicon.png;."

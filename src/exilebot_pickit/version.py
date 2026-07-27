@@ -1,10 +1,13 @@
 """Single source of truth for the app version."""
-VERSION = "4.45.0"
+VERSION = "4.45.1"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• The .exe finally says which version it is. Its filename never changes (the in-app updater depends on that), so Windows' version resource is the only thing that can tell two builds apart in Explorer — and it was never written: right-click → Properties → Details was blank on every release ever shipped, so an updated copy looked identical to the one it replaced. It is now generated from this file at build time, so the version in the exe's properties always matches the release.
+
+Also in 4.45.0:
 • Path of Exile 1 maps are generated now, on their own Maps page under Economy. PoE1 has ~120 map bases and poe.ninja prices most of them as "Drox Map (Tier 16)" — a price for ANY tier-16 map with that influence, not an item you can name — so a name-by-name pickit would be both unmaintainable and wrong. You pick a tier instead, and the pickit gets one [Category] == "Map" && [MapTier] >= "N" rule (the same approach Exiled Bot's own default pickit uses), the other tiers written out commented so you can swap one by hand, plus a [Type] rule for every map poe.ninja prices under a real base name. The page shows what it will write, says what is worth keeping at each tier, and finds your bot's own Maps folder — the map RUNNER config, which this app never touches.
 
 • A whole priced category was missing from Path of Exile 1: Runegrafts. 30 of them price in the current league, every one with live trade volume and worth at least 5c — the top three between 450 and 700 chaos — and not one had a rule at any floor. The same miss as Verisium: a category nobody asked poe.ninja for.
