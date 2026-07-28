@@ -6,6 +6,20 @@ download lives.
 
 ---
 
+## [v4.51.0] — 2026-07-28 — The run says which map tiers it wrote
+
+- **Map tiers default to T16 alone, and nothing said so.** Maps are the one
+  category whose scope is a *selection* rather than a value floor, so a new user
+  generated, saw a cheerful `✓ Maps` in the run log, and their bot then walked
+  past every T1-T15 map on the ground — which reads as "the app does not do
+  maps". The run now names the tiers it actually wrote (`✓ Maps: T16`), and when
+  the selection is narrow enough to look like nothing it adds that every other
+  tier is left on the ground and where to change it. An empty selection says so
+  outright instead of passing silently.
+- The default itself is unchanged. It is deliberate — the Maps tab argues that
+  "tier 1 and up" is the single biggest cause of a full stash — so the fix is to
+  stop being silent about it, not to flip it.
+
 ## [v4.50.2] — 2026-07-28 — What's new stops being a wall of text
 
 - **The in-app "What's new" showed every release ever.** It was prepended by

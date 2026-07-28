@@ -2712,7 +2712,27 @@ class AppApi:
                 top_pool += asm.top_items_from_lines(lines)
                 out += [gen.header_sub(label), ""] + lines + [""]
                 ok += 1
-                self._log(f"✓ {label}")
+                if key == "maps":
+                    # Maps are the one category whose scope is a SELECTION rather
+                    # than a value floor, and it defaults to tier 16 alone — so a
+                    # new user's bot walks past every T1-T15 map and the run said
+                    # only "OK, Maps". Name the tiers, and say where to change it
+                    # when the selection is narrow enough to look like nothing.
+                    tiers = asm.normalise_map_tiers(snap.get("poe1_map_tiers"))
+                    if not tiers:
+                        self._log("⚠ Maps: no tiers selected — only maps with their "
+                                  "own base name are picked up. Choose tiers on the "
+                                  "Maps tab.")
+                    else:
+                        runs = ", ".join(f"T{lo}" if lo == hi else f"T{lo}-T{hi}"
+                                         for lo, hi in asm.map_tier_runs(tiers))
+                        note = f"✓ {label}: {runs}"
+                        if len(tiers) <= 3:
+                            note += (" only — every other tier is left on the ground. "
+                                     "Add tiers on the Maps tab.")
+                        self._log(note)
+                else:
+                    self._log(f"✓ {label}")
 
             # Coverage self-check: a category that fetched OK but came back EMPTY
             # wrote no rules at all, and nothing used to say so (how Verisium went
