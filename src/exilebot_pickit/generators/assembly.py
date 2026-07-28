@@ -415,6 +415,40 @@ def _gem_is_plain(line: dict) -> bool:
     return (not line.get("corrupted")) and int(line.get("gemQuality") or 0) == 0
 
 
+def drop_value_index(payload: dict) -> dict:
+    """name → what ONE of that item is worth *as it drops*.
+
+    poe.ninja returns several rows for anything that varies after it lands —
+    gem level, quality, corruption — sorted dearest-first. Taking the first row
+    per name therefore reports the best possible copy: it priced a dropped
+    Stormbind at 124c, the value of the single listed level-21/quality-23
+    corrupted one, when the level-1 gem the bot actually scooped up is worth 1c.
+
+    This is the same rule ``build_poe1_gem_lines`` writes its rules with, kept
+    in one place so a price shown in the UI can never disagree with the price
+    the pickit was built from. Categories with one row per name are unaffected.
+    """
+    rate = gen.exalted_rate(payload)
+    by_name: dict[str, list[dict]] = {}
+    for line in payload.get("lines", []) or []:
+        name = line.get("name")
+        if name:
+            by_name.setdefault(name, []).append(line)
+
+    def _ev(line):
+        pv = float(line.get("primaryValue") or 0.0)
+        return pv * rate if rate else pv
+
+    out = {}
+    for name, variants in by_name.items():
+        plain = [v for v in variants if _gem_is_plain(v)]
+        if plain:
+            out[name] = _ev(min(plain, key=lambda v: (int(v.get("gemLevel") or 0), _ev(v))))
+        else:
+            out[name] = _ev(min(variants, key=_ev))
+    return out
+
+
 def build_poe1_gem_lines(payload: dict, min_exalt: float,
                          disabled: set | None = None) -> list[str]:
     """Skill gems, priced as they DROP rather than at their best variant.

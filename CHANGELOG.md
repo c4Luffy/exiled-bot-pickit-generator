@@ -6,6 +6,20 @@ download lives.
 
 ---
 
+## [v4.51.2] — 2026-07-28 — The price shown is the price the pickit used
+
+- **The pickup list priced gems at their best variant, not the one that
+  dropped.** v4.50.0 fixed this for the rules but the History panel kept its own
+  lookup, which took poe.ninja's first row per name — and poe.ninja sorts
+  dearest-first. So a Stormbind the bot scooped off the ground was reported at
+  **124.10c**, the value of the single listed level-21/quality-23 **corrupted**
+  copy, while the rule beside it correctly said 1c. A real session's haul read
+  **134.1c** when it was worth **2c**.
+- **There is now one definition of "what is this worth as it drops"**
+  (`drop_value_index`), used both to write the rules and to show the prices, so
+  the two can no longer disagree. A test asserts they match. Categories that
+  list one row per name are unaffected.
+
 ## [v4.51.1] — 2026-07-28 — The pickup list leads with what was worth something
 
 - **The value columns showed a dash on every visible row.** The list was sorted

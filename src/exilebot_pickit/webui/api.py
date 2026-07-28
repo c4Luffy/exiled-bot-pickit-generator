@@ -3339,16 +3339,17 @@ class AppApi:
                 payload = None
             if not isinstance(payload, dict):
                 continue
-            rate = gen.exalted_rate(payload)
             for ln in payload.get("lines", []) or []:
                 nm = ln.get("name")
-                if not nm:
-                    continue
-                if ln.get("icon"):
+                if nm and ln.get("icon"):
                     icons.setdefault(nm, ln["icon"])
-                if nm not in values:
-                    pv = float(ln.get("primaryValue") or 0.0)
-                    values[nm] = pv * rate if rate else pv
+            # Prices come from the SAME rule the pickit is written with, so a
+            # number shown here can never disagree with the file. Taking the
+            # first row per name reported the dearest variant instead: a
+            # dropped Stormbind was shown at 124c (one listed level-21/q23
+            # corrupted copy) when the level-1 gem the bot took is worth 1c.
+            for nm, ev in asm.drop_value_index(payload).items():
+                values.setdefault(nm, ev)
             for it in payload.get("items", []) or []:
                 img = it.get("image") or ""
                 if it.get("name") and img:

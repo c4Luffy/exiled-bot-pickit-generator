@@ -96,3 +96,37 @@ def test_plain_detector():
     assert asm._gem_is_plain({"gemQuality": 0, "corrupted": False})
     assert not asm._gem_is_plain({"gemQuality": 20, "corrupted": None})
     assert not asm._gem_is_plain({"gemQuality": None, "corrupted": True})
+
+
+# ── the price SHOWN must equal the price the pickit was BUILT from ──────────
+def test_drop_value_index_matches_the_rule_it_writes():
+    """One definition of "worth as it drops", used by the rules and the UI.
+
+    These were separate: the pickit used the plain row while the History
+    pickup list took poe.ninja's first row per name. A dropped Stormbind was
+    shown at 124c \u2014 the single listed level-21/quality-23 corrupted copy \u2014
+    while the rule beside it said 1c.
+    """
+    idx = asm.drop_value_index(PAYLOAD)
+    assert idx["Frostblink"] == 1.0
+    line = asm.build_poe1_gem_lines(PAYLOAD, 0.0)[0]
+    assert _ev(line) == idx["Frostblink"], "the shown price must equal the written one"
+
+
+def test_drop_value_index_ignores_a_lone_expensive_variant():
+    """Stormbind's real shape: one 124c corrupted listing, plain copies at 1c."""
+    stormbind = {"lines": [
+        {"name": "Stormbind", "gemLevel": 21, "gemQuality": 23, "corrupted": True,
+         "primaryValue": 124.1},
+        {"name": "Stormbind", "gemLevel": 20, "gemQuality": 20, "corrupted": None,
+         "primaryValue": 10.0},
+        {"name": "Stormbind", "gemLevel": 1, "gemQuality": None, "corrupted": None,
+         "primaryValue": 1.0},
+    ]}
+    assert asm.drop_value_index(stormbind)["Stormbind"] == 1.0
+
+
+def test_drop_value_index_leaves_single_row_categories_alone():
+    plain = {"lines": [{"name": "Chaos Orb", "primaryValue": 1.0},
+                       {"name": "Divine Orb", "primaryValue": 430.0}]}
+    assert asm.drop_value_index(plain) == {"Chaos Orb": 1.0, "Divine Orb": 430.0}
