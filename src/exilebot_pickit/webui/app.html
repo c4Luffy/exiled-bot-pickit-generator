@@ -4430,14 +4430,19 @@ async function loadBotLog(){
   // current price — so this reads like the Economy table rather than a log.
   const all=(i.pickups||[]);
   const rows=botLogAll?all:all.slice(0,12);
-  const money=v=>v>=1?Math.round(v).toLocaleString():(v>0?v.toFixed(2):"\u2013");
+  // An unpriced item shows a dash, never "0.00" \u2014 poe.ninja does not price a
+  // Portal Scroll, and a column of zeroes reads as a broken table. Anything
+  // real but sub-penny says "<0.01" rather than rounding itself away.
+  const money=v=>(!v||v<=0)?"\u2013"
+    :(v>=1?Math.round(v).toLocaleString():(v>=0.01?v.toFixed(2):"<0.01"));
   // "Times / Each / Worth" read as a puzzle — "each" could just as easily mean
   // the count. Spell the three numbers out and put the unit in the header, so
   // the cells stay clean and nothing has to be inferred.
   const u=GAME_UNITS;
   $("botLogPicks").innerHTML=all.length
     ? '<div class="hint" style="margin:0 0 8px">How many of each item the bot picked up this session, '
-      +'and what they are worth at current prices.</div>'
+      +'and what they are worth at current prices, dearest first. '
+      +'A dash means poe.ninja does not price that item.</div>'
       +'<table class="ltbl" style="width:100%"><thead><tr>'
       +'<th style="text-align:left" colspan="2">Item</th>'
       +'<th style="text-align:right">How many</th>'

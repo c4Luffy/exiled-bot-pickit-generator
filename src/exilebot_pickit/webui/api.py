@@ -3424,10 +3424,15 @@ class AppApi:
         # instead of a wall of text. Both come from caches that are already warm;
         # a name we have never priced simply has neither.
         icons, values = self._pickup_lookup()
+        # Sorted by what the pickups were WORTH, not by how many there were.
+        # Counting put ten Portal Scrolls and four alteration orbs — all priced
+        # at nothing — above the single Stormbind that carried 124 of the run's
+        # 134 chaos, so the value columns showed a dash on every visible row and
+        # the one item that paid for the session sat below the fold.
         info["pickups"] = sorted(
             ({"name": k, "n": v, "icon": icons.get(k, ""), "ex": values.get(k, 0.0)}
              for k, v in picks.items()),
-            key=lambda r: (-r["n"], r["name"]))
+            key=lambda r: (-(r["ex"] * r["n"]), -r["n"], r["name"]))
         info["pickup_total"] = sum(picks.values())
         info["pickup_value"] = round(
             sum(r["n"] * r["ex"] for r in info["pickups"]), 2)

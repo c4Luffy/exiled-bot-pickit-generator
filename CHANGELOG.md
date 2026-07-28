@@ -6,6 +6,21 @@ download lives.
 
 ---
 
+## [v4.51.1] — 2026-07-28 — The pickup list leads with what was worth something
+
+- **The value columns showed a dash on every visible row.** The list was sorted
+  by how many of each item the bot took, so a real session opened with ten
+  Portal Scrolls and four Orbs of Alteration — none of which poe.ninja prices —
+  while the single Stormbind carrying **124 of the run's 134 chaos** sat below
+  the fold. The two columns added last release therefore looked broken, and
+  fairly so. Sorted by what the pickups were worth now, so the rows that paid
+  for the session are the ones you see.
+- **An unpriced item shows a dash, not `0.00`.** A column of zeroes reads as a
+  broken table rather than "poe.ninja does not price Portal Scrolls". Anything
+  real but under a hundredth now reads `<0.01` instead of rounding itself away
+  to nothing.
+- The line above the table says the order and what a dash means.
+
 ## [v4.51.0] — 2026-07-28 — The run says which map tiers it wrote
 
 - **Map tiers default to T16 alone, and nothing said so.** Maps are the one
