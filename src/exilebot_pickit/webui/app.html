@@ -1135,6 +1135,12 @@
     font-size:38px;line-height:1.05;color:var(--gold-br);font-weight:700}
   .bot-hero-num em{font-style:normal;font-size:14px;color:var(--dim);letter-spacing:.04em}
   .bot-hero-side{display:flex;align-items:center;gap:8px;flex-shrink:0}
+
+  .bot-hero-alt{margin-left:auto;text-align:right;align-items:flex-end;padding-left:18px;
+    border-left:1px solid var(--border)}
+  .bot-hero-alt .bot-hero-num b{font-size:26px;color:var(--text)}
+  @media (max-width:900px){.bot-hero-alt{margin-left:0;border-left:0;padding-left:0;text-align:left;
+    align-items:flex-start}}
 </style>
 </head>
 <body>
@@ -1693,6 +1699,11 @@
         <span class="bot-hero-num"><b id="blWorth">&ndash;</b><em id="blWorthL">c</em></span>
         <span class="hint" id="botHeroSub" style="margin:0"></span>
       </div>
+      <div class="bot-hero-fig bot-hero-alt">
+        <span class="bot-hero-lbl">Total across every session logged</span>
+        <span class="bot-hero-num"><b id="blCareer">&ndash;</b><em id="blCareerL">c</em></span>
+        <span class="hint" id="botCareerSub" style="margin:0"></span>
+      </div>
       <div class="bot-hero-side">
         <button class="ghost mini" id="botLogRefresh" title="Re-read the bot&rsquo;s log from disk">&#8635; Re-read log</button>
       </div>
@@ -1710,6 +1721,17 @@
     <div class="card" style="margin-top:14px">
       <h2>&#128230; What it picked up</h2>
       <div id="botLogPicks"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 8px">
+        <h2 style="margin:0">&#128198; Every session</h2>
+        <span class="hint" style="margin:0" id="botSessCount"></span>
+      </div>
+      <div class="hint" style="margin:0 0 10px">The bot overwrites its log each time it starts, so this is
+        the only record of what earlier sessions earned. A session is captured while the app can still see
+        it &mdash; if the app is closed for a whole session, that one cannot be recovered.</div>
+      <div id="botSessions"></div>
     </div>
 
     <div class="hint" style="margin:12px 0 0" id="botLogMeta"></div>
@@ -4516,6 +4538,34 @@ async function loadBotLog(){
         "The bot has loaded your pickit but hasn't taken anything since it started.");
   const more=$("botLogMore");
   if(more)more.onclick=()=>{botLogAll=!botLogAll;loadBotLog();};
+
+  // Career total + the per-session table. The log itself only ever describes the
+  // current session, so these come from what the app has recorded over time.
+  const sess=i.sessions||[];
+  countUp($("blCareer"),Math.round(i.sessions_value||0));
+  $("blCareerL").textContent=u;
+  $("botCareerSub").textContent=sess.length
+    ? `${sess.length} session(s) \u00b7 ${(i.sessions_picks||0).toLocaleString()} items in total`
+    : "No sessions recorded yet.";
+  $("botSessCount").textContent=sess.length?`${sess.length} recorded`:"";
+  $("botSessions").innerHTML=sess.length
+    ? '<table class="ltbl" style="width:100%"><thead><tr>'
+      +'<th style="text-align:left">Session started</th>'
+      +'<th style="text-align:left">Last seen</th>'
+      +'<th style="text-align:right">Items</th>'
+      +'<th style="text-align:right">Sold</th>'
+      +'<th style="text-align:right">Earned ('+esc(u)+')</th></tr></thead><tbody>'
+      +sess.map((r,n)=>'<tr'+(n===0?' title="The session running now"':'')+'>'
+        +'<td>'+(n===0?'<b style="color:var(--gold)">\u25cf</b> ':'')+esc(r.id||"")+'</td>'
+        +'<td style="color:var(--dim)">'+esc(r.last||"")+'</td>'
+        +'<td style="text-align:right">'+Number(r.picks||0).toLocaleString()+'</td>'
+        +'<td style="text-align:right;color:var(--dim)">'+Number(r.sold||0).toLocaleString()+'</td>'
+        +'<td style="text-align:right;font-weight:600">'+money(r.value)+'</td>'
+        +'</tr>').join("")
+      +'</tbody></table>'
+    : emptyState("\ud83d\udcc5","No sessions recorded yet",
+        "Each time the bot runs while this app is open, that session is logged here "
+        +"with what it earned.");
 
   $("botLogMeta").innerHTML="Read from <code>"+esc(i.path)+"</code> \u00b7 last written "
     +esc(i.mtime||"?")+" \u00b7 "+(i.lines||0).toLocaleString()+" lines. The bot overwrites "

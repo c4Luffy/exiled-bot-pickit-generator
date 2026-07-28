@@ -3353,6 +3353,57 @@ class AppApi:
                         ("https://web.poecdn.com" + img) if img.startswith("/") else img)
         return icons, values
 
+    def _record_bot_session(self, info: dict) -> list:
+        """Keep each bot session's totals, because the log does not.
+
+        ``lastrun.log`` is overwritten every time the bot starts, so whatever
+        the last session earned is gone the moment the next one begins. This
+        snapshots the running session under its own start timestamp and updates
+        it in place while it grows, giving a per-session history and a career
+        total that the log itself cannot provide.
+
+        Honest limitation, surfaced in the UI: a session is only captured if
+        the app reads the log while it is still the current one. Close the app
+        for a whole session and that session is not recorded — nothing can
+        recover it afterwards, because the bot has already overwritten the file.
+
+        Kept per game (the two games are different bot installs) and capped, so
+        this can never grow the config without bound.
+        """
+        sid = info.get("session_start") or ""
+        if not sid or not info.get("found"):
+            return list((self.cfg.get("bot_sessions") or {}).get(self._game().id, []))
+        allsess = dict(self.cfg.get("bot_sessions") or {})
+        rows = [dict(r) for r in allsess.get(self._game().id, [])]
+        row = {
+            "id": sid,
+            "last": info.get("mtime") or "",
+            "picks": int(info.get("pickup_total") or 0),
+            "sold": int(info.get("sold") or 0),
+            "value": round(float(info.get("pickup_value") or 0.0), 2),
+            "rules": int((info.get("pickit") or {}).get("n") or 0),
+            "unit": self._game().unit_short,
+        }
+        for i, r in enumerate(rows):
+            if r.get("id") == sid:
+                # A read taken before prices are loaded values everything at 0.
+                # Overwriting with that wiped a session's real earnings, so the
+                # figure only moves when this read actually had prices.
+                if not info.get("priced"):
+                    row["value"] = r.get("value", row["value"])
+                if r == row:
+                    return rows                 # nothing moved: don't touch the config
+                rows[i] = row
+                break
+        else:
+            rows.append(row)
+        rows.sort(key=lambda r: r.get("id") or "")
+        rows = rows[-60:]                       # a couple of months of botting
+        allsess[self._game().id] = rows
+        self.cfg["bot_sessions"] = allsess
+        save_config(self.cfg)
+        return rows
+
     def bot_log_info(self):
         """What the bot ITSELF says it did — the other half of every claim here.
 
@@ -3420,6 +3471,10 @@ class AppApi:
         # instead of a wall of text. Both come from caches that are already warm;
         # a name we have never priced simply has neither.
         icons, values = self._pickup_lookup()
+        # Whether prices resolved AT ALL. The lookup reads a cache that is empty
+        # until the Economy tab (or a generate) has warmed it, so a read can
+        # legitimately produce a value of 0 for a session that earned plenty.
+        info["priced"] = bool(values)
         # Sorted by what the pickups were WORTH, not by how many there were.
         # Counting put ten Portal Scrolls and four alteration orbs — all priced
         # at nothing — above the single Stormbind that carried 124 of the run's
@@ -3456,6 +3511,14 @@ class AppApi:
             info["drift"] = "ok"
         else:
             info["drift"] = "stale"
+
+        # Per-session history + the career total. The log only ever describes the
+        # CURRENT session, so without this every previous session's earnings are
+        # lost the moment the bot restarts.
+        sessions = self._record_bot_session(info)
+        info["sessions"] = list(reversed(sessions))       # newest first for the UI
+        info["sessions_value"] = round(sum(float(r.get("value") or 0) for r in sessions), 2)
+        info["sessions_picks"] = sum(int(r.get("picks") or 0) for r in sessions)
         return info
 
     def maps_folder(self):

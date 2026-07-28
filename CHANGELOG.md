@@ -6,6 +6,27 @@ download lives.
 
 ---
 
+## [v4.53.0] — 2026-07-28 — Every session, and what each one earned
+
+- **Bot Activity now keeps a per-session history.** The bot overwrites
+  `lastrun.log` every time it starts, so what the previous session earned was
+  gone the moment the next one began — the tab could only ever describe the
+  session running now. Each session is snapshotted under its start timestamp
+  and updated in place while it grows, giving a table of every session (items,
+  sold, earned) and a career total beside the current one.
+- **A read taken before prices load can no longer erase what a session
+  earned.** The price lookup reads a cache that is empty until the Economy tab
+  or a generate has warmed it, so an early read values every pickup at zero —
+  and writing that over an already-recorded session wiped the figure. Seen
+  live: a session recorded at 2.0c came back as 0.0c after one cold read. The
+  earnings figure now only moves when the read actually had prices.
+- The history is per game (the two are different bot installs), capped at 60
+  sessions so it cannot grow the config without bound, and an unchanged session
+  does not rewrite the config on every visit to the tab.
+- Honest about its limit, in the tab itself: a session is only captured while
+  the app can still see it. If the app is closed for a whole session, that one
+  cannot be recovered — the bot has already overwritten the file.
+
 ## [v4.52.0] — 2026-07-28 — Bot Activity gets its own tab, and concurrent writes stop failing
 
 ### Bot Activity
