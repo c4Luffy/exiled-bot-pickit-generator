@@ -6,6 +6,27 @@ download lives.
 
 ---
 
+## [v4.48.2] — 2026-07-28 — The 7-day column shows the seven-day change
+
+- **"7d Δ" was showing something other than what it says.** The column's tooltip
+  reads *"7-day trend and total change (poe.ninja)"*, but for currency, fragments,
+  scarabs and every other exchange category it showed the change since **your last
+  generate** — so right after a run the whole table read a flat `0%` or `–` and
+  looked broken. poe.ninja sends the real seven-day figure for those rows too,
+  under a lowercase `sparkline` key (uniques use `sparkLine`); it was never read.
+  Now 91 of 100 currency rows carry a genuine move, verified line-for-line against
+  the raw API response. Uniques are unchanged — they already used it. The existing
+  ±500% implausible-swing guard still applies.
+- **The map-runner's backups rotate.** Every PoE 1 run copied the previous runner
+  file into `backups/` and never pruned it, so the folder grew by one file per run.
+  It now honours `backup_count` like the pickit's own backups, and the rotation is
+  anchored to its own filenames so it can never delete a pickit backup.
+- **A test now rejects invisible control characters in source.** This is the one
+  corruption every other gate misses: `ruff` parses it, `node --check` parses it,
+  `grep` prints the line as if it were fine, and the editor shows nothing. A
+  scripted edit turned `backslash-b` into a literal backspace (0x08) inside a regex during
+  this cycle — the pattern silently matched nothing while looking perfect.
+
 ## [v4.48.1] — 2026-07-27 — No "less than" on [MapTier], and the bot's own priority rules
 
 - **A tier block no longer uses `<=` on `[MapTier]`.** The map runner's own

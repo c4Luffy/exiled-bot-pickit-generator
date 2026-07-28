@@ -447,9 +447,17 @@ class AppApi:
                         img = it.get("image") or ""
                         if img and img.startswith("/"):
                             img = "https://web.poecdn.com" + img
+                        # poe.ninja sends a real 7-day change for exchange rows
+                        # too, under a lowercase "sparkline" (uniques use
+                        # "sparkLine"). It was never read, so the column headed
+                        # "7-day trend (poe.ninja)" actually showed change since
+                        # YOUR last generate — which reads as a flat 0% for
+                        # everything right after a run.
+                        sp = line.get("sparkline") or line.get("sparkLine")
                         items.append({"name": nm, "base": "", "ex": round(ev, 2),
                                       "enabled": cat_states.get(nm, {}).get("enabled", True),
-                                      "icon": img, "chg": _chg(nm, ev)})
+                                      "icon": img, "chg": _chg(nm, ev, sp),
+                                      "spark": _spark(sp)})
                 if key == "tablets":
                     # Type order matches poe.ninja's own row order; rarity order
                     # is always Normal, Magic, Rare within a type — a value sort
@@ -3077,8 +3085,20 @@ class AppApi:
             if os.path.isfile(dst):                      # keep the previous one
                 bdir = os.path.join(OUTPUT_DIR, "backups")
                 os.makedirs(bdir, exist_ok=True)
+                stem = name[:-4]
                 shutil.copy2(dst, os.path.join(
-                    bdir, f"{name[:-4]}-{time.strftime('%Y%m%d-%H%M%S')}.ipd"))
+                    bdir, f"{stem}-{time.strftime('%Y%m%d-%H%M%S')}.ipd"))
+                # Rotate like the pickit's own backups do. Without this the
+                # runner's copies piled up in that folder forever, one per run.
+                nkeep = int(self.cfg.get("backup_count", 5) or 0)
+                if nkeep > 0:
+                    old_files = sorted(f for f in os.listdir(bdir)
+                                       if _is_backup_name(stem, f))
+                    for f in old_files[:-nkeep]:
+                        try:
+                            os.remove(os.path.join(bdir, f))
+                        except OSError:
+                            pass
             shutil.copy2(local, dst + ".tmp")
             os.replace(dst + ".tmp", dst)
             self._log(f"✓ Map runner copied to {folder}")

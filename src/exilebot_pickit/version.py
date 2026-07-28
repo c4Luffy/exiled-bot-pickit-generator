@@ -1,10 +1,17 @@
 """Single source of truth for the app version."""
-VERSION = "4.48.1"
+VERSION = "4.48.2"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• The Economy "7d Δ" column finally shows the seven-day change it promises. Its own tooltip says "7-day trend and total change (poe.ninja)", but for currency, fragments, scarabs and every other exchange category it was showing the change since YOUR last generate — which reads as a flat 0% for the whole table right after a run. poe.ninja sends the real figure for those rows too, under a lowercase "sparkline" key (uniques use "sparkLine"), and it was simply never read. 91 of 100 currency rows now carry a real move, cross-checked against the raw API. Top movers gets the same data.
+
+• The map-runner's backups rotate. Every Path of Exile 1 run kept a copy of the previous runner file and never pruned them, so they piled up one per run beside the pickit backups. They now honour your backup count, and the rotation only ever touches its own files.
+
+• A new test rejects invisible control characters in source. That is the one corruption every other gate misses: a scripted edit once turned backslash-b into a literal backspace inside a regex, so it silently matched nothing while looking perfect in the editor, in grep and to the linter.
+
+Also in 4.48.1:
 • Map rules stop using "less than" on [MapTier]. The map runner's own documentation warns that a < or <= on [MapTier] hits a bot bug unless it is paired with a magic >= "66" — so a tier block like T11-T13 was written as a range the bot may mishandle. It now writes one == rule per tier, and the open-ended >= for a run that reaches the top. No magic number, no bug to trip over.
 
 • The generated map runner carries Exiled Bot's own priority list and its two gotchas: upgrading only happens on a map the bot has actually selected to farm (and only once it holds minimum_map_number_to_upgrade_tier of them), and marking a map for BOTH upgrading and running means it gets run. It also writes the optional UpgradeToRare and UpgradeQuality lines commented, ready to switch on.
