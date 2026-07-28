@@ -6,6 +6,38 @@ download lives.
 
 ---
 
+## [v4.49.0] — 2026-07-28 — What your bot actually did, and 850 rules that could never match
+
+- **History now reads Exiled Bot's own log.** Everything this app reported until
+  now was about what it *wrote*. The bot keeps `Log/lastrun.log`, and two lines
+  in it are the only evidence any of it reached the game:
+  `Loaded 3444 pickit rules from poe1_pickit.ipd` and `Picking item: ...`.
+  The rule count the bot reports is **exactly** this app's "active rules"
+  figure — verified on a real install, where a regenerate from 3452 to 3444
+  showed up in the log as precisely that switch. That makes the drift check
+  exact rather than a guess: if the bot last loaded a different number than you
+  last wrote, it is still running the older pickit and the card says so. It also
+  confirms the map runner was loaded, lists what was picked up and sold, and
+  needs no setup — the log is found from the bot folder you already set. It is
+  read-only and best-effort: no bot, no log, or an unreadable log hides the card
+  rather than raising an error.
+- **850 cluster-jewel rows were being written as rules that could never match.**
+  poe.ninja prices cluster jewels by their **enchantment**, so a row is named
+  *"Minions deal 10% increased Damage"* while the item is a plain
+  `Large Cluster Jewel`. Those sentences went straight into `[Type]`, which is
+  not an item type — 41 dead rules in a shipped pickit, the same silent failure
+  the pre-3.28 map bases had. Rules now name the real base.
+  The base alone cannot carry the decision either: in a live league the 425
+  Large variants run from 1c to 1289c with a **median of 1c**, and Exiled Bot
+  has no condition that can read an enchantment — so a rule naming the base
+  picks up all of them. Each base is therefore priced at the **median** of its
+  variants, what a random drop is actually worth, which leaves it commented out
+  below any real floor with the reason written beside it, rather than silently
+  dropped or silently dead. The best roll is still disclosed in the comment.
+- A new test rejects any rule whose `[Type]` is obviously mod text rather than
+  an item name — the check that would have caught this on the day it was
+  written, without anyone knowing that category was special.
+
 ## [v4.48.5] — 2026-07-28 — Loading and empty states
 
 - **Tables that are still loading show their shape instead of nothing.** Economy

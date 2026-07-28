@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.48.5/ExileBot2PickitGenerator.exe"><img alt="Download v4.48.5 for Windows" src="https://img.shields.io/badge/Download-v4.48.5-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.49.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.49.0 for Windows" src="https://img.shields.io/badge/Download-v4.49.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.48.5">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.49.0">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.48.5/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.49.0/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,9 +121,15 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.48.5
+## Current release: v4.49.0
 
-### Loading and empty states
+### What your bot actually did, and 850 rules that could never match
+
+- **History now reads Exiled Bot's own log.** Everything this app reported until now was what it *wrote*. The bot's `Log/lastrun.log` carries the only evidence it reached the game: `Loaded 3444 pickit rules from poe1_pickit.ipd` and every `Picking item:`. That count is **exactly** this app's "active rules" figure — so if the bot last loaded a different number than you last wrote, it's still running the older pickit and the card says so. It also confirms the map runner loaded, and needs no setup.
+- **850 cluster-jewel rows were written as rules that could never match.** poe.ninja prices cluster jewels by their *enchantment*, so a row reads *"Minions deal 10% increased Damage"* while the item is a plain `Large Cluster Jewel`. Those sentences went into `[Type]`, which is not an item type — 41 dead rules, the same silent failure the pre-3.28 map bases had.
+- **They're now priced honestly.** The base can't carry the decision either: 425 Large variants run 1c–1289c with a **median of 1c**, and the bot can't read an enchantment. Each base is priced at its median, so it sits commented out below any real floor with the reason beside it — not silently dropped, not silently dead.
+
+### v4.48.5 — Skeleton loading, real empty states, and stat tiles that count up
 
 - **Tables that are still loading show their shape instead of nothing.** Economy filled ~100 rows in one go, reflowing the page under your cursor; the two Maps tables just read `Loading…`. They draw skeleton rows now, so nothing jumps when the data lands. A *refresh* keeps the existing rows — swapping a readable table for grey bars is a downgrade — and a **failed** load clears the skeleton, names the error and offers Retry. A test enforces that last part: a skeleton that outlives its request is the old "Loading prices…" hang wearing a nicer coat.
 - **History has a real empty state.** `No runs yet.` in a bare table cell became an explanation of what the tab records, plus the button that gets you there.
@@ -151,14 +157,14 @@ A sweep over every tab. Everything here is additive — nothing moves or resizes
 - **The map-runner's backups rotate.** Every PoE 1 run copied the previous runner file into `backups/` and never pruned it, so the folder grew by one file per run. It now honours your backup count, anchored to its own filenames so it can never touch a pickit backup.
 - **A test rejects invisible control characters in source.** The one corruption every other gate misses: ruff parses it, `node --check` parses it, grep prints the line as if it were fine, and the editor shows nothing.
 
+<details>
+<summary><strong>Older releases</strong></summary>
+
 ### v4.48.1 — No "less than" on [MapTier], and the bot's own priority rules
 
 - **A tier block no longer uses `<=` on `[MapTier]`.** The map runner's own docs warn that "less than" on `[MapTier]` hits a bot bug unless paired with a large `>=`. Selecting T11–T13 wrote exactly that shape; it now writes one `==` per tier, keeping the open-ended `>=` for a run reaching the top.
 - **The generated runner carries the bot's priority list** (`[UpgradeMapTier] >> [IgnoreMap] >> [UpgradeToRare] >> [UpgradeToMagic] >> [RunMap]`) and its two gotchas — upgrading only happens to a map the bot has selected to farm, and marking a map for both upgrading *and* running means it gets run.
 - **The optional levers are written out, commented**: `[UpgradeToRare]` (which outranks `[UpgradeToMagic]`) and `[UpgradeQuality]`.
-
-<details>
-<summary><strong>Older releases</strong></summary>
 
 ### v4.48.0 — Map tier upgrading, and the bot's own switches checked
 
@@ -304,7 +310,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.48.5 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.48.5) · [full changelog](CHANGELOG.md)
+[Read the complete v4.49.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.49.0) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

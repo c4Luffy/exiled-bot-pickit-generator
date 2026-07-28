@@ -107,6 +107,15 @@ def _sanitize_output_base(value) -> str:
     return cleaned or "poe2_pickit"
 
 
+# Exiled Bot's own run log (Log/lastrun.log). Two lines out of ~25,000 carry
+# the evidence this app has never been able to show: which pickit the bot
+# actually LOADED and how many rules it got, and every item it picked up.
+#     2026-07-28 05:56:05 [info] -> Loaded 3444 pickit rules from poe1_pickit.ipd
+#     2026-07-28 05:44:21 [info] -> Picking item: Jeweller's Orb
+_RE_LOADED = re.compile(r"Loaded\s+(\d+)\s+(pickit|map)\s+rules?\s+from\s+(\S+\.ipd)", re.I)
+_RE_PICK = re.compile(r"Picking item:\s*(.+?)\s*$")
+
+
 # A rotated backup is "<output_base>-YYYYMMDD-HHMMSS.ipd" and NOTHING else.
 def _is_backup_name(base: str, name: str) -> bool:
     """Does `name` belong to `base`'s backup set?
@@ -3249,6 +3258,126 @@ class AppApi:
         except OSError:
             pass
         return ""
+
+    def bot_log_path(self) -> str:
+        """This install's ``Log/lastrun.log``, or "" if it can't be found.
+
+        Derived, never hardcoded: the bot folder we detect is
+        ``…/<root>/Configuration/<profile>/Pickit``, so the log lives at
+        ``…/<root>/Log/lastrun.log`` — three levels up, then down.
+        """
+        folder = (self.cfg.get("bot_folder") or "").strip()
+        if not folder:
+            try:
+                folder = (self.detect_bot_folder() or {}).get("path") or ""
+            except Exception:
+                folder = ""
+        if not folder:
+            return ""
+        profile = os.path.dirname(os.path.normpath(folder))   # …/<profile>
+        root = os.path.dirname(os.path.dirname(profile))      # …/<root>
+        log = os.path.join(root, "Log", "lastrun.log")
+        return log if os.path.isfile(log) else ""
+
+    def bot_log_info(self):
+        """What the bot ITSELF says it did — the other half of every claim here.
+
+        Until now this app could only report what it *wrote*. The bot's own log
+        records what it *loaded* and what it *picked up*, which is the only
+        evidence that any of it reached the game:
+
+            -> Loaded 3444 pickit rules from poe1_pickit.ipd
+            -> Loaded 10 map rules from poe1_pickit_maps.ipd
+            -> Picking item: Jeweller's Orb
+
+        The rule count in that first line is exactly our own "active rules"
+        figure — verified against this machine's history, where a regenerate
+        from 3452 to 3444 shows up in the log as the bot switching from one to
+        the other. That makes the drift check exact rather than a guess: if the
+        bot last loaded a different number than we last wrote, it is still
+        running the OLD pickit and has not reloaded yet.
+
+        ``lastrun.log`` is overwritten every time the bot starts, so this
+        describes the current bot session only. It is read-only and
+        best-effort — a missing or unreadable log is a blank panel, never an
+        error that blocks anything.
+        """
+        info = {"found": False, "path": "", "mtime": "", "loads": [],
+                "pickit": {}, "maps": {}, "pickups": [], "pickup_total": 0,
+                "sold": 0, "drift": "unknown", "drift_msg": "", "ours": 0,
+                "session_start": "", "lines": 0}
+        path = self.bot_log_path()
+        if not path:
+            return info
+        info["found"], info["path"] = True, path
+        try:
+            info["mtime"] = time.strftime(
+                "%Y-%m-%d %H:%M", time.localtime(os.path.getmtime(path)))
+        except OSError:
+            pass
+
+        loads, picks, sold, nlines, first_ts = [], {}, 0, 0, ""
+        # Read line by line: this file reaches 20k+ lines in a normal session
+        # and there is no reason to hold it in memory.
+        try:
+            with open(path, encoding="utf-8", errors="replace") as f:
+                for raw in f:
+                    nlines += 1
+                    if not first_ts and raw[:4].isdigit():
+                        first_ts = raw[:16]
+                    m = _RE_LOADED.search(raw)
+                    if m:
+                        loads.append({"ts": raw[:16], "n": int(m.group(1)),
+                                      "kind": m.group(2).lower(), "file": m.group(3)})
+                        continue
+                    m = _RE_PICK.search(raw)
+                    if m:
+                        picks[m.group(1).strip()] = picks.get(m.group(1).strip(), 0) + 1
+                        continue
+                    if "Selling item" in raw:
+                        sold += 1
+        except OSError as e:
+            info["drift_msg"] = f"Couldn't read the log ({e})"
+            return info
+
+        info["lines"], info["sold"], info["session_start"] = nlines, sold, first_ts
+        info["loads"] = loads[-20:]
+        info["pickups"] = sorted(({"name": k, "n": v} for k, v in picks.items()),
+                                 key=lambda r: (-r["n"], r["name"]))
+        info["pickup_total"] = sum(picks.values())
+        for ld in loads:                       # last load of each kind wins
+            info["maps" if ld["kind"] == "map" else "pickit"] = ld
+
+        # ── the drift check ──────────────────────────────────────────────
+        want_file = f"{self.cfg.get('output_base', 'poe1_pickit')}.ipd"
+        hist = (self.cfg.get("games", {}).get(self._game().id, {}) or {}).get("history") or []
+        ours = int((hist[-1] or {}).get("active") or 0) if hist else 0
+        info["ours"] = ours
+        got = info["pickit"]
+        if not got:
+            info["drift"] = "none"
+            info["drift_msg"] = ("This log has no pickit load in it — the bot "
+                                 "hasn't loaded a pickit during this session.")
+        elif got["file"] != want_file:
+            info["drift"] = "other"
+            info["drift_msg"] = (f"The bot loaded <b>{got['file']}</b>, not the "
+                                 f"<b>{want_file}</b> this app writes.")
+        elif not ours:
+            info["drift"] = "unknown"
+            info["drift_msg"] = (f"The bot loaded {got['n']:,} rules from "
+                                 f"{got['file']}. Generate once and this will "
+                                 f"also confirm it matches your latest file.")
+        elif got["n"] == ours:
+            info["drift"] = "ok"
+            info["drift_msg"] = (f"The bot is running your current pickit — it "
+                                 f"loaded all {ours:,} rules from {got['file']}.")
+        else:
+            info["drift"] = "stale"
+            info["drift_msg"] = (f"The bot last loaded <b>{got['n']:,}</b> rules, but "
+                                 f"your latest generate wrote <b>{ours:,}</b>. It is "
+                                 f"still running the older file — it picks the new "
+                                 f"one up when it next reloads the pickit.")
+        return info
 
     def maps_folder(self):
         """Where THIS install keeps Exiled Bot's map-runner configs.

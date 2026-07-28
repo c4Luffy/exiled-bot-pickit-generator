@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import datetime
 import re
+import statistics
 
 from exilebot_pickit import generator as gen
 
@@ -404,6 +405,59 @@ def _poe1_enabled_names(is_unique: bool, payload: dict, cat_states: dict) -> set
     return None
 
 
+def build_poe1_cluster_lines(payload: dict, min_exalt: float,
+                             disabled: set | None = None) -> list[str]:
+    """Cluster jewels, which cannot be matched the way every other category is.
+
+    poe.ninja keys this category by the jewel's ENCHANTMENT — a row is named
+    "Minions deal 10% increased Damage", and the item it describes is a plain
+    "Large Cluster Jewel". Feeding those names through the normal builder wrote
+    ``[Type] == "Minions deal 10% increased Damage"``, which is not an item type
+    and matched nothing: 41 dead rules in a shipped pickit, the same silent
+    failure the pre-3.28 map bases had.
+
+    The base alone cannot carry the decision either. In a live league the 425
+    Large Cluster Jewel variants run from 1c to 1289c with a **median of 1c** —
+    88% of them are worth a single chaos, and Exiled Bot has no condition that
+    can read an enchantment, so a rule naming the base picks up all of them.
+
+    So each base gets ONE rule priced at the MEDIAN of its variants, which is
+    what an unidentified drop is actually worth. Any real floor leaves that
+    below the line, so the rule is written commented-out with the reason —
+    visible, like map rules below the floor, instead of silently dropped or
+    silently dead.
+    """
+    dis = set(disabled or ())
+    rate = gen.exalted_rate(payload)
+    by_base: dict[str, list[float]] = {}
+    for line in payload.get("lines", []):
+        base = (line.get("baseType") or "").strip()
+        if not base:
+            continue
+        pv = float(line.get("primaryValue") or 0.0)
+        by_base.setdefault(base, []).append(pv * rate if rate else pv)
+    if not by_base:
+        return []
+    out = [
+        "// Cluster jewels are priced by their ENCHANTMENT, which Exiled Bot",
+        "// cannot read — it only sees the base. Each base is therefore valued at",
+        "// the MEDIAN of its variants (what a random drop is really worth), not",
+        "// at its best roll. Uncomment one to take every jewel of that base.",
+    ]
+    rows = []
+    for base, vals in by_base.items():
+        vals.sort()
+        med = statistics.median(vals)   # a true median: [1,1,15,1289] is 8, not 15
+        best = vals[-1]
+        rule = (f'[Type] == "{gen._quote_ipd(base)}" # [StashItem] == "true" '
+                f"// ExValue = {med:.2f} (median of {len(vals)}; best roll {best:.2f})")
+        keep = med >= min_exalt and base not in dis
+        rows.append((med, rule if keep else f"//{rule}"))
+    rows.sort(key=lambda r: r[0], reverse=True)
+    out.extend(rule for _, rule in rows)
+    return out
+
+
 def build_poe1_stash_lines(payload: dict, min_exalt: float,
                            disabled: set | None = None,
                            key_tag: str = "Type") -> list[str]:
@@ -648,6 +702,11 @@ def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
             cat_lines = build_poe1_map_lines(
                 payload, eff_min,
                 snapshot.get("poe1_map_tiers", snapshot.get("poe1_map_tier", 16)), dis)
+        elif key == "cluster_jewels":
+            # poe.ninja names these rows by enchantment, not by item, so the
+            # normal name-keyed builder wrote rules matching nothing.
+            dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
+            cat_lines = build_poe1_cluster_lines(payload, eff_min, dis)
         elif is_unique:
             dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
             # Stash-endpoint category. Real uniques (unique_* keys) match by

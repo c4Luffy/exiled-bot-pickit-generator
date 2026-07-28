@@ -1636,6 +1636,25 @@
     <div class="stat"><b id="htAvg">–</b><span>average rules</span></div>
     <div class="stat"><b id="htPeak">–</b><em id="htPeakD" class="tdelta" style="display:none"></em><span>peak rules</span></div>
   </div>
+
+  <!-- Everything else on this page is what WE wrote. This card is what the bot
+       itself says it loaded and picked up — read from its own Log/lastrun.log. -->
+  <div class="card" id="botLogCard" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 10px">
+      <h2 style="margin:0">🤖 What your bot actually did</h2>
+      <button class="ghost mini" id="botLogRefresh" title="Re-read the bot's log">⟳ Re-read</button>
+    </div>
+    <div id="botLogDrift"></div>
+    <div class="stats" style="grid-template-columns:repeat(4,1fr);margin:12px 0 0">
+      <div class="stat"><b id="blRules">–</b><span>rules the bot loaded</span></div>
+      <div class="stat"><b id="blMaps">–</b><span>map rules loaded</span></div>
+      <div class="stat"><b id="blPicks">–</b><span>items picked up</span></div>
+      <div class="stat"><b id="blSold">–</b><span>items sold</span></div>
+    </div>
+    <div id="botLogPicks" style="margin-top:12px"></div>
+    <div class="hint" style="margin:10px 0 0" id="botLogMeta"></div>
+  </div>
+
   <div class="card"><h2>📈 Active rules per run</h2>
     <div style="position:relative">
       <svg id="histChart" width="100%" height="180" style="display:block"></svg>
@@ -2216,7 +2235,7 @@ function openPage(p){
     $("ickInput").focus();
     ickAutoPaste();                     // Ctrl+C in game, click the tab — that's it
   }
-  if(p==="hist")loadHistory();
+  if(p==="hist"){loadHistory();loadBotLog();}
   if(p==="mypk")mypkStatus();
   if(p==="set"){renderSetNav();loadBackups();loadBotConn();}
   if(p==="dbg"){loadDebug();_errCount=0;bumpErrBadge(0);}   // opened it — badge acknowledged
@@ -4325,6 +4344,54 @@ function relTs(ts){
   if(m<1440)return Math.floor(m/60)+" h ago";
   if(m<10080)return Math.floor(m/1440)+" d ago";
   return esc(String(ts).split(" ")[0]);}
+/* ── what the bot itself did ─────────────────────────────────────────────
+   Every other number on this page is something this app WROTE. These come out
+   of Exiled Bot's own Log/lastrun.log, so they are the only evidence that any
+   of it reached the game. The rule count the bot reports is exactly our
+   "active rules" figure, which makes the drift check exact: a different number
+   means the bot is still running an older pickit.
+
+   Best-effort by design. No bot folder, no log, an unreadable log — the card
+   hides itself rather than turning a missing file into an error. */
+async function loadBotLog(){
+  const card=$("botLogCard");
+  let i;
+  try{ i=await api().bot_log_info(); }
+  catch(_){ card.style.display="none"; return; }
+  if(!i||!i.found){ card.style.display="none"; return; }
+  card.style.display="";
+
+  const tone={ok:"var(--ok)",stale:"var(--warn)",other:"var(--warn)",
+              none:"var(--dim)",unknown:"var(--dim)"}[i.drift]||"var(--dim)";
+  const mark={ok:"\u2713",stale:"\u26a0",other:"\u26a0"}[i.drift]||"\u2139";
+  $("botLogDrift").innerHTML=
+    '<div class="hint" style="margin:0;display:flex;gap:9px;align-items:flex-start;font-size:13px">'
+    +'<b style="color:'+tone+'">'+mark+'</b><span>'+(i.drift_msg||"")+'</span></div>';
+
+  const pk=i.pickit||{}, mp=i.maps||{};
+  countUp($("blRules"),pk.n||0);
+  countUp($("blMaps"),mp.n||0);
+  countUp($("blPicks"),i.pickup_total||0);
+  countUp($("blSold"),i.sold||0);
+
+  const rows=(i.pickups||[]).slice(0,12);
+  $("botLogPicks").innerHTML=rows.length
+    ? '<table class="ltbl" style="width:100%"><thead><tr><th style="text-align:left">Item the bot took</th>'
+      +'<th style="text-align:right">Times</th></tr></thead><tbody>'
+      +rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td style="text-align:right">'
+        +r.n.toLocaleString()+'</td></tr>').join("")
+      +'</tbody></table>'
+      +((i.pickups.length>rows.length)
+        ? '<div class="hint" style="margin:8px 0 0">+'+(i.pickups.length-rows.length)
+          +' more distinct item(s).</div>' : "")
+    : emptyState("\ud83d\udce6","Nothing picked up yet this session",
+        "The bot has loaded your pickit but hasn't taken anything since it started.");
+
+  $("botLogMeta").innerHTML="Read from <code>"+esc(i.path)+"</code> \u00b7 last written "
+    +esc(i.mtime||"?")+" \u00b7 "+(i.lines||0).toLocaleString()+" lines. The bot overwrites "
+    +"this log every time it starts, so it covers the current session only.";
+}
+$("botLogRefresh").onclick=()=>{toast("Re-reading the bot's log\u2026");loadBotLog();};
 async function loadHistory(){
   const h=await api().history();
   const vals=h.map(r=>r.active||0);
