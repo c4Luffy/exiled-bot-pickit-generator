@@ -4364,9 +4364,27 @@ async function loadBotLog(){
   const tone={ok:"var(--ok)",stale:"var(--warn)",other:"var(--warn)",
               none:"var(--dim)",unknown:"var(--dim)"}[i.drift]||"var(--dim)";
   const mark={ok:"\u2713",stale:"\u26a0",other:"\u26a0"}[i.drift]||"\u2139";
+  // Built HERE, not in Python: these numbers sit directly above the tiles, and
+  // the tiles format with the browser's own locale. Building the sentence
+  // server-side put a comma ("3,444") next to a tile reading "3 444".
+  const n=v=>Number(v||0).toLocaleString();
+  const gotN=(i.pickit&&i.pickit.n)||0, gotF=esc((i.pickit&&i.pickit.file)||"");
+  const msg=i.drift_msg?esc(i.drift_msg):({
+    none:"This log has no pickit load in it — the bot hasn't loaded a pickit "
+        +"during this session.",
+    other:"The bot loaded <b>"+gotF+"</b>, not the <b>"+esc(i.want_file||"")
+        +"</b> this app writes.",
+    unknown:"The bot loaded "+n(gotN)+" rules from "+gotF+". Generate once and this "
+        +"will also confirm it matches your latest file.",
+    ok:"The bot is running your current pickit — it loaded all "+n(i.ours)
+        +" rules from "+gotF+".",
+    stale:"The bot last loaded <b>"+n(gotN)+"</b> rules, but your latest generate "
+        +"wrote <b>"+n(i.ours)+"</b>. It is still running the older file — it "
+        +"picks the new one up when it next reloads the pickit."
+  }[i.drift]||"");
   $("botLogDrift").innerHTML=
     '<div class="hint" style="margin:0;display:flex;gap:9px;align-items:flex-start;font-size:13px">'
-    +'<b style="color:'+tone+'">'+mark+'</b><span>'+(i.drift_msg||"")+'</span></div>';
+    +'<b style="color:'+tone+'">'+mark+'</b><span>'+msg+'</span></div>';
 
   const pk=i.pickit||{}, mp=i.maps||{};
   countUp($("blRules"),pk.n||0);

@@ -6,6 +6,16 @@ download lives.
 
 ---
 
+## [v4.49.1] — 2026-07-28 — One number, one format
+
+- **The bot-activity card printed the same figure two ways.** Its headline read
+  "it loaded all **3,444** rules" while the tile directly beneath it read
+  "**3 444**" — the sentence was built in Python with `"{:,}"`, the tiles by the
+  browser with `toLocaleString()`, which on this machine's locale is a space.
+  The verdict and the raw numbers now cross the bridge and the sentence is built
+  in the UI beside the tiles, so the two can never disagree again whatever the
+  user's regional settings are.
+
 ## [v4.49.0] — 2026-07-28 — What your bot actually did, and 850 rules that could never match
 
 - **History now reads Exiled Bot's own log.** Everything this app reported until

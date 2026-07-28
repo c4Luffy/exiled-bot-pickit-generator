@@ -3353,30 +3353,22 @@ class AppApi:
         hist = (self.cfg.get("games", {}).get(self._game().id, {}) or {}).get("history") or []
         ours = int((hist[-1] or {}).get("active") or 0) if hist else 0
         info["ours"] = ours
+        # Only the VERDICT and the raw numbers cross the bridge. The sentence is
+        # built in the UI, because thousands separators must match the tiles
+        # sitting right under it — those use the browser's own locale, and
+        # Python's "{:,}" put a comma next to a tile reading "3 444".
+        info["want_file"] = want_file
         got = info["pickit"]
         if not got:
             info["drift"] = "none"
-            info["drift_msg"] = ("This log has no pickit load in it — the bot "
-                                 "hasn't loaded a pickit during this session.")
         elif got["file"] != want_file:
             info["drift"] = "other"
-            info["drift_msg"] = (f"The bot loaded <b>{got['file']}</b>, not the "
-                                 f"<b>{want_file}</b> this app writes.")
         elif not ours:
             info["drift"] = "unknown"
-            info["drift_msg"] = (f"The bot loaded {got['n']:,} rules from "
-                                 f"{got['file']}. Generate once and this will "
-                                 f"also confirm it matches your latest file.")
         elif got["n"] == ours:
             info["drift"] = "ok"
-            info["drift_msg"] = (f"The bot is running your current pickit — it "
-                                 f"loaded all {ours:,} rules from {got['file']}.")
         else:
             info["drift"] = "stale"
-            info["drift_msg"] = (f"The bot last loaded <b>{got['n']:,}</b> rules, but "
-                                 f"your latest generate wrote <b>{ours:,}</b>. It is "
-                                 f"still running the older file — it picks the new "
-                                 f"one up when it next reloads the pickit.")
         return info
 
     def maps_folder(self):

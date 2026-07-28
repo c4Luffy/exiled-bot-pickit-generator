@@ -1,5 +1,5 @@
 """Single source of truth for the app version."""
-VERSION = "4.49.0"
+VERSION = "4.49.1"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
@@ -12,6 +12,9 @@ HIGHLIGHTS = """\
 • The stat tiles count up instead of snapping from a dash to 2,214 — the number reads as measured rather than pasted in. It honours the reduce-motion setting the app started respecting last release, and only the seven tiles that hold actual numbers animate: file size and validation are left alone.
 
 Also in 4.48.4:
+• The bot-activity card printed the same number two ways. Its headline said the bot loaded "3,444 rules" while the tile directly beneath it read "3 444" — the sentence was formatted in Python with a comma, the tiles by the browser using your machine's own locale. The sentence is now built in the same place as the tiles, so both always agree however your Windows is set.
+
+Also in 4.49.0:
 • HISTORY NOW SHOWS WHAT YOUR BOT ACTUALLY DID. Everything this app reported until now was about what it WROTE. Exiled Bot keeps its own Log/lastrun.log, and two lines in it are the only evidence any of this reached the game: which pickit it loaded and how many rules it got, and every item it picked up. The rule count it reports is exactly this app's "active rules" figure, so the check is exact rather than a guess — if the bot last loaded a different number than you last wrote, it is still running the OLD pickit and the card says so. It also confirms your map runner was loaded, lists what got picked up, and needs no setup: it finds the log from the bot folder you already set.
 
 • 850 cluster-jewel rows were being written as rules that could never match. poe.ninja prices cluster jewels by their ENCHANTMENT, so a row is named "Minions deal 10% increased Damage" while the item is a plain Large Cluster Jewel. Those sentences went straight into [Type], which is not an item type — 41 dead rules in a shipped pickit, the same silent failure the pre-3.28 map bases had. They now name the real base. The base alone cannot carry the decision either: 425 Large variants run from 1c to 1289c with a MEDIAN of 1c, and the bot cannot read an enchantment, so a base rule would take all of them. Each base is priced at its median — what a random drop is really worth — which leaves it commented out below any real floor, with the reason written next to it instead of silently dropped.

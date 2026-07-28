@@ -68,20 +68,23 @@ def test_counts_pickups_and_sales(tmp_path):
 def test_drift_ok_when_the_counts_agree(tmp_path):
     i = _Api(_bot(tmp_path), active=3444).bot_log_info()
     assert i["drift"] == "ok"
-    assert "3,444" in i["drift_msg"]
+    assert i["ours"] == 3444 and i["pickit"]["n"] == 3444
 
 
 def test_drift_stale_when_we_wrote_a_different_number(tmp_path):
     """The real case: regenerate, but the bot has not reloaded yet."""
     i = _Api(_bot(tmp_path), active=3600).bot_log_info()
     assert i["drift"] == "stale"
-    assert "3,444" in i["drift_msg"] and "3,600" in i["drift_msg"]
+    # the raw numbers cross the bridge; the UI formats them so the thousands
+    # separator matches the tiles sitting right under the sentence
+    assert i["pickit"]["n"] == 3444 and i["ours"] == 3600
 
 
 def test_drift_other_when_the_bot_loads_someone_elses_file(tmp_path):
     i = _Api(_bot(tmp_path), active=3444, output_base="my_pickit").bot_log_info()
     assert i["drift"] == "other"
-    assert "poe1_pickit.ipd" in i["drift_msg"] and "my_pickit.ipd" in i["drift_msg"]
+    assert i["pickit"]["file"] == "poe1_pickit.ipd"
+    assert i["want_file"] == "my_pickit.ipd"
 
 
 def test_drift_unknown_before_the_first_generate(tmp_path):
