@@ -1225,7 +1225,7 @@
         <span class="hint">Output</span>
         <button class="ghost mini" id="openIpd" title="The file your bot reads">.ipd</button> <button class="ghost mini g2only" id="openFlt" title="In-game filter for manual play — don't feed it to the bot">.filter</button> <button class="ghost mini" id="open" title="All generated files + backups">📂 Output folder</button>
         <span class="sp"></span>
-        <span class="hint">Generate <span class="kbd">Ctrl</span>+<span class="kbd">G</span></span>
+        <span class="hint" title="Ctrl+G generate · Ctrl+R refresh leagues · Ctrl+F search this tab (Esc clears it) · Ctrl+1-9 and Ctrl+0 switch tabs">Generate <span class="kbd">Ctrl</span>+<span class="kbd">G</span> · <a href="#" id="kbdHelp" style="color:var(--dim)">all shortcuts</a></span>
       </div>
     </section>
 
@@ -1396,12 +1396,15 @@
   </div>
 
   <div class="card" style="margin-top:14px">
-    <h2>Your map runner (not written by this app)</h2>
+    <h2>Your map runner</h2>
     <div class="hint" style="margin:0 0 10px">
-      Which maps the bot <b>runs</b>, rerolls or skips is a different file: Exiled Bot&rsquo;s own
-      <code>Maps/*.ipd</code>, using <span class="kbd">RunMap</span>, <span class="kbd">IgnoreMap</span> and
-      <span class="kbd">RerollMods</span>. This app only decides what gets <b>picked up off the ground</b>, so it
-      never touches those files. Detected from your bot folder, so it points at your own install:
+      Which maps the bot <b>runs</b>, rerolls or skips is a second file, separate from the pickit:
+      Exiled Bot&rsquo;s own <code>Maps/*.ipd</code>, using <span class="kbd">RunMap</span>,
+      <span class="kbd">IgnoreMap</span>, <span class="kbd">UpgradeMapTier</span> and
+      <span class="kbd">RerollMods</span>. Every Path of Exile&nbsp;1 generate writes yours from the tiers
+      above and copies it here. Your bot&rsquo;s own <code>default.ipd</code> is never overwritten &mdash; the
+      app writes its own profile file beside it. Detected from your bot folder, so it points at your own
+      install:
     </div>
     <div class="ctl" style="align-items:center;gap:10px;flex-wrap:wrap">
       <code id="mapFolderPath" style="flex:1;min-width:220px;word-break:break-all">—</code>
@@ -1409,6 +1412,11 @@
     </div>
     <div class="hint" style="margin:8px 0 0" id="mapFolderFiles"></div>
     <div id="mapBotFlags" style="margin-top:12px"></div>
+    <div class="ctl" id="mapFixRow" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px">
+      <button class="ghost mini" id="mapFixIni">🔧 Set these for me</button>
+      <span class="hint" id="mapFixMsg" style="margin:0">Edits only those keys in the bot&rsquo;s
+        <code>config.ini</code>, after backing it up. Close the bot first.</span>
+    </div>
   </div>
 </div>
 
@@ -2052,8 +2060,8 @@ const funit=s=>String(s).replace(/ ex\b/g," "+GAME_UNITS);
 let ecoGrpCollapsed={};        // sidebar group → collapsed? (click a header to fold it)
 const _ruleCache={};           // cache rule_for() results so hover/copy don't re-hit the bridge
 
-function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");
-  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),2200);}
+function toast(m,ms){const t=$("toast");t.textContent=m;t.classList.add("on");
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),ms||2200);}
 function logLine(m,c){
   const l=$("log"),d=document.createElement("div");
   if(!c)c=m.startsWith("✓")?"ok":m.startsWith("✗")?"err":(m.startsWith("→")||m.startsWith("✨")||m.startsWith("⬇"))?"act":"";
@@ -2262,6 +2270,11 @@ document.addEventListener("keydown",e=>{
     const cur=document.querySelector(".page.on");
     const sid=cur&&PAGE_SEARCH[cur.id.replace("p-","")];
     if(sid){e.preventDefault();const el=$(sid);el.focus();el.select();}}
+  if(e.ctrlKey&&e.key.toLowerCase()==="r"){
+    // The league button has advertised "(Ctrl+R)" all along with nothing behind
+    // it, so the key fell through to WebView2 and reloaded the whole app —
+    // losing the run summary and dropping you back on Generate. Take it.
+    e.preventDefault();refreshLeagues();}
   if(e.ctrlKey&&e.key.toLowerCase()==="c"){
     const sel=window.getSelection().toString();
     if(sel){e.preventDefault();copyText(sel).then(ok=>toast(ok?"Copied "+sel.split("\\n").length+" line(s)":"Clipboard blocked"));}
@@ -2535,6 +2548,9 @@ async function loadMapsInfo(){
         html+=`<div class="hint" style="margin:0">Needs at least <b>${esc(b.min_to_upgrade)}</b> maps of a tier before it upgrades them.</div>`;
     }
     $("mapBotFlags").innerHTML=html;
+    // Offer the one-click fix only when there is something to fix — an always-on
+    // button that reports "already correct" is just another thing to read.
+    $("mapFixRow").style.display=(f.path&&html.indexOf("\u26a0")>=0)?"flex":"none";
     $("mapPreview").innerHTML=(i.lines&&i.lines.length)
       ? i.lines.map(mapLineHtml).join("")
       : `<span class="hint">${esc(i.error||"Prices aren't loaded yet — open Economy once.")}</span>`;
@@ -2555,6 +2571,17 @@ async function loadMapsInfo(){
   finally{ _mapsBusy=false; }
 }
 if($("mapFolderOpen")){
+$("mapFixIni").onclick=async()=>{
+  const b=$("mapFixIni"), m=$("mapFixMsg"), was=b.textContent;
+  b.disabled=true; b.textContent="Setting\u2026";
+  try{
+    const r=await api().fix_bot_ini();
+    if(r&&r.error){ m.innerHTML='<b style="color:var(--warn)">'+esc(r.error)+'</b>'; }
+    else{ m.innerHTML='<b style="color:var(--ok)">\u2713 '+esc((r&&r.msg)||"Done.")+'</b>'; }
+  }catch(e){ m.innerHTML='<b style="color:var(--warn)">'+esc(String(e))+'</b>'; }
+  b.disabled=false; b.textContent=was;
+  loadMapsInfo();
+};
   $("mapFolderOpen").onclick=async()=>{const r=await api().open_maps_folder();
     if(r&&r.error)toast("✗ "+r.error);};
 }
@@ -3302,7 +3329,17 @@ function ecoPin(cat,it,e,tr){
 }
 ecoHover.addEventListener("click",e=>{if(e.target.closest(".hc-close"))ecoUnpin();});
 document.addEventListener("mousedown",e=>{if(ecoPinned&&!ecoHover.contains(e.target))ecoUnpin();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&ecoPinned)ecoUnpin();});
+document.addEventListener("keydown",e=>{
+  // Escape clears the search box you are actually typing in, before anything
+  // else claims the key. Ctrl+F focuses one of six of them and there was no way
+  // to empty one again except selecting the text by hand.
+  const a=document.activeElement;
+  if(e.key==="Escape"&&a&&a.tagName==="INPUT"&&Object.values(PAGE_SEARCH).includes(a.id)&&a.value){
+    e.preventDefault();e.stopPropagation();a.value="";
+    a.dispatchEvent(new Event("input",{bubbles:true}));   // re-run that tab's filter
+    return;
+  }
+  if(e.key==="Escape"&&ecoPinned)ecoUnpin();});
 function ecoHoverShow(cat,it,e,tr){
   clearTimeout(ecoHoverTimer);
   ecoOpen=true;ecoHoverRow=tr||null;
@@ -4541,6 +4578,11 @@ async function refreshLeagues(){
   const sel=$("league"),cur=sel.value;sel.innerHTML="";
   for(const l of ls){const o=document.createElement("option");o.value=l.name;o.textContent=l.display;sel.appendChild(o);}
   if(cur)sel.value=cur;updMktLeague();toast("League list refreshed");}
+$("kbdHelp").onclick=e=>{
+  e.preventDefault();
+  toast("Ctrl+G generate \u00b7 Ctrl+R refresh leagues \u00b7 Ctrl+F search this tab "+
+        "(Esc clears) \u00b7 Ctrl+1\u20139 / Ctrl+0 switch tabs",6000);
+};
 $("leagueRefresh").onclick=refreshLeagues;
 $("mktRefresh").onclick=refreshLeagues;
 // mirror the picked league into the market strip

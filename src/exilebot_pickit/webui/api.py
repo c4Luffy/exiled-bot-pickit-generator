@@ -3127,6 +3127,113 @@ class AppApi:
             pass
         return ""
 
+    def fix_bot_ini(self):
+        """Set the two config.ini keys the Maps page checks, on request.
+
+        Writing a correct map runner is only half the job: the bot ignores it
+        unless ``map_profile`` names it, and it never upgrades a tier unless
+        ``enable_map_tier_upgrading`` is true (it ships false). The page could
+        already SAY so, which still left the user hand-editing an INI inside
+        their bot install to finish a job this app started.
+
+        This is somebody else's config file, so it is edited the careful way:
+
+        * The file is read and written as latin-1, which round-trips every byte
+          1:1. The readers elsewhere use ``errors="replace"``, which is fine for
+          looking but would turn any non-UTF-8 byte into U+FFFD on the way back
+          out — silent corruption of a line we never meant to touch.
+        * Only these two keys are rewritten, in place, keeping each line's own
+          ending. Comments, ordering, unknown keys and unknown sections survive
+          exactly as they were.
+        * A missing key is appended under its real section (the bot reads these
+          per-section), and the section itself is created only if absent.
+        * The original is backed up next to itself first, and the new file is
+          swapped in atomically.
+
+        Never runs on its own — the Maps page calls it from a button.
+        """
+        folder = (self.maps_folder() or {}).get("path") or ""
+        if not folder:
+            return {"error": "Couldn't find your Exiled Bot folder — set it in Settings."}
+        ini = os.path.join(os.path.dirname(folder), "config.ini")
+        if not os.path.isfile(ini):
+            return {"error": f"No config.ini in {os.path.dirname(folder)}"}
+
+        want = {                                  # key -> (value, section)
+            "map_profile": (f"{self.cfg.get('output_base', 'poe1_pickit')}_maps", "profile"),
+            "enable_map_tier_upgrading": ("true", "stashing"),
+        }
+        try:
+            with open(ini, "rb") as f:
+                raw = f.read()
+        except OSError as e:
+            return {"error": f"Couldn't read config.ini ({e})"}
+
+        text = raw.decode("latin-1")
+        lines = text.splitlines(keepends=True)
+        nl = "\r\n" if "\r\n" in text else "\n"
+        changed, seen = [], set()
+        # An existing key is rewritten wherever it already sits — its section is
+        # deliberately not checked here. If someone's file has map_profile under
+        # an unexpected heading, that is still the line their bot reads, and
+        # adding a second one elsewhere would leave two answers in the file.
+        # The section only decides where a MISSING key gets created (below).
+        for i, raw_line in enumerate(lines):
+            body = raw_line.rstrip("\r\n")
+            end = raw_line[len(body):] or nl
+            stripped = body.strip()
+            if stripped.startswith("[") and stripped.endswith("]"):
+                continue
+            if stripped.startswith((";", "#")) or "=" not in stripped:
+                continue
+            key = stripped.split("=", 1)[0].strip().lower()
+            if key not in want or key in seen:
+                continue
+            seen.add(key)
+            value, _ = want[key]
+            if stripped.split("=", 1)[1].strip() == value:
+                continue
+            lines[i] = f"{key}={value}{end}"
+            changed.append(f"{key}={value}")
+
+        for key, (value, want_section) in want.items():
+            if key in seen:
+                continue
+            at, here = None, ""                    # end of that section's block
+            for i, raw_line in enumerate(lines):
+                stripped = raw_line.strip()
+                if stripped.startswith("[") and stripped.endswith("]"):
+                    if here == want_section:
+                        break
+                    here = stripped[1:-1].strip().lower()
+                if here == want_section:
+                    at = i + 1
+            if at is None:                         # no such section: make one
+                if lines and not lines[-1].endswith(("\n", "\r")):
+                    lines[-1] += nl
+                lines.extend([nl, f"[{want_section}]{nl}"])
+                at = len(lines)
+            while at > 0 and not lines[at - 1].strip():
+                at -= 1                            # keep it with its block, not
+                #                                    orphaned against the next [section]
+            lines.insert(at, f"{key}={value}{nl}")
+            changed.append(f"{key}={value}")
+
+        if not changed:
+            return {"ok": True, "changed": [], "ini": ini,
+                    "msg": "Both settings were already correct."}
+        try:
+            shutil.copy2(ini, f"{ini}.bak-{time.strftime('%Y%m%d-%H%M%S')}")
+            with open(ini + ".tmp", "wb") as f:
+                f.write("".join(lines).encode("latin-1"))
+            os.replace(ini + ".tmp", ini)
+        except OSError as e:
+            return {"error": f"Couldn't write config.ini ({e}). "
+                             f"Is the bot running? Close it and try again."}
+        self._log("✓ Bot config.ini updated: " + ", ".join(changed))
+        return {"ok": True, "changed": changed, "ini": ini,
+                "msg": "Set " + " and ".join(changed) + ". The original was backed up."}
+
     def _map_profile_name(self) -> str:
         """Which map profile the bot's config.ini currently selects."""
         folder = (self.maps_folder() or {}).get("path") or ""

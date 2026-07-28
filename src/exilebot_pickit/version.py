@@ -1,10 +1,21 @@
 """Single source of truth for the app version."""
-VERSION = "4.48.2"
+VERSION = "4.48.3"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• The Maps page can set the bot's two switches for you. It already checked map_profile and enable_map_tier_upgrading and told you what to change — which still left you hand-editing an INI inside your bot install to finish a job this app started. A "Set these for me" button now does it, and appears only when something is actually wrong. It rewrites those two keys and nothing else: your config.ini is backed up first, comments, ordering and unknown sections survive untouched, and a missing key is created under its proper section.
+
+• Ctrl+R refreshes the league list, as the button has always claimed. Nothing implemented it, so the key fell through to the webview and RELOADED the whole app — losing your run summary and dropping you back on Generate. It now does what the tooltip says.
+
+• Escape clears the search box you are typing in. Ctrl+F focuses one of six of them and there was no way to empty one again except selecting the text by hand.
+
+• The shortcuts are findable. Only Ctrl+G was ever shown anywhere; "all shortcuts" next to it now lists the rest.
+
+• The Maps page stopped calling the map runner "not written by this app". It has been writing it since 4.47.1 — the card still said it never touches those files.
+
+Also in 4.48.2:
 • The Economy "7d Δ" column finally shows the seven-day change it promises. Its own tooltip says "7-day trend and total change (poe.ninja)", but for currency, fragments, scarabs and every other exchange category it was showing the change since YOUR last generate — which reads as a flat 0% for the whole table right after a run. poe.ninja sends the real figure for those rows too, under a lowercase "sparkline" key (uniques use "sparkLine"), and it was simply never read. 91 of 100 currency rows now carry a real move, cross-checked against the raw API. Top movers gets the same data.
 
 • The map-runner's backups rotate. Every Path of Exile 1 run kept a copy of the previous runner file and never pruned them, so they piled up one per run beside the pickit backups. They now honour your backup count, and the rotation only ever touches its own files.

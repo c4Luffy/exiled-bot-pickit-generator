@@ -6,6 +6,30 @@ download lives.
 
 ---
 
+## [v4.48.3] — 2026-07-28 — Quality of life: the bot's switches, and the keyboard
+
+- **The Maps page can set the bot's two switches for you.** It already read
+  `map_profile` and `enable_map_tier_upgrading` and told you what to change,
+  which still left you hand-editing an INI inside your bot install to finish a
+  job this app started. A **Set these for me** button now does it, shown only
+  when something is actually wrong. Because it is someone else's config file, it
+  is edited the careful way: the original is backed up first, the file is read
+  and written byte-for-byte (so non-UTF-8 bytes, comments, ordering and unknown
+  sections survive exactly), only those two keys are rewritten, a missing key is
+  created under its real section, and the write is atomic. Verified against a
+  copy of a real 11 KB `config.ini`: exactly two lines changed.
+- **`Ctrl+R` refreshes the league list, as the button has always claimed.** The
+  tooltip has advertised it all along with nothing behind it, so the key fell
+  through to WebView2 and reloaded the entire app — losing the run summary and
+  dropping you back on Generate.
+- **Escape clears the search box you are typing in.** `Ctrl+F` focuses one of
+  six of them and none could be emptied except by selecting the text by hand.
+- **The shortcuts are discoverable.** Only `Ctrl+G` was shown anywhere in the
+  UI; an "all shortcuts" link beside it now lists the rest.
+- **The Maps page stopped calling the map runner "not written by this app"** —
+  it has written it since v4.47.1, while the card still said it never touches
+  those files.
+
 ## [v4.48.2] — 2026-07-28 — The 7-day column shows the seven-day change
 
 - **"7d Δ" was showing something other than what it says.** The column's tooltip
