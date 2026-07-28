@@ -61,8 +61,11 @@ def test_counts_pickups_and_sales(tmp_path):
     i = _Api(_bot(tmp_path), active=3444).bot_log_info()
     assert i["pickup_total"] == 4
     assert i["sold"] == 1
-    assert i["pickups"][0] == {"name": "Portal Scroll", "n": 2}, "sorted by count"
-    assert {"name": "Jeweller's Orb", "n": 1} in i["pickups"], "apostrophes survive"
+    top = i["pickups"][0]
+    assert (top["name"], top["n"]) == ("Portal Scroll", 2), "sorted by count"
+    # each row also carries art + a price for the UI; unknown names get neither
+    assert "icon" in top and "ex" in top
+    assert ("Jeweller's Orb", 1) in [(r["name"], r["n"]) for r in i["pickups"]],         "apostrophes survive"
 
 
 def test_drift_ok_when_the_counts_agree(tmp_path):

@@ -6,6 +6,35 @@ download lives.
 
 ---
 
+## [v4.50.0] — 2026-07-28 — Gems priced as they drop, and a pill that stops lying
+
+- **Skill gems were priced at their best variant instead of what drops.**
+  poe.ninja lists a gem once per (level, quality, corrupted) combination and
+  returns them dearest-first; the generator kept the first row. So Frostblink
+  was written as `ExValue = 7853.00` — a level-20/quality-20 **corrupted** one —
+  when the gem that falls on the ground is worth 1. Measured on a live league,
+  **666 of 810 gems** were overstated by 10x or more, and Heavy Strike of
+  Trarthus (2c on the ground) was written as 36,810c.
+  This was not cosmetic: it made the value floor useless for gems, since every
+  gem cleared any floor on the strength of a corrupted 21/23 variant it will
+  never be — so the bot picked up all 810. Gems are now priced from the row a
+  dropped gem actually matches (uncorrupted, quality 0, lowest level; 729 of 810
+  have one, the rest fall back to their cheapest variant), with the best roll
+  still disclosed in the comment. At a 20 ex floor: **68 gems, not 810**.
+- **The Economy table's "keep" pill described the wrong thing.** It reflected
+  only the manual include/exclude toggle, never the value floor — so an item
+  under your floor sat in the table in green saying "keep" while the generator
+  wrote that same rule commented out. The tab and the `.ipd` disagreed about the
+  same item, which is how someone discovers their tablets "stopped being picked
+  up". Rows that are enabled but under the floor now read **under floor**, and
+  the tooltip says the rule is written commented and how to include it.
+- **The bot-activity list is readable.** Item art, each item's current price, what
+  the whole haul was worth, and a button to expand past the top twelve.
+- **The chance outcome list labels its target.** The curated unique was already
+  gold, but in most pools it is also the dearest outcome, so the colour read as
+  "the highest number is highlighted" rather than "this is what you are chancing
+  for". It now carries a `target` tag.
+
 ## [v4.49.1] — 2026-07-28 — One number, one format
 
 - **The bot-activity card printed the same figure two ways.** Its headline read

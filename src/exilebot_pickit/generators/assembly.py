@@ -405,6 +405,69 @@ def _poe1_enabled_names(is_unique: bool, payload: dict, cat_states: dict) -> set
     return None
 
 
+def _gem_is_plain(line: dict) -> bool:
+    """Is this the row for a gem as it DROPS — uncorrupted and unqualified?
+
+    poe.ninja lists a gem once per (level, quality, corrupted) combination.
+    Only the plain row describes something that falls on the ground; the rest
+    are the result of levelling, gem-cutting or corrupting it afterwards.
+    """
+    return (not line.get("corrupted")) and int(line.get("gemQuality") or 0) == 0
+
+
+def build_poe1_gem_lines(payload: dict, min_exalt: float,
+                         disabled: set | None = None) -> list[str]:
+    """Skill gems, priced as they DROP rather than at their best variant.
+
+    Same trap as the cluster jewels: poe.ninja returns one row per gem
+    *variant* — Frostblink appears eleven times, from a level-1 plain copy at
+    1c to a level-20/quality-20 CORRUPTED one at 7853c — while an Exiled Bot
+    rule can only name the gem. The old builder kept the first row per name and
+    poe.ninja sorts them dearest-first, so every gem was priced at its best
+    possible roll: 666 of 810 gems overstated by 10x or more, one of them
+    (Heavy Strike of Trarthus, 2c on the ground) by 18,405x.
+
+    That is not a cosmetic error. It made the value floor meaningless for gems
+    — every gem cleared any floor on the strength of a corrupted 21/23 variant
+    it will never be — so the bot picked up all of them.
+
+    The rule is therefore priced from the row a dropped gem actually matches:
+    uncorrupted, quality 0, lowest level (729 of 810 gems have one). Where
+    poe.ninja lists no such row the cheapest variant stands in, which is the
+    same conservative direction. The best roll stays in the comment, because
+    the gem you *level* can still be worth chasing.
+    """
+    dis = set(disabled or ())
+    rate = gen.exalted_rate(payload)
+    by_name: dict[str, list[dict]] = {}
+    for line in payload.get("lines", []):
+        name = line.get("name")
+        if name:
+            by_name.setdefault(name, []).append(line)
+
+    def _ev(line):
+        pv = float(line.get("primaryValue") or 0.0)
+        return pv * rate if rate else pv
+
+    rows = []
+    for name, variants in by_name.items():
+        plain = [v for v in variants if _gem_is_plain(v)]
+        if plain:                       # the gem as it drops: lowest level of those
+            pick = min(plain, key=lambda v: (int(v.get("gemLevel") or 0), _ev(v)))
+        else:                           # never listed plain — stay conservative
+            pick = min(variants, key=_ev)
+        ev = _ev(pick)
+        best = max(_ev(v) for v in variants)
+        note = f" // ExValue = {ev:.2f}"
+        if best > ev:
+            note += f" (as it drops; best variant {best:.2f})"
+        rule = f'[Type] == "{gen._quote_ipd(name)}" # [StashItem] == "true"{note}'
+        keep = ev >= min_exalt and name not in dis
+        rows.append((ev, rule if keep else f"//{rule}"))
+    rows.sort(key=lambda r: r[0], reverse=True)
+    return [rule for _, rule in rows]
+
+
 def build_poe1_cluster_lines(payload: dict, min_exalt: float,
                              disabled: set | None = None) -> list[str]:
     """Cluster jewels, which cannot be matched the way every other category is.
@@ -702,6 +765,11 @@ def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
             cat_lines = build_poe1_map_lines(
                 payload, eff_min,
                 snapshot.get("poe1_map_tiers", snapshot.get("poe1_map_tier", 16)), dis)
+        elif key == "skill_gems":
+            # One poe.ninja row per level/quality/corrupted variant, but the
+            # rule can only name the gem — so price it as it drops.
+            dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
+            cat_lines = build_poe1_gem_lines(payload, eff_min, dis)
         elif key == "cluster_jewels":
             # poe.ninja names these rows by enchantment, not by item, so the
             # normal name-keyed builder wrote rules matching nothing.

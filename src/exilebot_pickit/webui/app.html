@@ -52,6 +52,10 @@
   /* the curated jackpot stands out from the rest of the pool */
   .cpool-row.tgt .n{color:var(--text);font-weight:700}
   .cpool-row.tgt .v{color:var(--gold-br);font-weight:700}
+  /* Gold marked the curated target, but in most pools that is ALSO the dearest
+     outcome — so it read as "the highest number is coloured". Name it. */
+  .cpool-row .tgt-tag{flex:0 0 auto;font-size:8px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gold);border:1px solid var(--gold-dim);border-radius:99px;padding:1px 5px}
   /* the unique you're chancing FOR — wider box (belt art is 2:1) + soft glow */
   .bc2 img.uq{width:52px;height:34px;filter:drop-shadow(0 0 7px rgba(255,150,60,.35))}
   .bc2.chance.many img.uq{width:46px;height:33px}
@@ -887,6 +891,8 @@
     font-family:Consolas,ui-monospace,monospace;font-variant-numeric:tabular-nums}
   .chg{font-family:Consolas,ui-monospace,monospace;font-variant-numeric:tabular-nums}
   .icn{border-radius:6px}
+  /* an enabled row that still will not be written: under the value floor */
+  .pilltog.under{color:var(--warn);border-color:var(--gold-dim);background:transparent}
   /* status pills: green "keep" / muted "skip" */
   .pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;color:var(--dim);
     background:var(--bg2);border:1px solid var(--border);
@@ -1645,11 +1651,12 @@
       <button class="ghost mini" id="botLogRefresh" title="Re-read the bot's log">⟳ Re-read</button>
     </div>
     <div id="botLogDrift"></div>
-    <div class="stats" style="grid-template-columns:repeat(4,1fr);margin:12px 0 0">
+    <div class="stats" style="grid-template-columns:repeat(5,1fr);margin:12px 0 0">
       <div class="stat"><b id="blRules">–</b><span>rules the bot loaded</span></div>
       <div class="stat"><b id="blMaps">–</b><span>map rules loaded</span></div>
       <div class="stat"><b id="blPicks">–</b><span>items picked up</span></div>
       <div class="stat"><b id="blSold">–</b><span>items sold</span></div>
+      <div class="stat"><b id="blWorth">–</b><span>haul value (chaos)</span></div>
     </div>
     <div id="botLogPicks" style="margin-top:12px"></div>
     <div class="hint" style="margin:10px 0 0" id="botLogMeta"></div>
@@ -3373,6 +3380,27 @@ function ecoRows(){
    totalChange out of it and binned the shape). Points are cumulative % change from
    day 0 — a trend, not a price. Thin line + emphasised endpoint, in the same colour
    as the % beside it so the pair reads as one thing. */
+/* The keep/skip pill used to show ONLY the manual toggle, so an item below the
+   value floor still read "keep" while the generator wrote it commented out —
+   the Economy tab and the .ipd disagreeing about the same item. That is how a
+   user finds out their tablets "stopped being picked up". Three states now:
+   skip (you turned it off), below floor (kept, but under your threshold), keep. */
+function belowFloor(it,cat){
+  const f=cat&&typeof cat.floor==="number"?cat.floor:0;
+  return !it.static && f>0 && Number(it.ex||0) < f;
+}
+function pillFor(it,cat){
+  if(!it.enabled)
+    return '<button type="button" class="pilltog pill" title="Click to include / exclude this rule">skip</button>';
+  if(belowFloor(it,cat)){
+    const f=cat.floor;
+    return '<button type="button" class="pilltog pill under" title="Kept, but '
+      +fmtVal(it.ex)+' is under your '+fmtVal(f)+' floor — this rule is written '
+      +'COMMENTED OUT, so the bot will not pick it up. Lower the floor on Generate '
+      +'to include it.">under floor</button>';
+  }
+  return '<button type="button" class="pilltog pill on" title="Click to include / exclude this rule">● keep</button>';
+}
 function sparkSvg(pts,dir){
   if(!pts||pts.length<2)return "";
   const W=46,H=14,P=1.5;
@@ -3620,7 +3648,7 @@ function renderEco(){
       :`<span class="valbar"><span class="fill" style="width:${barW(it.ex)}%"></span><span class="vnum">${fmtVal(it.ex)}</span></span>`;
     tr.innerHTML=`<td title="${esc(it.name)}">${nm}</td><td class="val">${valCell}</td>
       <td class="chgcell"${it.spark?' title="7-day price trend"':""}>${sparkSvg(it.spark,dir)}${chg}</td>
-      <td style="text-align:center"><button type="button" class="pilltog pill ${it.enabled?"on":""}" title="Click to include / exclude this rule">${it.enabled?"● keep":"skip"}</button></td>
+      <td style="text-align:center">${pillFor(it,cat)}</td>
       <td><button class="rowbtn">copy</button></td>`;
     tr.querySelector(".rowbtn").onclick=async e=>{e.stopPropagation();
       const rule=await ruleFor(cat,it);
@@ -3753,9 +3781,11 @@ function renderChanceGrid(){
     // rolls the whole pool — this shows what that actually means.
     const pool=b.pool||[];
     const poolHtml=pool.length?`<div class="cpool"><div class="cpool-h">Can roll into</div>`
-      +pool.map(t=>`<div class="cpool-row${t.target?" tgt":""}">`
+      +pool.map(t=>`<div class="cpool-row${t.target?" tgt":""}"${t.target
+          ?' title="This is the unique this base is chanced FOR — the rest are what else can come out"':""}>`
         +(t.icon?`<img loading="lazy" src="${t.icon}" alt="">`:`<span class="ph"></span>`)
         +`<span class="n">${esc(t.name)}</span>`
+        +(t.target?`<span class="tgt-tag">target</span>`:"")
         +`<span class="v">${px(t)}</span></div>`).join("")
       +`</div>`:"";
     d.innerHTML=`<div class="bc2-top">`
@@ -4353,6 +4383,7 @@ function relTs(ts){
 
    Best-effort by design. No bot folder, no log, an unreadable log — the card
    hides itself rather than turning a missing file into an error. */
+let botLogAll=false;   // "show all" toggle for the pickup list
 async function loadBotLog(){
   const card=$("botLogCard");
   let i;
@@ -4391,19 +4422,39 @@ async function loadBotLog(){
   countUp($("blMaps"),mp.n||0);
   countUp($("blPicks"),i.pickup_total||0);
   countUp($("blSold"),i.sold||0);
+  countUp($("blWorth"),Math.round(i.pickup_value||0));
 
-  const rows=(i.pickups||[]).slice(0,12);
-  $("botLogPicks").innerHTML=rows.length
-    ? '<table class="ltbl" style="width:100%"><thead><tr><th style="text-align:left">Item the bot took</th>'
-      +'<th style="text-align:right">Times</th></tr></thead><tbody>'
-      +rows.map(r=>'<tr><td>'+esc(r.name)+'</td><td style="text-align:right">'
-        +r.n.toLocaleString()+'</td></tr>').join("")
+  // A wall of names told you nothing about what the haul was WORTH. Art comes
+  // from the same cache the Economy tab warms, and the value is that item's
+  // current price — so this reads like the Economy table rather than a log.
+  const all=(i.pickups||[]);
+  const rows=botLogAll?all:all.slice(0,12);
+  const money=v=>v>=1?Math.round(v).toLocaleString():(v>0?v.toFixed(2):"\u2013");
+  $("botLogPicks").innerHTML=all.length
+    ? '<table class="ltbl" style="width:100%"><thead><tr>'
+      +'<th style="text-align:left" colspan="2">Item the bot took</th>'
+      +'<th style="text-align:right">Times</th>'
+      +'<th style="text-align:right">Each</th>'
+      +'<th style="text-align:right">Worth</th></tr></thead><tbody>'
+      +rows.map(r=>'<tr>'
+        +'<td style="width:26px;padding-right:0">'
+        +(r.icon?'<img src="'+esc(r.icon)+'" alt="" loading="lazy" '
+          +'style="width:22px;height:22px;object-fit:contain;display:block">':'')
+        +'</td>'
+        +'<td>'+esc(r.name)+'</td>'
+        +'<td style="text-align:right">'+r.n.toLocaleString()+'</td>'
+        +'<td style="text-align:right;color:var(--dim)">'+money(r.ex)+'</td>'
+        +'<td style="text-align:right">'+money(r.ex*r.n)+'</td>'
+        +'</tr>').join("")
       +'</tbody></table>'
-      +((i.pickups.length>rows.length)
-        ? '<div class="hint" style="margin:8px 0 0">+'+(i.pickups.length-rows.length)
-          +' more distinct item(s).</div>' : "")
+      +(all.length>12
+        ? '<div class="eco-head" style="margin-top:8px"><button class="ghost mini" '
+          +'id="botLogMore">'+(botLogAll?"Show top 12 only":"Show all "+all.length
+          +" items")+'</button></div>' : "")
     : emptyState("\ud83d\udce6","Nothing picked up yet this session",
         "The bot has loaded your pickit but hasn't taken anything since it started.");
+  const more=$("botLogMore");
+  if(more)more.onclick=()=>{botLogAll=!botLogAll;loadBotLog();};
 
   $("botLogMeta").innerHTML="Read from <code>"+esc(i.path)+"</code> \u00b7 last written "
     +esc(i.mtime||"?")+" \u00b7 "+(i.lines||0).toLocaleString()+" lines. The bot overwrites "

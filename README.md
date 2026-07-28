@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.49.1/ExileBot2PickitGenerator.exe"><img alt="Download v4.49.1 for Windows" src="https://img.shields.io/badge/Download-v4.49.1-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.50.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.50.0 for Windows" src="https://img.shields.io/badge/Download-v4.50.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.49.1">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.50.0">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.49.1/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.50.0/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,13 +121,14 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.49.1
+## Current release: v4.50.0
 
-### What your bot actually did, and 850 rules that could never match
+### Gems priced as they drop, and a pill that stops lying
 
-- **History now reads Exiled Bot's own log.** Everything this app reported until now was what it *wrote*. The bot's `Log/lastrun.log` carries the only evidence it reached the game: `Loaded 3444 pickit rules from poe1_pickit.ipd` and every `Picking item:`. That count is **exactly** this app's "active rules" figure — so if the bot last loaded a different number than you last wrote, it's still running the older pickit and the card says so. It also confirms the map runner loaded, and needs no setup.
-- **850 cluster-jewel rows were written as rules that could never match.** poe.ninja prices cluster jewels by their *enchantment*, so a row reads *"Minions deal 10% increased Damage"* while the item is a plain `Large Cluster Jewel`. Those sentences went into `[Type]`, which is not an item type — 41 dead rules, the same silent failure the pre-3.28 map bases had.
-- **They're now priced honestly.** The base can't carry the decision either: 425 Large variants run 1c–1289c with a **median of 1c**, and the bot can't read an enchantment. Each base is priced at its median, so it sits commented out below any real floor with the reason beside it — not silently dropped, not silently dead.
+- **Skill gems were priced at their best variant, not what drops.** poe.ninja lists a gem once per level/quality/corrupted combination, dearest first, and we kept the first row — so Frostblink was written as `7853.00` (a level-20 quality-20 **corrupted** one) when the gem that falls on the ground is worth 1. **666 of 810 gems** were overstated by 10x or more; Heavy Strike of Trarthus, 2c on the ground, was written as 36,810c.
+- **That made your floor useless for gems** — every gem cleared any floor on the strength of a variant it will never be, so the bot took all 810. They are now priced from the row a dropped gem matches, best roll still noted. At a 20 ex floor: **68 gems, not 810**.
+- **The Economy "keep" pill described the wrong thing.** It showed only whether you had manually excluded an item, never whether it clears your floor — so a 4 ex tablet sat there in green saying "keep" while the generator wrote it commented out. Those rows now read **under floor**, with a tooltip explaining why and how to include them.
+- **The bot-activity list got item art, prices and a haul total**, and the chance outcome list now labels the unique you are chancing *for*.
 
 ### v4.48.5 — Skeleton loading, real empty states, and stat tiles that count up
 
@@ -310,7 +311,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.49.1 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.49.1) · [full changelog](CHANGELOG.md)
+[Read the complete v4.50.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.50.0) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

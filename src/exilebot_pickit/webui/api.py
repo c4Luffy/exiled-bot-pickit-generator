@@ -480,7 +480,19 @@ class AppApi:
                     items.sort(key=lambda i: -i["ex"])
                 if not is_unique:
                     priced.update(i["name"] for i in items)
-                out.append({"key": key, "label": label, "unique": is_unique, "items": items})
+                # The floor this category is actually written against. Without
+                # it the table could only show the MANUAL keep/skip toggle, so a
+                # row below the floor still read "keep" while the generator
+                # commented it out — the Economy tab and the .ipd disagreeing
+                # about the same item, which is exactly how a user discovers
+                # their tablets "stopped being picked up".
+                out.append({"key": key, "label": label, "unique": is_unique,
+                            "floor": round(float(asm.effective_min(
+                                {"cat_thresh": self.cfg.get("cat_thresh") or {}},
+                                key, is_unique,
+                                float(self.cfg.get("min_exalt_gear") or 0.0),
+                                float(self.cfg.get("min_exalt_unique") or 0.0))), 2),
+                            "items": items})
 
             # Synthetic always-pick categories (no poe.ninja prices — picked
             # because they're map juice/valuable bases, not exchange value).
@@ -3279,6 +3291,52 @@ class AppApi:
         log = os.path.join(root, "Log", "lastrun.log")
         return log if os.path.isfile(log) else ""
 
+    def _pickup_lookup(self):
+        """name → (icon URL, chaos value) for whatever the bot picked up.
+
+        Built from the SAME disk cache the Economy tab warms, so this costs no
+        network call and works offline; anything never priced just comes back
+        without art or a value. Best-effort throughout — the log panel must
+        still render if the cache is empty or unreadable.
+        """
+        from exilebot_pickit.api import client as _c
+        from exilebot_pickit.data.icons import STATIC_ICONS
+        icons, values = dict(STATIC_ICONS), {}
+        g = self._game()
+        league = (self.cfg.get("games", {}).get(g.id, {}) or {}).get("league") \
+            or self.cfg.get("league") or ""
+        if not league:
+            return icons, values
+        for key, _ninja_type, _label, _uniq in g.all_categories:
+            try:
+                # memory first (fresh), then the DISK cache — the in-memory one
+                # is empty in a process that has not fetched yet, which is the
+                # normal case when History is the first tab opened
+                payload = _c._cache_get(league, key, g.id)
+                if not isinstance(payload, dict):
+                    payload, _age = _c.load_payload_from_disk(league, key, g.id)
+            except Exception:
+                payload = None
+            if not isinstance(payload, dict):
+                continue
+            rate = gen.exalted_rate(payload)
+            for ln in payload.get("lines", []) or []:
+                nm = ln.get("name")
+                if not nm:
+                    continue
+                if ln.get("icon"):
+                    icons.setdefault(nm, ln["icon"])
+                if nm not in values:
+                    pv = float(ln.get("primaryValue") or 0.0)
+                    values[nm] = pv * rate if rate else pv
+            for it in payload.get("items", []) or []:
+                img = it.get("image") or ""
+                if it.get("name") and img:
+                    icons.setdefault(
+                        it["name"],
+                        ("https://web.poecdn.com" + img) if img.startswith("/") else img)
+        return icons, values
+
     def bot_log_info(self):
         """What the bot ITSELF says it did — the other half of every claim here.
 
@@ -3342,9 +3400,17 @@ class AppApi:
 
         info["lines"], info["sold"], info["session_start"] = nlines, sold, first_ts
         info["loads"] = loads[-20:]
-        info["pickups"] = sorted(({"name": k, "n": v} for k, v in picks.items()),
-                                 key=lambda r: (-r["n"], r["name"]))
+        # Art + a price for each name, so the list reads like the Economy table
+        # instead of a wall of text. Both come from caches that are already warm;
+        # a name we have never priced simply has neither.
+        icons, values = self._pickup_lookup()
+        info["pickups"] = sorted(
+            ({"name": k, "n": v, "icon": icons.get(k, ""), "ex": values.get(k, 0.0)}
+             for k, v in picks.items()),
+            key=lambda r: (-r["n"], r["name"]))
         info["pickup_total"] = sum(picks.values())
+        info["pickup_value"] = round(
+            sum(r["n"] * r["ex"] for r in info["pickups"]), 2)
         for ld in loads:                       # last load of each kind wins
             info["maps" if ld["kind"] == "map" else "pickit"] = ld
 
