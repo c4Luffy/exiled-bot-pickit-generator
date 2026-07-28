@@ -6,6 +6,34 @@ download lives.
 
 ---
 
+## [v4.48.4] — 2026-07-28 — Polish: the keyboard, and affordances that lied
+
+A sweep over every tab, fixing what it turned up. Nothing here moves or resizes
+an element — the changes are additive, so no layout can shift.
+
+- **You can see where the keyboard is.** Text boxes picked up a gold border on
+  `:focus`, but buttons, selects, textareas and links had nothing at all, and
+  three rules explicitly set `outline:none` — so tabbing through the app was a
+  guess. Everything focusable now draws a ring via `:focus-visible`, which fires
+  only for keyboard interaction: clicking with a mouse looks exactly as before.
+  An outline is used rather than a border or shadow, so nothing can reflow.
+- **The tab rail answers the keyboard.** It is a column of plain `<div>`s, so it
+  was not focusable at all — the only keyboard route to a tab was `Ctrl+1..0`,
+  and that reaches ten of the sixteen. Tab and Enter/Space now work, and the
+  active tab carries `aria-current` for screen readers.
+- **Sixteen of nineteen table headers stopped pretending to be clickable.** Only
+  the three Economy columns are wired to sort, but the bare `th` rule set
+  `cursor:pointer` and a hover colour for all of them — every table on Maps,
+  History, Preview and Item Check invited a click that does nothing.
+- **Selected text uses the app's own colour** instead of the browser's default
+  blue — the one colour that appears nowhere else in the design.
+- **`prefers-reduced-motion` is honoured.** Thirty-two transitions and three
+  keyframe animations never asked whether this user wants motion.
+- **Setting the bot's switches asks first.** It writes into your bot install, so
+  it now confirms like deleting a profile or clearing backups already did.
+- The Economy sort arrow no longer inherits the header's letter-spacing, which
+  left it floating a space away from the label.
+
 ## [v4.48.3] — 2026-07-28 — Quality of life: the bot's switches, and the keyboard
 
 - **The Maps page can set the bot's two switches for you.** It already read

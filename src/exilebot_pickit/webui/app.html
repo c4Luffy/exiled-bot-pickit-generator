@@ -1053,6 +1053,47 @@
     background:color-mix(in srgb,var(--gold) 8%,transparent)}
   .ick-t{display:flex;gap:8px;align-items:baseline;margin-top:5px;color:var(--text);font-size:12px}
   .ick-tier{flex:0 0 26px;font-weight:700;color:var(--gold-br);font-size:11px}
+
+  /* ══ Polish pass ══════════════════════════════════════════════════════
+     Four things a sweep over every tab turned up. All of them are additive:
+     nothing here moves or resizes an element, so no layout can shift. */
+
+  /* 1. Keyboard focus was invisible. Inputs picked up a border colour on
+        :focus, but buttons, selects, textareas and links had nothing at all —
+        tabbing through the app left you with no idea where you were, and three
+        rules actively set outline:none. :focus-visible fires only for keyboard
+        interaction, so clicking with a mouse looks exactly as it did before.
+        An outline (not a border or shadow) can never reflow anything. */
+  button:focus-visible,select:focus-visible,input:focus-visible,
+  textarea:focus-visible,a:focus-visible,[tabindex]:focus-visible{
+    outline:2px solid var(--gold);outline-offset:2px;border-radius:3px}
+  /* these three set outline:none on :focus, leaving no keyboard affordance */
+  .dial .dval input:focus-visible,.value input:focus-visible,
+  .value select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+  /* 2. Selected text used the browser's default blue — the one colour that
+        appears nowhere else in the app. */
+  ::selection{background:rgba(201,154,74,.32);color:var(--text)}
+
+  /* 3. Only the three Economy headers are wired to sort, but `th` set
+        cursor:pointer and a hover colour for all nineteen of them — every table
+        on Maps, History, Preview and Item Check invited a click that does
+        nothing. Give the affordance only to the headers that have one. */
+  th{cursor:default}
+  th:hover{color:var(--dim)}
+  th[data-s]{cursor:pointer}
+  th[data-s]:hover{color:var(--text)}
+  /* the sort arrow inherited the header's uppercase letter-spacing, which left
+     it floating a space away from the label */
+  .s-ind{letter-spacing:0;color:var(--gold)}
+
+  /* 4. Thirty-two transitions and three keyframe animations, none of which
+        asked whether this user wants motion at all. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms!important;animation-iteration-count:1!important;
+      transition-duration:.01ms!important;scroll-behavior:auto!important}
+  }
 </style>
 </head>
 <body>
@@ -2084,10 +2125,11 @@ const NAV_GROUPS={gen:"cockpit",prev:"cockpit",item:"cockpit",hist:"cockpit",myp
 const _lastTab={cockpit:"gen",tune:"eco",system:"set"};
 function openPage(p){
   if(ECON_ONLY&&G2_ONLY.has(p))p="gen";   // PoE1 is economy only — no rare-gear pages
-  document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".nav-btn").forEach(x=>{
+    x.classList.remove("on");x.removeAttribute("aria-current");});
   document.querySelectorAll(".page").forEach(x=>x.classList.remove("on"));
   const btn=document.querySelector(`.nav-btn[data-p="${p}"]`);
-  if(btn)btn.classList.add("on");
+  if(btn){btn.classList.add("on");btn.setAttribute("aria-current","page");}
   $("p-"+p).classList.add("on");
   const g=NAV_GROUPS[p]||"cockpit";_lastTab[g]=p;
   document.querySelectorAll(".nav-grp").forEach(x=>x.classList.toggle("on",x.dataset.g===g));
@@ -2110,7 +2152,17 @@ function openPage(p){
   if(p==="set"){renderSetNav();loadBackups();loadBotConn();}
   if(p==="dbg"){loadDebug();_errCount=0;bumpErrBadge(0);}   // opened it — badge acknowledged
 }
-document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>openPage(b.dataset.p));
+document.querySelectorAll(".nav-btn").forEach(b=>{
+  b.onclick=()=>openPage(b.dataset.p);
+  // The rail is a column of plain <div>s, so it was not focusable at all: the
+  // only keyboard route to a tab was Ctrl+1..0, and that reaches ten of the
+  // sixteen. Wire them up here rather than in the markup so a tab added later
+  // cannot be forgotten.
+  b.tabIndex=0;b.setAttribute("role","button");
+  b.onkeydown=e=>{
+    if(e.key==="Enter"||e.key===" "){e.preventDefault();openPage(b.dataset.p);}
+  };
+});
 document.querySelectorAll(".nav-grp").forEach(gp=>gp.onclick=()=>openPage(_lastTab[gp.dataset.g]));
 // ── Game (PoE1 / PoE2) switch ──────────────────────────────────────────────
 function applyGameUI(i){
@@ -2573,6 +2625,13 @@ async function loadMapsInfo(){
 if($("mapFolderOpen")){
 $("mapFixIni").onclick=async()=>{
   const b=$("mapFixIni"), m=$("mapFixMsg"), was=b.textContent;
+  // This writes into the user's BOT install, not our own data folder \u2014 so it
+  // asks first, exactly as deleting a profile or clearing backups does.
+  if(!await askConfirm("Update the bot's config.ini",
+    "Set <b>map_profile</b> and <b>enable_map_tier_upgrading</b> in your bot's "
+    +"<code>config.ini</code>?<br>Nothing else in the file is touched, and the "
+    +"original is backed up next to it first. Close Exiled Bot before doing this.",
+    {ok:"Set them"}))return;
   b.disabled=true; b.textContent="Setting\u2026";
   try{
     const r=await api().fix_bot_ini();

@@ -1,10 +1,23 @@
 """Single source of truth for the app version."""
-VERSION = "4.48.3"
+VERSION = "4.48.4"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• You can see where the keyboard is. Text boxes picked up a gold border when focused, but buttons, dropdowns and links showed nothing at all — and three of them explicitly turned the outline off — so tabbing through the app was a guess. Everything focusable now draws a ring, and only for keyboard use: clicking with a mouse looks exactly as it did.
+
+• The tab rail answers the keyboard. It was a column of plain divs, so it could not be focused at all — the only way in was Ctrl+1..0, which reaches ten of the sixteen tabs. Tab and Enter now work, and the current tab is announced to screen readers.
+
+• Sixteen table headers stopped pretending to be clickable. Only the three Economy columns sort, but every header in the app showed a hand cursor and lit up on hover — on Maps, History, Preview and Item Check that was an invitation to click something that does nothing.
+
+• Selected text is finally the app's own colour instead of the browser's default blue, the one colour that appears nowhere else in the design.
+
+• If Windows is set to reduce motion, the app honours it. Thirty-two transitions and three animations never asked.
+
+• Setting the bot's switches asks first, the same as deleting a profile does — it writes into your bot install, so it should not be a single unguarded click.
+
+Also in 4.48.3:
 • The Maps page can set the bot's two switches for you. It already checked map_profile and enable_map_tier_upgrading and told you what to change — which still left you hand-editing an INI inside your bot install to finish a job this app started. A "Set these for me" button now does it, and appears only when something is actually wrong. It rewrites those two keys and nothing else: your config.ini is backed up first, comments, ordering and unknown sections survive untouched, and a missing key is created under its proper section.
 
 • Ctrl+R refreshes the league list, as the button has always claimed. Nothing implemented it, so the key fell through to the webview and RELOADED the whole app — losing your run summary and dropping you back on Generate. It now does what the tooltip says.
