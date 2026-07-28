@@ -1656,7 +1656,7 @@
       <div class="stat"><b id="blMaps">–</b><span>map rules loaded</span></div>
       <div class="stat"><b id="blPicks">–</b><span>items picked up</span></div>
       <div class="stat"><b id="blSold">–</b><span>items sold</span></div>
-      <div class="stat"><b id="blWorth">–</b><span>haul value (chaos)</span></div>
+      <div class="stat"><b id="blWorth">–</b><span id="blWorthL">haul value</span></div>
     </div>
     <div id="botLogPicks" style="margin-top:12px"></div>
     <div class="hint" style="margin:10px 0 0" id="botLogMeta"></div>
@@ -4423,6 +4423,7 @@ async function loadBotLog(){
   countUp($("blPicks"),i.pickup_total||0);
   countUp($("blSold"),i.sold||0);
   countUp($("blWorth"),Math.round(i.pickup_value||0));
+  $("blWorthL").textContent="haul value ("+GAME_UNITS+")";
 
   // A wall of names told you nothing about what the haul was WORTH. Art comes
   // from the same cache the Economy tab warms, and the value is that item's
@@ -4430,21 +4431,28 @@ async function loadBotLog(){
   const all=(i.pickups||[]);
   const rows=botLogAll?all:all.slice(0,12);
   const money=v=>v>=1?Math.round(v).toLocaleString():(v>0?v.toFixed(2):"\u2013");
+  // "Times / Each / Worth" read as a puzzle — "each" could just as easily mean
+  // the count. Spell the three numbers out and put the unit in the header, so
+  // the cells stay clean and nothing has to be inferred.
+  const u=GAME_UNITS;
   $("botLogPicks").innerHTML=all.length
-    ? '<table class="ltbl" style="width:100%"><thead><tr>'
-      +'<th style="text-align:left" colspan="2">Item the bot took</th>'
-      +'<th style="text-align:right">Times</th>'
-      +'<th style="text-align:right">Each</th>'
-      +'<th style="text-align:right">Worth</th></tr></thead><tbody>'
+    ? '<div class="hint" style="margin:0 0 8px">How many of each item the bot picked up this session, '
+      +'and what they are worth at current prices.</div>'
+      +'<table class="ltbl" style="width:100%"><thead><tr>'
+      +'<th style="text-align:left" colspan="2">Item</th>'
+      +'<th style="text-align:right">How many</th>'
+      +'<th style="text-align:right">Price each ('+esc(u)+')</th>'
+      +'<th style="text-align:right">Total ('+esc(u)+')</th></tr></thead><tbody>'
       +rows.map(r=>'<tr>'
         +'<td style="width:26px;padding-right:0">'
         +(r.icon?'<img src="'+esc(r.icon)+'" alt="" loading="lazy" '
           +'style="width:22px;height:22px;object-fit:contain;display:block">':'')
         +'</td>'
         +'<td>'+esc(r.name)+'</td>'
-        +'<td style="text-align:right">'+r.n.toLocaleString()+'</td>'
-        +'<td style="text-align:right;color:var(--dim)">'+money(r.ex)+'</td>'
-        +'<td style="text-align:right">'+money(r.ex*r.n)+'</td>'
+        +'<td style="text-align:right">×'+r.n.toLocaleString()+'</td>'
+        +'<td style="text-align:right;color:var(--dim)"'
+        +(r.ex>0?'':' title="poe.ninja has no price for this item">')+money(r.ex)+'</td>'
+        +'<td style="text-align:right;font-weight:600">'+money(r.ex*r.n)+'</td>'
         +'</tr>').join("")
       +'</tbody></table>'
       +(all.length>12

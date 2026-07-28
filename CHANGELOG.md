@@ -6,6 +6,15 @@ download lives.
 
 ---
 
+## [v4.50.1] — 2026-07-28 — Columns that say what they mean
+
+- **The bot-activity table headers were a puzzle.** "Times / Each / Worth" left
+  you guessing — "each" reads just as naturally as the count as it does as the
+  unit price. They are now **How many** (shown as `×10`), **Price each** and
+  **Total**, with the currency named once in the header so the cells stay clean,
+  and a line above the table saying what it is. The haul tile names its unit too,
+  instead of hardcoding "chaos" in a dual-game app.
+
 ## [v4.50.0] — 2026-07-28 — Gems priced as they drop, and a pill that stops lying
 
 - **Skill gems were priced at their best variant instead of what drops.**

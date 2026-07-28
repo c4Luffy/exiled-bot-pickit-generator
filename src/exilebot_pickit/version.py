@@ -1,5 +1,5 @@
 """Single source of truth for the app version."""
-VERSION = "4.50.0"
+VERSION = "4.50.1"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
@@ -12,6 +12,9 @@ HIGHLIGHTS = """\
 • The stat tiles count up instead of snapping from a dash to 2,214 — the number reads as measured rather than pasted in. It honours the reduce-motion setting the app started respecting last release, and only the seven tiles that hold actual numbers animate: file size and validation are left alone.
 
 Also in 4.48.4:
+• The bot-activity columns say what they mean. "Times / Each / Worth" was a puzzle — "each" reads just as easily as the count. They are now "How many", "Price each" and "Total", the unit is in the header so the numbers stay clean, the count shows as ×10, and a line above says what the table is.
+
+Also in 4.50.0:
 • SKILL GEMS WERE PRICED AT THEIR BEST VARIANT INSTEAD OF WHAT DROPS. poe.ninja lists a gem once per level/quality/corrupted combination and returns them dearest-first, and the generator kept the first row — so Frostblink was written as 7,853 ex (a level-20 quality-20 CORRUPTED one) when the gem that falls on the ground is worth 1. Measured against a live league, 666 of 810 gems were overstated by 10x or more; Heavy Strike of Trarthus, 2c on the ground, was written as 36,810c. That made your value floor useless for gems: every gem cleared any floor on the strength of a variant it will never be, so the bot picked up all 810. Gems are now priced from the row a dropped gem matches — uncorrupted, quality 0, lowest level — with the best variant still noted in the comment. At a 20 ex floor that is 68 gems instead of 810.
 
 • The Economy table's "keep" pill told you something the pickit did not do. It only ever showed whether you had manually excluded an item, never whether it clears your value floor — so a tablet worth 4 ex sat there in green saying "keep" while the generator wrote it commented out. Rows that are kept but under your floor now say "under floor", and hovering explains that the rule is written commented and how to include it.
