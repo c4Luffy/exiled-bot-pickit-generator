@@ -1,0 +1,10 @@
+# Questions belong in Discord, not the issue tracker — most "is this normal?"
+# reports are answered in a minute there and never need an issue.
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question / get help
+    url: https://discord.gg/T7DU3Afve6
+    about: Setup help, "is this normal?", pickit tuning — fastest answer is Discord.
+  - name: Exiled Bot forum
+    url: https://www.exiled-bot.net/
+    about: Questions about the bot itself rather than this pickit generator.

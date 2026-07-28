@@ -212,6 +212,27 @@ def main() -> int:
         die(f"expected exactly one VERSION assignment in version.py, found {_n}")
     VERSION_FILE.write_text(_new, encoding="utf-8", newline="\n")
 
+    # HIGHLIGHTS is the in-app "What's new". Prepending it by hand each release
+    # grew it to 53,000 characters and 63 "Also in" blocks reaching back to
+    # v4.38.0 — all shipped inside the exe and poured into one dialog — and the
+    # order had drifted (4.48.4 sat above 4.50.0). Regenerate it from the
+    # CHANGELOG instead, capped at the two most recent releases.
+    try:
+        sys.path.insert(0, str(ROOT / "tools"))
+        import build_highlights as _hl
+        _src2 = VERSION_FILE.read_text(encoding="utf-8")
+        _built = _hl.build((ROOT / "CHANGELOG.md").read_text(encoding="utf-8"), a.version)
+        _out, _k = re.subn(r'(?s)HIGHLIGHTS = """\\\n.*?"""',
+                           'HIGHLIGHTS = """\\\n' + _built + '"""', _src2, count=1)
+        if _k == 1:
+            VERSION_FILE.write_text(_out, encoding="utf-8", newline="\n")
+            print(f"  what's-new rebuilt from CHANGELOG ({len(_built)} chars, "
+                  f"{_hl.MAX_ENTRIES} releases)")
+        else:
+            print("  !! could not find HIGHLIGHTS block — left as it was")
+    except Exception as e:                       # never block a release on this
+        print(f"  !! what's-new rebuild skipped ({e})")
+
     for line in sync_site(tag):
         print(f"  site updated: {line}")
 

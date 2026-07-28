@@ -13,8 +13,10 @@ body:
     id: version
     attributes:
       label: Version
-      description: Which version are you using? Check Help → About or the .exe filename.
-      placeholder: e.g. v2.6.21
+      description: Shown in the sidebar under "Pickit Generator". The .exe filename
+        never changes, so it cannot tell you — use the sidebar, or right-click the
+        .exe → Properties → Details.
+      placeholder: e.g. v4.50.1
     validations:
       required: true
   - type: textarea
@@ -22,8 +24,8 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Opened the Items tab
-        2. Clicked Refresh
+        1. Opened the Economy tab
+        2. Pressed Generate
         3. ...
   - type: textarea
     id: debug
