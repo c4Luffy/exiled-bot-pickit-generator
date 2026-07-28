@@ -284,13 +284,19 @@ def refresh_game_data(cache_dir: str) -> str:
             return status + " (remote copy failed validation — ignored)"
         _apply(data)
         try:
-            tmp = cache_file + ".tmp"
-            with open(tmp, "w", encoding="utf-8") as f:
+            # unique temp: two app instances launching together both wrote
+            # "<cache>.tmp" and one renamed a half-written file over the other
+            import tempfile
+            _fd, tmp = tempfile.mkstemp(
+                dir=os.path.dirname(os.path.abspath(cache_file)) or ".",
+                prefix="." + os.path.basename(cache_file) + "-", suffix=".tmp")
+            with os.fdopen(_fd, "w", encoding="utf-8") as f:
                 # Stamp the app version: a cache written by another build is
                 # ignored on load, so a shipped data fix can't be shadowed.
                 json.dump({"ts": time.time(), "app_version": _VERSION,
                            "data": data}, f)
-            os.replace(tmp, cache_file)
+            from exilebot_pickit.generator import _replace_retry
+            _replace_retry(tmp, cache_file)
         except OSError:
             pass
         return "fresh remote data applied"

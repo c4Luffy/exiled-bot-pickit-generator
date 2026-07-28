@@ -6,6 +6,36 @@ download lives.
 
 ---
 
+## [v4.52.0] — 2026-07-28 — Bot Activity gets its own tab, and concurrent writes stop failing
+
+### Bot Activity
+
+- **It has its own tab now**, instead of a card buried under History's charts.
+  The session's value leads — a single large figure with what made it up
+  underneath — then the "is the bot running your pickit" verdict, then four
+  tiles (picked up / sold / pickit rules loaded / map rules loaded), then the
+  itemised list. Before the bot has ever run it explains itself and offers the
+  Settings button rather than showing a blank tab.
+
+### From the full audit
+
+- **Concurrent writes could fail outright, and a unique temp name was only half
+  the fix.** Five places still swapped through a shared `<target>.tmp` — the
+  pickit and map runner copied into the bot folder, the bot's `config.ini`, the
+  remote game-data cache. Worse, reproducing the collision showed `os.replace`
+  **itself** raises `PermissionError` on Windows when a second writer holds the
+  destination for an instant, so even the paths that already used unique temps
+  (the .ipd, the price cache) could silently not be written. Every writer now
+  uses a unique temp *and* retries the swap. Five tests reproduce the race with
+  concurrent threads instead of trusting the fix.
+- Verified clean and unchanged: quote escaping on every rule builder that
+  interpolates a poe.ninja name, no type-less `[StashItem]` rule in a full
+  generate, the anchored backup-name matcher at all seven call sites,
+  `save_config` reporting the real outcome, `game_data.json` against the code,
+  and the stat ids and weights against the live patch.
+- **CLAUDE.md's page list was stale again** — the file that warns "this list has
+  gone stale before" was missing `p-maps` and `p-bot`.
+
 ## [v4.51.2] — 2026-07-28 — The price shown is the price the pickit used
 
 - **The pickup list priced gems at their best variant, not the one that

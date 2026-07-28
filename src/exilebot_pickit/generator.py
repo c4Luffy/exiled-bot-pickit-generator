@@ -78,6 +78,83 @@ def cfg_int(d: dict, key: str, default: int) -> int:
     return max(0, v)
 
 
+def _replace_retry(tmp: str, path: str, tries: int = 12) -> None:
+    """``os.replace`` with a short retry — the other half of the concurrency fix.
+
+    A unique temp name stops two writers sharing one scratch file, but it does
+    NOT make the swap itself safe on Windows: ``MoveFileEx(REPLACE_EXISTING)``
+    returns ACCESS_DENIED when anything else holds the destination open for
+    even an instant, which is exactly what a second writer replacing the same
+    file looks like. Reproduced with concurrent writers to one path: unique
+    temps alone still raised ``PermissionError``, so a .ipd copied into the bot
+    folder while another run was copying it simply did not get written.
+
+    The window is sub-millisecond, so a handful of short sleeps closes it.
+    POSIX never fails this way and falls through on the first try.
+    """
+    import time as _t
+    for attempt in range(tries):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if attempt == tries - 1:
+                raise
+            _t.sleep(0.01 * (attempt + 1))
+
+
+def copy_atomic(src: str, dst: str) -> None:
+    """Copy *src* over *dst* via a UNIQUE temp file + atomic rename.
+
+    The copy counterpart of :func:`write_text_atomic`, and it exists for the
+    same reason. Several places copied through a shared ``<dst>.tmp`` — the
+    pickit and map runner going into the bot's folder, the remote game-data
+    cache — which is only safe for one writer at a time. Two app instances
+    (or a GUI generate racing the ``--regenerate`` task) both used that one
+    name: on Windows the second write fails outright with PermissionError, on
+    POSIX the two interleave and one renames a half-written file over the
+    real one. ``os.replace`` being atomic never helped, because the clash
+    happens before the swap.
+    """
+    import shutil
+    import tempfile
+    dst = os.path.abspath(dst)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(dst) or ".",
+                               prefix="." + os.path.basename(dst) + "-", suffix=".tmp")
+    os.close(fd)
+    try:
+        shutil.copy2(src, tmp)
+        _replace_retry(tmp, dst)
+        tmp = None
+    finally:
+        if tmp and os.path.exists(tmp):
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+
+
+def write_bytes_atomic(path: str, data: bytes) -> None:
+    """Bytes counterpart of :func:`write_text_atomic`, same unique-temp rule."""
+    import tempfile
+    path = os.path.abspath(path)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path) or ".",
+                               prefix="." + os.path.basename(path) + "-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        _replace_retry(tmp, path)
+        tmp = None
+    finally:
+        if tmp and os.path.exists(tmp):
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+
+
 def write_text_atomic(path: str, content: str, encoding: str = "utf-8", newline: str | None = None) -> None:
     """Write text to *path* via a temp file + atomic rename.
 
@@ -107,7 +184,7 @@ def write_text_atomic(path: str, content: str, encoding: str = "utf-8", newline:
             f.write(content)
             f.flush()
             os.fsync(f.fileno())      # don't swap in a file the OS hasn't written yet
-        os.replace(tmp, path)
+        _replace_retry(tmp, path)
         tmp = None
     finally:
         if tmp and os.path.exists(tmp):

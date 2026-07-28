@@ -246,7 +246,11 @@ def save_payload_to_disk(league: str, key: str, payload: dict, game_id: str = "p
         tmp = f"{fname}.{os.getpid()}-{threading.get_ident()}.tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump({"ts": time.time(), "payload": payload}, f)
-        os.replace(tmp, fname)   # atomic on Windows + POSIX
+        # Retried: os.replace itself returns ACCESS_DENIED on Windows when
+        # another writer holds the destination for an instant, so the unique
+        # temp above is only half the fix.
+        from exilebot_pickit.generator import _replace_retry
+        _replace_retry(tmp, fname)
     except (OSError, TypeError, ValueError):
         pass
 

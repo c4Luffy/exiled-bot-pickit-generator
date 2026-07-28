@@ -2587,8 +2587,7 @@ class AppApi:
             if self.cfg.get("auto_copy") and bot and os.path.isdir(bot):
                 try:
                     dst = os.path.join(bot, os.path.basename(ipd))
-                    shutil.copy2(ipd, dst + ".tmp")
-                    os.replace(dst + ".tmp", dst)
+                    gen.copy_atomic(ipd, dst)
                     copied = bot
                     self._log(f"✓ Auto-copied to {bot}")
                 except OSError as e:
@@ -2897,8 +2896,7 @@ class AppApi:
                     # fail the WHOLE generate even though the .ipd on disk is fine.
                     try:
                         dst = os.path.join(bot, os.path.basename(ipd))
-                        shutil.copy2(ipd, dst + ".tmp")
-                        os.replace(dst + ".tmp", dst)
+                        gen.copy_atomic(ipd, dst)
                         copied = bot
                         self._log(f"✓ Auto-copied to {bot}")
                     except OSError as e:
@@ -3140,8 +3138,7 @@ class AppApi:
                             os.remove(os.path.join(bdir, f))
                         except OSError:
                             pass
-            shutil.copy2(local, dst + ".tmp")
-            os.replace(dst + ".tmp", dst)
+            gen.copy_atomic(local, dst)
             self._log(f"✓ Map runner copied to {folder}")
             profile = name[:-4]
             if self._map_profile_name() != profile:
@@ -3265,9 +3262,7 @@ class AppApi:
                     "msg": "Both settings were already correct."}
         try:
             shutil.copy2(ini, f"{ini}.bak-{time.strftime('%Y%m%d-%H%M%S')}")
-            with open(ini + ".tmp", "wb") as f:
-                f.write("".join(lines).encode("latin-1"))
-            os.replace(ini + ".tmp", ini)
+            gen.write_bytes_atomic(ini, "".join(lines).encode("latin-1"))
         except OSError as e:
             return {"error": f"Couldn't write config.ini ({e}). "
                              f"Is the bot running? Close it and try again."}

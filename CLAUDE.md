@@ -143,9 +143,11 @@ After ANY edit:
 - Extract the `<script>` body and `node --check` it.
 - Id audit: every `$("id")` must match exactly one `id="..."` — zero missing,
   zero duplicate.
-- Pages are ordered blocks in this file: p-gen, p-eco, p-chance, p-craft, p-exc,
-  p-fracture, p-rare, p-hist, p-dbg, p-prev, p-item, p-mypk, p-guide, p-set
-  (re-verify with a regex over `class="page` — this list has gone stale before).
+- Pages are ordered blocks in this file: p-gen, p-eco, p-maps, p-chance, p-craft,
+  p-exc, p-fracture, p-rare, p-hist, p-bot, p-dbg, p-prev, p-item, p-mypk,
+  p-guide, p-set — 16 as of v4.52.0
+  (re-verify with a regex over `class="page` — this list has gone stale before,
+  and had again: it was missing p-maps and p-bot until someone checked).
   When slicing by index, anchor on both the page's opening div and the next
   page's comment.
 - Never build replacement JS via `re.sub` replacement strings (they eat `\n`);

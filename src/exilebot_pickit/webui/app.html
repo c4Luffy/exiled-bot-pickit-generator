@@ -1123,6 +1123,18 @@
   .empty-state b{display:block;color:var(--text);font-size:13.5px;margin-bottom:3px}
   .empty-state .es-act{margin-top:13px}
   td .empty-state{margin:6px 2px}
+
+  /* Bot Activity: the session's value is the headline, everything else supports it. */
+  .bot-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    background:var(--bg2);border:1px solid var(--border);border-radius:15px;padding:18px 20px;
+    background-image:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--gold) 9%,transparent),transparent 60%)}
+  .bot-hero-fig{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .bot-hero-lbl{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  .bot-hero-num{display:flex;align-items:baseline;gap:7px}
+  .bot-hero-num b{font-family:Consolas,ui-monospace,monospace;font-variant-numeric:tabular-nums;
+    font-size:38px;line-height:1.05;color:var(--gold-br);font-weight:700}
+  .bot-hero-num em{font-style:normal;font-size:14px;color:var(--dim);letter-spacing:.04em}
+  .bot-hero-side{display:flex;align-items:center;gap:8px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -1142,6 +1154,7 @@
   <div class="nav-btn g2only" data-p="item">🔍 Item Check</div>
   <div class="nav-btn g2only" data-p="mypk">📥 Create your filter</div>
   <div class="nav-btn" data-p="hist">🕰️ History</div>
+  <div class="nav-btn" data-p="bot">🤖 Bot Activity</div>
   </div>
   <div class="nav-groups">
     <button class="nav-grp" data-g="tune">Loot Rules</button>
@@ -1643,25 +1656,6 @@
     <div class="stat"><b id="htPeak">–</b><em id="htPeakD" class="tdelta" style="display:none"></em><span>peak rules</span></div>
   </div>
 
-  <!-- Everything else on this page is what WE wrote. This card is what the bot
-       itself says it loaded and picked up — read from its own Log/lastrun.log. -->
-  <div class="card" id="botLogCard" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 10px">
-      <h2 style="margin:0">🤖 What your bot actually did</h2>
-      <button class="ghost mini" id="botLogRefresh" title="Re-read the bot's log">⟳ Re-read</button>
-    </div>
-    <div id="botLogDrift"></div>
-    <div class="stats" style="grid-template-columns:repeat(5,1fr);margin:12px 0 0">
-      <div class="stat"><b id="blRules">–</b><span>rules the bot loaded</span></div>
-      <div class="stat"><b id="blMaps">–</b><span>map rules loaded</span></div>
-      <div class="stat"><b id="blPicks">–</b><span>items picked up</span></div>
-      <div class="stat"><b id="blSold">–</b><span>items sold</span></div>
-      <div class="stat"><b id="blWorth">–</b><span id="blWorthL">haul value</span></div>
-    </div>
-    <div id="botLogPicks" style="margin-top:12px"></div>
-    <div class="hint" style="margin:10px 0 0" id="botLogMeta"></div>
-  </div>
-
   <div class="card"><h2>📈 Active rules per run</h2>
     <div style="position:relative">
       <svg id="histChart" width="100%" height="180" style="display:block"></svg>
@@ -1682,6 +1676,44 @@
       <tbody id="histRows"><tr><td colspan="7" class="hint" style="padding:14px">No runs yet.</td></tr></tbody></table>
   </div>
   <div class="eco-head" style="margin-top:4px"><button class="ghost mini" id="histClear">🗑 Clear history</button></div>
+</div>
+
+<!-- ══ BOT ACTIVITY ══ -->
+<div class="page" id="p-bot">
+  <h1>Bot Activity</h1>
+  <div class="sub">Read from Exiled Bot&rsquo;s own <code>Log/lastrun.log</code> &mdash; not from anything this
+    app wrote. It is the only evidence that your pickit reached the game.</div>
+
+  <div id="botMissing" style="display:none"></div>
+
+  <div id="botBody" style="display:none">
+    <div class="bot-hero">
+      <div class="bot-hero-fig">
+        <span class="bot-hero-lbl">Value picked up this session</span>
+        <span class="bot-hero-num"><b id="blWorth">&ndash;</b><em id="blWorthL">c</em></span>
+        <span class="hint" id="botHeroSub" style="margin:0"></span>
+      </div>
+      <div class="bot-hero-side">
+        <button class="ghost mini" id="botLogRefresh" title="Re-read the bot&rsquo;s log from disk">&#8635; Re-read log</button>
+      </div>
+    </div>
+
+    <div id="botLogDrift" style="margin-top:12px"></div>
+
+    <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-top:12px">
+      <div class="stat"><b id="blPicks">&ndash;</b><span>items picked up</span></div>
+      <div class="stat"><b id="blSold">&ndash;</b><span>items sold</span></div>
+      <div class="stat"><b id="blRules">&ndash;</b><span>pickit rules loaded</span></div>
+      <div class="stat"><b id="blMaps">&ndash;</b><span>map rules loaded</span></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>&#128230; What it picked up</h2>
+      <div id="botLogPicks"></div>
+    </div>
+
+    <div class="hint" style="margin:12px 0 0" id="botLogMeta"></div>
+  </div>
 </div>
 
 <!-- ══ DEBUG ══ -->
@@ -2215,6 +2247,7 @@ function logLine(m,c){
 // Left rail: 3 section headers, every tab always visible beneath its header.
 // Clicking a header jumps to that section's last-used tab.
 const NAV_GROUPS={gen:"cockpit",prev:"cockpit",item:"cockpit",hist:"cockpit",mypk:"cockpit",
+                  bot:"cockpit",
                   eco:"tune",maps:"tune",chance:"tune",craft:"tune",exc:"tune",fracture:"tune",rare:"tune",
                   guide:"system",set:"system",dbg:"system"};
 const _lastTab={cockpit:"gen",tune:"eco",system:"set"};
@@ -2242,7 +2275,8 @@ function openPage(p){
     $("ickInput").focus();
     ickAutoPaste();                     // Ctrl+C in game, click the tab — that's it
   }
-  if(p==="hist"){loadHistory();loadBotLog();}
+  if(p==="hist")loadHistory();
+  if(p==="bot")loadBotLog();
   if(p==="mypk")mypkStatus();
   if(p==="set"){renderSetNav();loadBackups();loadBotConn();}
   if(p==="dbg"){loadDebug();_errCount=0;bumpErrBadge(0);}   // opened it — badge acknowledged
@@ -4385,12 +4419,21 @@ function relTs(ts){
    hides itself rather than turning a missing file into an error. */
 let botLogAll=false;   // "show all" toggle for the pickup list
 async function loadBotLog(){
-  const card=$("botLogCard");
+  const body=$("botBody"), miss=$("botMissing");
   let i;
   try{ i=await api().bot_log_info(); }
-  catch(_){ card.style.display="none"; return; }
-  if(!i||!i.found){ card.style.display="none"; return; }
-  card.style.display="";
+  catch(_){ i=null; }
+  // A missing log is the normal state before the bot has ever run, so it gets a
+  // real explanation rather than a blank tab or an error.
+  if(!i||!i.found){
+    body.style.display="none"; miss.style.display="";
+    miss.innerHTML=emptyState("\ud83e\udd16","No bot log found yet",
+      "This reads Exiled Bot&rsquo;s own <code>Log/lastrun.log</code>. Point the app at your "
+      +"bot folder in Settings, then run the bot once \u2014 everything here fills in by itself.",
+      '<button class="ghost mini" onclick="openPage(\'set\')">Open Settings</button>');
+    return;
+  }
+  miss.style.display="none"; body.style.display="";
 
   const tone={ok:"var(--ok)",stale:"var(--warn)",other:"var(--warn)",
               none:"var(--dim)",unknown:"var(--dim)"}[i.drift]||"var(--dim)";
@@ -4423,7 +4466,12 @@ async function loadBotLog(){
   countUp($("blPicks"),i.pickup_total||0);
   countUp($("blSold"),i.sold||0);
   countUp($("blWorth"),Math.round(i.pickup_value||0));
-  $("blWorthL").textContent="haul value ("+GAME_UNITS+")";
+  $("blWorthL").textContent=GAME_UNITS;
+  const distinct=(i.pickups||[]).length;
+  $("botHeroSub").textContent=(i.pickup_total||0)
+    ? `${(i.pickup_total||0).toLocaleString()} item(s) picked up \u00b7 `
+      +`${distinct} different kind(s) \u00b7 priced as they drop`
+    : "Nothing picked up since the bot started.";
 
   // A wall of names told you nothing about what the haul was WORTH. Art comes
   // from the same cache the Economy tab warms, and the value is that item's
