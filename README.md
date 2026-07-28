@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.48.4/ExileBot2PickitGenerator.exe"><img alt="Download v4.48.4 for Windows" src="https://img.shields.io/badge/Download-v4.48.4-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.48.5/ExileBot2PickitGenerator.exe"><img alt="Download v4.48.5 for Windows" src="https://img.shields.io/badge/Download-v4.48.5-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.48.4">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.48.5">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.48.4/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.48.5/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,9 +121,15 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.48.4
+## Current release: v4.48.5
 
-### Polish: the keyboard, and affordances that lied
+### Loading and empty states
+
+- **Tables that are still loading show their shape instead of nothing.** Economy filled ~100 rows in one go, reflowing the page under your cursor; the two Maps tables just read `Loading…`. They draw skeleton rows now, so nothing jumps when the data lands. A *refresh* keeps the existing rows — swapping a readable table for grey bars is a downgrade — and a **failed** load clears the skeleton, names the error and offers Retry. A test enforces that last part: a skeleton that outlives its request is the old "Loading prices…" hang wearing a nicer coat.
+- **History has a real empty state.** `No runs yet.` in a bare table cell became an explanation of what the tab records, plus the button that gets you there.
+- **The stat tiles count up** instead of snapping from `–` to `2,214`. Respects `prefers-reduced-motion`, keeps thousands grouping, and animates only the seven tiles holding real numbers — file size and validation are left alone.
+
+### v4.48.4 — Polish: the keyboard, and affordances that lied
 
 A sweep over every tab. Everything here is additive — nothing moves or resizes, so no layout shifts.
 
@@ -151,13 +157,13 @@ A sweep over every tab. Everything here is additive — nothing moves or resizes
 - **The generated runner carries the bot's priority list** (`[UpgradeMapTier] >> [IgnoreMap] >> [UpgradeToRare] >> [UpgradeToMagic] >> [RunMap]`) and its two gotchas — upgrading only happens to a map the bot has selected to farm, and marking a map for both upgrading *and* running means it gets run.
 - **The optional levers are written out, commented**: `[UpgradeToRare]` (which outranks `[UpgradeToMagic]`) and `[UpgradeQuality]`.
 
+<details>
+<summary><strong>Older releases</strong></summary>
+
 ### v4.48.0 — Map tier upgrading, and the bot's own switches checked
 
 - **The map runner upgrades the tiers you don't run.** Every tier below your selection gets an `[UpgradeMapTier]` rule, so low maps are traded up toward the ones you farm. Exiled Bot ships ~20 upgrade examples, but each is commented out *and* names a pre-3.28 base (`Arena Map`, …) that no longer exists — so they'd match nothing even uncommented. Ours name the current `Map (Tier N)` base.
 - **The Maps page checks the bot's own settings.** The bot picks its map file by `map_profile` in `config.ini`, and upgrading needs `enable_map_tier_upgrading=true` (it ships `false`). Both are read from your install and shown with a tick or a warning and the exact value to set — so a correctly generated file can't sit there unread.
-
-<details>
-<summary><strong>Older releases</strong></summary>
 
 ### v4.47.3 — Click anywhere on an Economy row again
 
@@ -298,7 +304,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.48.4 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.48.4) · [full changelog](CHANGELOG.md)
+[Read the complete v4.48.5 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.48.5) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

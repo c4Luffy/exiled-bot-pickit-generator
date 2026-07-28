@@ -1094,6 +1094,29 @@
       animation-duration:.01ms!important;animation-iteration-count:1!important;
       transition-duration:.01ms!important;scroll-behavior:auto!important}
   }
+
+  /* ══ Loading and empty states ═════════════════════════════════════════
+     A table that fills asynchronously used to sit blank and then snap to a
+     hundred rows, reflowing the page under the cursor. Skeleton rows hold the
+     real shape while the data is in flight, so nothing jumps when it lands. */
+  .skel{display:block;height:9px;border-radius:99px;background:var(--bg3);
+    background-image:linear-gradient(90deg,transparent 0%,color-mix(in srgb,var(--border) 90%,transparent) 50%,transparent 100%);
+    background-size:220% 100%;background-repeat:no-repeat;
+    animation:skel 1.15s ease-in-out infinite}
+  @keyframes skel{0%{background-position:120% 0}100%{background-position:-120% 0}}
+  tr.skel-row td{padding:9px 10px;border-bottom:1px solid var(--border)}
+  tr.skel-row:hover td{background:none}
+  .skel-line{padding:7px 0}
+
+  /* The Economy dock already had this look (.eco-empty) and nothing else used
+     it. One empty state for the whole app, and one that offers the way out
+     rather than just reporting the dead end. */
+  .empty-state{padding:24px 18px;border:1px dashed var(--border);border-radius:13px;
+    text-align:center;color:var(--dim);font-size:12.5px;line-height:1.55}
+  .empty-state .es-ico{display:block;font-size:23px;margin-bottom:9px;opacity:.7}
+  .empty-state b{display:block;color:var(--text);font-size:13.5px;margin-bottom:3px}
+  .empty-state .es-act{margin-top:13px}
+  td .empty-state{margin:6px 2px}
 </style>
 </head>
 <body>
@@ -2103,6 +2126,52 @@ const _ruleCache={};           // cache rule_for() results so hover/copy don't r
 
 function toast(m,ms){const t=$("toast");t.textContent=m;t.classList.add("on");
   clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),ms||2200);}
+/* ── skeleton rows, empty states, count-ups ──────────────────────────────
+   Shared so every async table behaves the same way. skelRows() must be
+   cleared on EVERY exit path of a load, success or failure: the Economy load
+   already had a bug where a failed poll left the tab reading "Loading prices…"
+   forever, and a skeleton that outlives its request is the same trap wearing a
+   nicer coat. */
+function skelRows(tbody,cols,n){
+  if(!tbody)return;
+  n=n||8;let h="";
+  for(let i=0;i<n;i++){
+    h+='<tr class="skel-row">';
+    for(let c=0;c<cols;c++){
+      // deterministic pseudo-random widths: a skeleton of identical bars reads
+      // as a loading GRAPHIC, varied ones read as text about to arrive
+      const w=c===0?(52+(i*17)%26):(26+(i*11+c*13)%34);
+      h+='<td><span class="skel" style="width:'+w+'%"></span></td>';
+    }
+    h+="</tr>";
+  }
+  tbody.innerHTML=h;
+}
+function emptyState(icon,title,msg,action){
+  return '<div class="empty-state"><span class="es-ico">'+icon+'</span>'
+    +'<b>'+title+'</b>'+msg
+    +(action?'<div class="es-act">'+action+'</div>':'')+'</div>';
+}
+const _reduceMotion=()=>!!(window.matchMedia
+  &&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+/* Tiles snapped from "–" to "2,214". Counting up reads as the number being
+   MEASURED rather than pasted in. Honours prefers-reduced-motion, which the
+   app now respects everywhere else — an animation that ignored it would be a
+   direct contradiction. */
+function countUp(el,to,ms){
+  if(!el)return;
+  const fmt=v=>Math.round(v).toLocaleString();
+  if(!isFinite(to)){el.textContent="\u2013";return;}
+  const from=parseFloat(String(el.textContent).replace(/[^0-9.\-]/g,""))||0;
+  clearInterval(el._cu);
+  if(_reduceMotion()||Math.abs(to-from)<2){el.textContent=fmt(to);return;}
+  const t0=(window.performance||Date).now(),dur=ms||420;
+  el._cu=setInterval(()=>{
+    const k=Math.min(1,((window.performance||Date).now()-t0)/dur);
+    el.textContent=fmt(from+(to-from)*(1-Math.pow(1-k,3)));   // ease-out cubic
+    if(k>=1){clearInterval(el._cu);el.textContent=fmt(to);}
+  },16);
+}
 function logLine(m,c){
   const l=$("log"),d=document.createElement("div");
   if(!c)c=m.startsWith("✓")?"ok":m.startsWith("✗")?"err":(m.startsWith("→")||m.startsWith("✨")||m.startsWith("⬇"))?"act":"";
@@ -2571,6 +2640,7 @@ let _mapsBusy=false;
 async function loadMapsInfo(){
   if(_mapsBusy||!$("mapPreview"))return; _mapsBusy=true;
   try{
+    skelRows($("mapNamedBody"),3,5);
     const i=await api().maps_info();
     if(Array.isArray(i.tiers)){MAP_TIERS=i.tiers.slice();}
     if(Array.isArray(i.presets)){MAP_PRESETS=i.presets;}
@@ -3093,9 +3163,15 @@ async function _loadEco(){
     $("ecoChips").innerHTML="";$("ecoBody").innerHTML='<tr><td colspan="5" class="hint" style="padding:16px">No league selected yet — choose one on the Generate tab and prices will load here.</td></tr>';
     return;}
   $("ecoInfo").textContent="Loading prices…";
+  // Skeleton only when there is nothing to look at. A REFRESH keeps the old
+  // rows on screen — replacing a readable table with grey bars is a downgrade.
+  if(!eco)skelRows($("ecoBody"),5,10);
   const started=await api().economy_start($("league").value);
   if(started&&started.error&&started.error!=="already running"){
-    $("ecoInfo").textContent="✗ "+started.error;return;}
+    $("ecoInfo").textContent="✗ "+started.error;
+    $("ecoBody").innerHTML='<tr><td colspan="5">'+emptyState("\u26a0",
+      "Couldn't start the price load",esc(started.error))+"</td></tr>";
+    return;}
   /* The interval MUST die on EVERY exit path. This used to await the bridge
      BEFORE clearInterval, so a single rejected or undefined poll aborted the
      callback mid-way: the timer was never cleared and the promise never
@@ -3114,7 +3190,13 @@ async function _loadEco(){
       if(!p.running)done(p.result||{error:"the price load finished without returning any prices"});
     },250);});
   if(!eco||eco.error){
-    $("ecoInfo").textContent="✗ "+((eco&&eco.error)||"couldn't load prices")+" — check your connection and Refresh prices.";
+    const _e=(eco&&eco.error)||"couldn't load prices";
+    $("ecoInfo").textContent="✗ "+_e+" — check your connection and Refresh prices.";
+    // clear the skeleton on the failure path too, or it animates forever and
+    // the tab looks busy when it has actually given up
+    $("ecoBody").innerHTML='<tr><td colspan="5">'+emptyState("\u26a0",
+      "Couldn't load prices",esc(_e)+" — check your connection, then try again.",
+      '<button class="ghost mini" onclick="loadEco(true)">Retry</button>')+"</td></tr>";
     eco=null;return;}
   if(eco.divine_rate)setDivRate(eco.divine_rate);
   api().chaos_ex($("league").value).then(r=>{chaosEx=r.ex||0;if(ecoUnit==="chaos")renderEco();});
@@ -4246,10 +4328,13 @@ function relTs(ts){
 async function loadHistory(){
   const h=await api().history();
   const vals=h.map(r=>r.active||0);
-  $("htRuns").textContent=h.length||"–";
-  $("htLast").textContent=h.length?vals[0].toLocaleString():"–";
-  $("htAvg").textContent=h.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length).toLocaleString():"–";
-  $("htPeak").textContent=h.length?Math.max(...vals).toLocaleString():"–";
+  if(!h.length){["htRuns","htLast","htAvg","htPeak"].forEach(k=>$(k).textContent="–");}
+  else{
+    countUp($("htRuns"),h.length);
+    countUp($("htLast"),vals[0]);
+    countUp($("htAvg"),Math.round(vals.reduce((a,b)=>a+b,0)/vals.length));
+    countUp($("htPeak"),Math.max(...vals));
+  }
   const dl=$("htLastD"),dp=$("htPeakD");
   if(h.length>1){const d=vals[0]-vals[1];
     dl.textContent=d>0?"▲ +"+d.toLocaleString()+" vs prev":d<0?"▼ "+Math.abs(d).toLocaleString()+" vs prev":"= same as prev";
@@ -4262,7 +4347,13 @@ async function loadHistory(){
   drawHistChart(h);
   const tb=$("histRows");
   const flo=v=>{v=Number(v||0);return(v>0&&v<1?v.toFixed(2):Math.round(v).toLocaleString())+" "+GAME_UNITS;};
-  tb.innerHTML=h.length?h.map((r,i)=>{
+  if(!h.length){
+    tb.innerHTML='<tr><td colspan="7">'+emptyState("\ud83d\udd70\ufe0f","No runs yet",
+      "Every Generate is logged here — rule counts, the floors you used and how "
+      +"each run compares with the one before.",
+      '<button class="ghost mini" onclick="openPage(\'gen\')">Go to Generate</button>')
+      +"</td></tr>";
+  }else tb.innerHTML=h.map((r,i)=>{
     const total=(r.active||0)+(r.commented||0);
     const prev=h[i+1],d=prev?(r.active||0)-(prev.active||0):null;
     const dCell=d===null?'<span style="color:var(--dim)">–</span>'
@@ -4282,8 +4373,7 @@ async function loadHistory(){
         return dr>1&&v>=dr?(v/dr>=100?Math.round(v/dr).toLocaleString():(v/dr).toFixed(1))+" div":v.toLocaleString()+" "+GAME_UNITS;})()}</span>`:""}</td>
       <td style="text-align:right;color:var(--dim)">${r.duration||""}</td></tr>
       <tr class="hdet" data-i="${i}" style="display:none"><td colspan="7" class="hint" style="padding:6px 14px 10px">${detail}</td></tr>`;
-  }).join(""):
-    '<tr><td colspan="7" class="hint" style="padding:14px">No runs yet.</td></tr>';
+  }).join("");
   tb.querySelectorAll(".hrow").forEach(row=>row.onclick=()=>{
     const det=tb.querySelector(`.hdet[data-i="${row.dataset.i}"]`);
     const open=det.style.display==="none";det.style.display=open?"table-row":"none";
@@ -4831,9 +4921,8 @@ function renderPreview(){
              +`use the search box to narrow it, or Copy all / open the .ipd for the complete file.</span>`:"");
   const tot=prevLines.filter(pvIsRule).length;
   const act=prevLines.filter(l=>pvIsRule(l)&&!l.startsWith("//")).length;
-  $("pvTotal").textContent=tot?tot.toLocaleString():"–";
-  $("pvActive").textContent=tot?act.toLocaleString():"–";
-  $("pvSkip").textContent=tot?(tot-act).toLocaleString():"–";
+  if(!tot){["pvTotal","pvActive","pvSkip"].forEach(k=>$(k).textContent="–");}
+  else{countUp($("pvTotal"),tot);countUp($("pvActive"),act);countUp($("pvSkip"),tot-act);}
   $("pvSize").textContent=prevLines.length?Math.round(prevLines.join("\n").length/1024)+" KB":"–";}
 document.querySelectorAll("#pvChips .chip").forEach(c=>c.onclick=()=>{
   document.querySelectorAll("#pvChips .chip").forEach(x=>x.classList.remove("on"));

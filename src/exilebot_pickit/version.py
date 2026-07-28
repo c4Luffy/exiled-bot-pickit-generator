@@ -1,10 +1,17 @@
 """Single source of truth for the app version."""
-VERSION = "4.48.4"
+VERSION = "4.48.5"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
+• Tables that are still loading show their shape instead of nothing. Economy filled a hundred rows in one go, reflowing the page under your cursor; the Maps tables just said "Loading…". They now draw skeleton rows while the data is in flight, so nothing jumps when it lands. A refresh keeps the old rows on screen — replacing a readable table with grey bars would be a downgrade — and a FAILED load clears the skeleton and says what went wrong, with a Retry button. A skeleton that outlives its request is just the old "Loading prices…" hang wearing a nicer coat, so a test now enforces that.
+
+• History has a real empty state. It said "No runs yet." in a table cell and left you there; it now explains what the tab will show and offers the Generate button. The Economy failures use the same treatment, which until now only the price card had.
+
+• The stat tiles count up instead of snapping from a dash to 2,214 — the number reads as measured rather than pasted in. It honours the reduce-motion setting the app started respecting last release, and only the seven tiles that hold actual numbers animate: file size and validation are left alone.
+
+Also in 4.48.4:
 • You can see where the keyboard is. Text boxes picked up a gold border when focused, but buttons, dropdowns and links showed nothing at all — and three of them explicitly turned the outline off — so tabbing through the app was a guess. Everything focusable now draws a ring, and only for keyboard use: clicking with a mouse looks exactly as it did.
 
 • The tab rail answers the keyboard. It was a column of plain divs, so it could not be focused at all — the only way in was Ctrl+1..0, which reaches ten of the sixteen tabs. Tab and Enter now work, and the current tab is announced to screen readers.

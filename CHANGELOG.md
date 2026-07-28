@@ -6,6 +6,24 @@ download lives.
 
 ---
 
+## [v4.48.5] — 2026-07-28 — Loading and empty states
+
+- **Tables that are still loading show their shape instead of nothing.** Economy
+  filled ~100 rows in one go, reflowing the page under the cursor; the two Maps
+  tables just read `Loading…`. They draw skeleton rows now, so nothing jumps
+  when the data lands. Three details matter: a *refresh* keeps the existing rows
+  (replacing a readable table with grey bars is a downgrade), a **failed** load
+  clears the skeleton and names the error with a Retry button, and a new test
+  enforces that — a skeleton that outlives its request is the old
+  "Loading prices…" hang wearing a nicer coat.
+- **History has a real empty state.** `No runs yet.` in a bare table cell became
+  an explanation of what the tab records plus the button that gets you there.
+  Economy's failure states use the same treatment, which only the price card had.
+- **The stat tiles count up** rather than snapping from `–` to `2,214`. It
+  respects `prefers-reduced-motion` (honoured app-wide since v4.48.4), keeps
+  `toLocaleString` grouping, and animates only the seven tiles that hold real
+  numbers — file size and validation are left alone.
+
 ## [v4.48.4] — 2026-07-28 — Polish: the keyboard, and affordances that lied
 
 A sweep over every tab, fixing what it turned up. Nothing here moves or resizes

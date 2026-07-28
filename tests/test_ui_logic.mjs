@@ -238,6 +238,10 @@ function test(label, fn) {
         chaos_ex: async () => ({ ex: 0 }) }),
       setInterval: (fn, ms) => { const h = setInterval(fn, ms); liveTimers.add(h); return h; },
       clearInterval: (h) => { liveTimers.delete(h); clearInterval(h); } });
+    // the real helpers, not stubs — _loadEco paints a skeleton before polling
+    // and every exit path has to replace it
+    vm.runInContext(pullFn("skelRows"), ctx);
+    vm.runInContext(pullFn("emptyState"), ctx);
     vm.runInContext(pullFn("_loadEco"), ctx);
     await ctx._loadEco();                      // must RESOLVE — hanging here is the bug
     return { els, liveTimers, eco: ctx.eco };
@@ -249,6 +253,15 @@ function test(label, fn) {
     assert.equal(thrown.eco, null, "eco must stay null so re-opening the tab retries");
     assert.ok(/bridge died/.test(thrown.els.ecoInfo.textContent));
     assert.ok(/Refresh prices/.test(thrown.els.ecoInfo.textContent));
+  });
+
+  test("a failed load replaces the loading skeleton instead of animating forever", () => {
+    // A skeleton that outlives its request is the old "Loading prices…" hang
+    // wearing a nicer coat: the tab looks busy when it has actually given up.
+    const html = thrown.els.ecoBody.innerHTML;
+    assert.ok(!/class="skel"/.test(html), "skeleton rows were left on screen");
+    assert.ok(/empty-state/.test(html), "no empty state took their place");
+    assert.ok(/bridge died/.test(html), "the empty state must name the failure");
   });
 
   const empty = await run(async () => undefined);
