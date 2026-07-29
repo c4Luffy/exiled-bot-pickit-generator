@@ -264,14 +264,39 @@ def coverage_warnings(payloads: dict, categories: list,
 
 # ── Per-category rule building ────────────────────────────────────────────────
 
+def is_unique_category(key: str) -> bool:
+    """Is this category REAL uniques, as opposed to stash-endpoint routing?
+
+    ``is_unique`` on a category tuple answers "which poe.ninja endpoint", not
+    "is this a unique item". Eight categories are fetched from the stash
+    endpoint while being perfectly ordinary drops — Precursor Tablets, skill
+    gems, beasts, incubators, vials, cluster jewels, invitations and maps — and
+    the tablets entry says so in its own comment ("purely for endpoint routing:
+    this is not a real unique category").
+
+    The naming convention is the honest signal, and the PoE 1 rule writer
+    already relies on it to choose ``[UniqueName]`` over ``[Type]``.
+    """
+    return key.startswith("unique_")
+
+
 def effective_min(snapshot: dict, key: str, is_unique: bool,
                   min_exalt_gear: float, min_exalt_unique: float) -> float:
     """The exalt threshold for a category: its per-category override when set
-    (>= 0), otherwise the appropriate global (unique gear vs everything else)."""
+    (>= 0), otherwise the appropriate global (unique gear vs everything else).
+
+    The *floor* is chosen from the category KEY, not from ``is_unique`` — that
+    argument is the endpoint flag, and using it here put tablets, skill gems,
+    beasts and five other ordinary categories behind the UNIQUE floor. With a
+    typical preset (items from 2 ex, uniques from 6) that silently skipped
+    cheap-but-real drops; with a high unique floor it skipped tablets entirely,
+    which is how it was reported. ``is_unique`` is still accepted so callers
+    read naturally and nothing else has to change.
+    """
     cat_thresh = snapshot.get("cat_thresh", {}).get(key, -1.0)
     if not isinstance(cat_thresh, (int, float)):
         cat_thresh = -1.0
-    global_min = min_exalt_unique if is_unique else min_exalt_gear
+    global_min = min_exalt_unique if is_unique_category(key) else min_exalt_gear
     return cat_thresh if cat_thresh >= 0 else global_min
 
 
@@ -792,9 +817,9 @@ def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
         cat_states = item_states.get(key, {})
         eff_min = effective_min(snapshot, key, is_unique, min_gear, min_uniq)
         if key == "maps":
-            # Maps price by base and are taken by tier — not uniques, so they
-            # follow the general items floor rather than the unique floor.
-            eff_min = effective_min(snapshot, key, False, min_gear, min_uniq)
+            # (Maps used to re-derive their floor here to escape the unique
+            # floor. effective_min now picks the floor from the key, so every
+            # stash-routed non-unique category gets that for free.)
             dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
             cat_lines = build_poe1_map_lines(
                 payload, eff_min,

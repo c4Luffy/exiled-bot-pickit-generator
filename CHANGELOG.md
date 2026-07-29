@@ -6,6 +6,27 @@ download lives.
 
 ---
 
+## [v4.54.0] — 2026-07-28 — Tablets are not uniques, and neither are seven other categories
+
+- **A category's value floor came from which poe.ninja endpoint it uses, not
+  from what it is.** The `is_unique` flag on a category answers "stash endpoint
+  or exchange endpoint" — the Precursor Tablets entry says so in its own
+  comment, "purely for endpoint routing: this is not a real unique category" —
+  but `effective_min()` also used it to choose between the items floor and the
+  unique floor. So **eight ordinary categories sat behind the unique floor**:
+  Precursor Tablets, and in Path of Exile 1 skill gems, beasts, incubators,
+  vials, cluster jewels, invitations and maps.
+  Reported from a real setup: with a 100 ex unique floor, tablets worth 75-90 ex
+  were written commented out while the Economy tab showed them kept. On that
+  setup the fix takes tablets from **9 of 21 rules active to all 21**.
+- The floor is now chosen from the category key, which is the honest signal and
+  the same test the Path of Exile 1 rule writer already uses to decide between
+  `[UniqueName]` and `[Type]`. Real uniques are unaffected.
+- Maps had a one-off workaround for exactly this, added when the same problem
+  was noticed for them alone. It is gone — every stash-routed category now gets
+  the right floor for free, and a new test fails if a future category is added
+  with the same conflation.
+
 ## [v4.53.0] — 2026-07-28 — Every session, and what each one earned
 
 - **Bot Activity now keeps a per-session history.** The bot overwrites
