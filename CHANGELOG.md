@@ -6,6 +6,23 @@ download lives.
 
 ---
 
+## [v4.56.0] — 2026-07-29 — Charts you can actually find, with their own art
+
+- **The Charts category was buried.** Its key is `_charts`, and the Economy
+  sidebar groups by an `_ap_` prefix — so it fell through to "General" and
+  landed **29 entries down**, below the fold of the rail, while the section it
+  belongs to did not appear at all. Confirmed by querying the running UI rather
+  than reasoning about it: the sidebar read `GENERAL 22 | EQUIPMENT 7` with
+  Charts as General's last row.
+- **"Always pick" now sits first.** It used to be last, after poe.ninja's three
+  sections, on the reasoning that it is this app's own addition rather than
+  theirs. But it is also the smallest group and the one nothing else points at,
+  so it was the hardest to reach. poe.ninja's General / Equipment / Atlas keep
+  their exact order after it.
+- **Charts have their real item art**, embedded in the exe like every other icon
+  so it works offline. poe.ninja carries no Chart category, so there is no
+  payload icon to fall back on and the rows had been drawing a generic emoji.
+
 ## [v4.55.1] — 2026-07-29 — Charts have somewhere to be looked at
 
 - **Charts had nowhere in the app to see or switch them.** v4.55.0 wrote the

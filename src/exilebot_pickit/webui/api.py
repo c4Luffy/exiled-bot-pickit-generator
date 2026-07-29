@@ -320,8 +320,11 @@ class AppApi:
             prev = self.cfg.get("last_gen_prices", {}).get(league, {})
             # name → icon URL: poe2db art for the always-pick items, plus
             # anything the fetched payloads carry
-            from exilebot_pickit.data.icons import STATIC_ICONS
+            from exilebot_pickit.data.icons import CHART_ICONS, STATIC_ICONS
             icon_idx = dict(STATIC_ICONS)
+            # poe.ninja has no Chart category, so no payload can supply this art
+            # and the rows fell back to a generic emoji.
+            icon_idx.update(CHART_ICONS)
             for _p in payloads.values():
                 if not isinstance(_p, dict):
                     continue

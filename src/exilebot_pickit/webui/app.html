@@ -3345,7 +3345,11 @@ function renderChips(){
     kb.title="Every boss key, reliquary key and invitation, wherever poe.ninja files it";
     kb.onclick=()=>{ecoCat="_keys_";renderChips();renderEco();};
     c.appendChild(kb);}
-  const group=k=>(k.startsWith("_ap_")||k==="waystones")?"Always pick"
+  // "_charts" is an always-pick group like the "_ap_*" ones — it just predates
+  // that prefix. Without it here the key fell through to "General" and Charts
+  // sat 22nd in the longest group, below the fold of the rail, while the
+  // section it belongs to ("Always pick") did not exist for PoE 1 at all.
+  const group=k=>(k.startsWith("_ap_")||k==="waystones"||k==="_charts")?"Always pick"
     // Waystones isn't a poe.ninja category at all — it has no price, no floor,
     // every tier is always kept (build_waystone_lines ignores the payload
     // entirely) — same deal as Wombgifts/Exotic Bases, so it belongs with them,
@@ -3360,7 +3364,12 @@ function renderChips(){
   // contiguous, and section names/order match poe.ninja's own sidebar exactly
   // (checked 2026-07-23 against the live site): GENERAL, EQUIPMENT, ATLAS,
   // then our own app-only extras (Always pick) that poe.ninja doesn't have.
-  const order=["General","Equipment","Atlas","Always pick"];
+  // "Always pick" sits FIRST. It used to be last, after poe.ninja's three
+  // sections, on the reasoning that it is our own addition — but it is also
+  // the smallest group and the one nothing else points at, so on PoE 1 it
+  // landed 29 entries down and had to be scrolled for. poe.ninja's own
+  // three keep their exact relative order after it.
+  const order=["Always pick","General","Equipment","Atlas"];
   // poe.ninja lists Unique Tablets above Precursor Tablets inside ATLAS —
   // opposite of these categories' natural array order (tablets is fetched
   // via the exchange list, unique_tablets via the unique list after it) — so
