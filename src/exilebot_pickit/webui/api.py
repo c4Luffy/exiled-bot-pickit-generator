@@ -498,10 +498,12 @@ class AppApi:
             # because they're map juice/valuable bases, not exchange value).
             # Each group is its own sidebar entry with its own toggles.
             _emj = {"_ap_tablets": "🗿", "_ap_splinters": "🧩",
-                    "_ap_wombgifts": "🥚", "_ap_keys": "🗝️", "_ap_exotic": "🧿"}
+                    "_ap_wombgifts": "🥚", "_ap_keys": "🗝️", "_ap_exotic": "🧿",
+                    # a compass, not a map — the Maps tab already owns 🗺️
+                    "_charts": "🧭"}
             # Always-pick synthetic groups are PoE2-only content; an economy-only
             # game (PoE1) shows just its priced categories.
-            for key, label, rows in (self._ap_groups() if not g.economy_only else []):
+            for key, label, rows in self._ap_groups_for_game():
                 st = self._ap_item_states(states, key)
                 items = [{"name": nm, "base": base, "ex": 0, "sec": sec,
                           "icon": icon_idx.get(nm, ""),
@@ -522,7 +524,7 @@ class AppApi:
 
             enabled_cfg = self.cfg.get("category_enabled", {})
             cat_en = {c[0]: enabled_cfg.get(c[0], True) for c in g.all_categories}
-            for key, _l, _r in (self._ap_groups() if not g.economy_only else []):
+            for key, _l, _r in self._ap_groups_for_game():
                 cat_en[key] = self._ap_cat_enabled(enabled_cfg, key)
             # The "Keys" lens groups PoE2 pinnacle keys — a PoE2-only concept.
             # Send empty tables for an economy-only game so it doesn't show.
@@ -564,6 +566,20 @@ class AppApi:
         last so a remotely-added base is visible under "Other", not lost."""
         order = gen.EXOTIC_SLOT_ORDER
         return order.index(slot) if slot in order else len(order)
+
+    def _ap_groups_for_game(self):
+        """Always-pick groups for the ACTIVE game.
+
+        The PoE 2 groups below are PoE 2 content. Path of Exile 1 has exactly
+        one: Charts. poe.ninja publishes no price for them, so they can never
+        appear as an ordinary priced row — but "no price" is a poor reason for
+        "invisible", which is how they shipped in v4.55.0: three rules in the
+        file with nowhere in the app to see or switch them.
+        """
+        if self._game().economy_only:
+            return [("_charts", "Charts",
+                     [(n, "Fathomless Depths", "") for n in asm.CHART_BASES])]
+        return self._ap_groups()
 
     @staticmethod
     def _ap_groups():
@@ -633,7 +649,7 @@ class AppApi:
         whole category is off contributes every one of its names."""
         states = snap["item_states"]
         dis = set()
-        for key, _label, rows in self._ap_groups():
+        for key, _label, rows in self._ap_groups_for_game():
             if not snap["cat_enabled"].get(key, True):
                 dis.update(n for n, _b, _s in rows)
                 continue
