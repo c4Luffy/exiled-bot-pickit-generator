@@ -6,6 +6,25 @@ download lives.
 
 ---
 
+## [v4.55.0] — 2026-07-29 — Charts, and a notice that never ran
+
+- **Charts are picked up.** Path of Exile 1's Fathomless Depths mechanic — item
+  class `DeepwaterChart`, brought to Valerie to explore the Depths and combined
+  on the Voyage Board. Three bases: `Coral Forest Chart`, `Coral Reef Chart`,
+  `Sandy Seabed Chart`, all confirmed drop-enabled in the game's own item table.
+  poe.ninja does **not** price this category — there is no Chart type on its
+  PoE 1 economy API, and none of the 28 categories the app fetches carries one —
+  so unlike every other section these cannot be valued or floored. They are
+  taken on sight, and the file says so above the rules. When poe.ninja starts
+  pricing them this becomes a normal priced category.
+- **The map-tier notice from v4.51.0 never ran.** It was written into
+  `_generate`, which hands off to `_generate_poe1` on its second line for an
+  economy-only game — and maps are Path of Exile 1 only. So the notice sat in
+  code that game never reaches, and every test passed because they all checked
+  the wording of a helper nothing called. It now lives in the PoE 1 path where
+  maps actually are, and a test asserts it is wired in rather than merely
+  well-worded.
+
 ## [v4.54.0] — 2026-07-28 — Tablets are not uniques, and neither are seven other categories
 
 - **A category's value floor came from which poe.ninja endpoint it uses, not

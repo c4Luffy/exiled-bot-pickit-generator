@@ -15,11 +15,7 @@ from exilebot_pickit.generators import assembly as asm
 
 def _summary(tiers):
     """The phrasing the run log builds from a tier selection."""
-    picked = asm.normalise_map_tiers(tiers)
-    if not picked:
-        return "none"
-    return ", ".join(f"T{lo}" if lo == hi else f"T{lo}-T{hi}"
-                     for lo, hi in asm.map_tier_runs(picked))
+    return asm.map_tier_summary(tiers) or "none"
 
 
 def test_the_default_selection_is_a_single_tier():
@@ -54,3 +50,26 @@ def test_narrow_selections_are_the_ones_worth_warning_about():
     for tiers in ([16], [16, 15], [16, 15, 14]):
         assert len(asm.normalise_map_tiers(tiers)) <= 3
     assert len(asm.normalise_map_tiers(list(range(10, 17)))) > 3
+
+
+# ── the notice must REACH the run log ────────────────────────────────────
+def test_the_notice_is_wired_into_the_poe1_generate():
+    """The bug this test exists for.
+
+    v4.51.0 put this notice in ``_generate``, which returns to
+    ``_generate_poe1`` on its second line for an economy-only game — and maps
+    are PoE 1 only. The notice could never run. Every test passed, because they
+    all checked the wording of a helper nobody called.
+    """
+    import inspect
+    from exilebot_pickit.webui import api as webapi
+    src = inspect.getsource(webapi.AppApi._generate_poe1)
+    assert "map_tier_notice" in src, "the PoE 1 generate must emit the map notice"
+
+
+def test_the_notice_wording_for_each_case():
+    assert asm.map_tier_notice([16]).startswith("✓ Maps: T16 only")
+    assert "every other tier is left on the ground" in asm.map_tier_notice([16])
+    # a broad selection is not nagged at
+    assert asm.map_tier_notice(list(range(1, 17))) == "✓ Maps: T1-T16"
+    assert asm.map_tier_notice([]).startswith("⚠ Maps: no tiers selected")

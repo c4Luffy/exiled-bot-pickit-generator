@@ -440,6 +440,37 @@ def _gem_is_plain(line: dict) -> bool:
     return (not line.get("corrupted")) and int(line.get("gemQuality") or 0) == 0
 
 
+def map_tier_summary(tiers) -> str:
+    """"T16", "T14-T16", "T14, T16" — the selection, read back in words."""
+    picked = normalise_map_tiers(tiers)
+    if not picked:
+        return ""
+    return ", ".join(f"T{lo}" if lo == hi else f"T{lo}-T{hi}"
+                     for lo, hi in map_tier_runs(picked))
+
+
+def map_tier_notice(tiers, label: str = "Maps") -> str:
+    """The run-log line for the map category.
+
+    Maps are the only category whose scope is a SELECTION rather than a value
+    floor, and it defaults to tier 16 alone — so a new user generated, read a
+    cheerful "OK, Maps", and their bot then walked past every T1-T15 map.
+
+    Lives here, as a pure function, because the first attempt at this notice
+    was written into the PoE 2 generate path while maps are PoE 1 only: it
+    could never run, and a test that only checked the wording passed anyway.
+    """
+    picked = normalise_map_tiers(tiers)
+    if not picked:
+        return ("⚠ Maps: no tiers selected — only maps with their own base name "
+                "are picked up. Choose tiers on the Maps tab.")
+    note = f"✓ {label}: {map_tier_summary(picked)}"
+    if len(picked) <= 3:
+        note += (" only — every other tier is left on the ground. "
+                 "Add tiers on the Maps tab.")
+    return note
+
+
 def drop_value_index(payload: dict) -> dict:
     """name → what ONE of that item is worth *as it drops*.
 
@@ -851,8 +882,41 @@ def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
         lines += cat_lines
         lines.append("")
 
+    chart_dis = {n for n, st in (snapshot.get("item_states", {}).get("_charts", {}) or {}).items()
+                 if not st.get("enabled", True)}
+    lines += [gen.header_sub("Charts"), ""] + build_poe1_chart_lines(chart_dis) + [""]
+
     active = sum(1 for l in lines if is_rule_line(l) and not l.lstrip().startswith("//"))
     return lines, active
+
+
+# Charts — Path of Exile 1's Fathomless Depths mechanic. Item class
+# "DeepwaterChart": brought to Valerie to explore the Depths, and combined on
+# the Voyage Board for a Voyage. poe.ninja does NOT price this category (no
+# Chart type on its PoE 1 economy API, and none of the 28 categories we fetch
+# contains one), so unlike every other section here these cannot be valued or
+# floored — they are picked up on sight. Verified drop-enabled in the game's
+# own item table; the moment poe.ninja prices them this should become a normal
+# priced category and this block should go.
+CHART_BASES = (
+    "Coral Forest Chart",
+    "Coral Reef Chart",
+    "Sandy Seabed Chart",
+)
+
+
+def build_poe1_chart_lines(disabled: set | None = None) -> list[str]:
+    """Always-pick rules for Charts, since no price exists to floor them by."""
+    dis = set(disabled or ())
+    lines = [
+        "// Charts (Fathomless Depths). poe.ninja does not price these, so there",
+        "// is no value to compare against your floor — they are taken on sight.",
+        "// Comment a line out to stop picking that chart up.",
+    ]
+    for base in CHART_BASES:
+        rule = f'[Type] == "{gen._quote_ipd(base)}" # [StashItem] == "true"'
+        lines.append(rule if base not in dis else f"//{rule}")
+    return lines
 
 
 # ── Price-move alerts ─────────────────────────────────────────────────────────

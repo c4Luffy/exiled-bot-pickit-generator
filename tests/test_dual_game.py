@@ -142,8 +142,11 @@ def test_build_poe1_economy_lines_applies_floors_and_syntax():
     # below floor → commented out
     assert '//[Type] == "Orb of Alteration"' in text
     assert '//[UniqueName] == "Wanderlust"' in text  # unique below 10 floor
-    # 3 active: Divine, Chaos, Headhunter
-    assert active == 3
+    # 3 priced (Divine, Chaos, Headhunter) + the 3 Charts, which carry no
+    # poe.ninja price at all and so are always active regardless of the floor
+    from exilebot_pickit.generators import assembly as _asm
+    assert active == 3 + len(_asm.CHART_BASES)
+    assert sum(text.count(f'[Type] == "{b}"') for b in _asm.CHART_BASES) == 3
 
 
 def test_annotate_value_lines_adds_chaos_and_divine():
