@@ -4255,7 +4255,7 @@ class AppApi:
                    "Focus": "Foci", "Quiver": "Quivers", "Bow": "Bows",
                    "Crossbow": "Crossbows", "Quarterstaff": "Quarterstaves",
                    "Spear": "Spears", "Mace": "One Hand Maces", "Sceptre": "Sceptres",
-                   "Wand": "Wands", "Staff": "Staves"}
+                   "Wand": "Wands", "Staff": "Staves", "Jewel": "Jewels"}
     # Rares roll a generated two-word name in game, so any of these is as real as
     # the next — only the base name and the mods decide anything.
     _RARE_NAMES = ["Dust Song", "Widow Grasp", "Gloom Bite", "Carrion Whisper",

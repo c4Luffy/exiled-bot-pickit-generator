@@ -35,6 +35,7 @@ _SLOT_ITEM_CLASSES = {
     "Sceptre": {"Sceptre"},
     "Wand": {"Wand"},
     "Staff": {"Staff"},
+    "Jewel": {"Jewel"},
 }
 
 _UNIQUE_PATH = re.compile(r"Unique\d*$")

@@ -4173,7 +4173,8 @@ function renderFracture(){
 const RARE_SLOTS=[["Armour",["Body Armour","Helmet","Gloves","Boots"]],
   ["Jewellery",["Amulet","Ring","Belt"]],
   ["Off-hand",["Focus","Quiver"]],
-  ["Weapons",["Bow","Crossbow","Quarterstaff","Spear","Mace","Sceptre","Wand","Staff"]]];
+  ["Weapons",["Bow","Crossbow","Quarterstaff","Spear","Mace","Sceptre","Wand","Staff"]],
+  ["Jewels",["Jewel"]]];
 let rareSel="Body Armour";
 async function loadRare(){
   const s=$("rareSide");s.innerHTML="";
@@ -4280,7 +4281,7 @@ function renderRare(){
        <div><div style="color:var(--dim);font-size:10.5px;letter-spacing:.7px">WEIGHTEDSUM ≥</div>
          <div style="font-family:Georgia,serif;font-size:24px;color:var(--gold)">${esc(r.threshold)}</div></div>
        <div><div style="color:var(--dim);font-size:10.5px;letter-spacing:.7px">MIN ITEM TIER</div>
-         <div style="font-family:Georgia,serif;font-size:24px;color:var(--gold)">${esc(r.item_tier)}</div></div>
+         <div style="font-family:Georgia,serif;font-size:24px;color:var(--gold)">${r.item_tier?esc(r.item_tier):"—"}</div></div>
        <div style="flex:1;min-width:220px"><div style="color:var(--dim);font-size:10.5px;letter-spacing:.7px">BASES (ONE RULE EACH)</div>
          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${r.bases.map(b=>`<span class="pill">${esc(b)}</span>`).join("")}</div></div>
      </div>

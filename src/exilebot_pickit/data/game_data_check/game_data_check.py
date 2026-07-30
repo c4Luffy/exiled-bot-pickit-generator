@@ -138,13 +138,33 @@ def _drop_delta(current: set) -> dict:
 
 
 # ── indexing the game's data ──────────────────────────────────────────────────
+# Jewel affixes do NOT live in the "item" domain — the GGPK files them under
+# "misc", keyed by these three spawn tags (Ruby=str, Emerald=dex, Sapphire=int).
+# Filtering on domain=="item" alone therefore made every jewel-only stat look
+# like it had been removed from the game: adding the Jewel recipe on 2026-07-30
+# instantly produced two false "not a normal affix" advisories for
+# elemental_damage_+% and triggered_spell_spell_damage_+%, both of which are
+# ordinary jewel prefixes. Twelve more slipped through only because the same id
+# also rolls on equipment.
+_JEWEL_TAGS = frozenset({"strjewel", "dexjewel", "intjewel"})
+
+
+def _is_jewel_mod(m: dict) -> bool:
+    return m.get("domain") == "misc" and any(
+        w.get("tag") in _JEWEL_TAGS and w.get("weight", 0) > 0
+        for w in m.get("spawn_weights", []))
+
+
 def index_mods(mods: dict):
     """(affix_stat_ids, any_item_stat_ids) — ids granted by a normal item
-    prefix/suffix, and the softer 'granted by any item mod at all' set."""
+    prefix/suffix, and the softer 'granted by any item mod at all' set.
+
+    Covers equipment (domain "item") plus jewels (domain "misc" + a jewel spawn
+    tag); see _JEWEL_TAGS for why the second half is not optional."""
     affix: set[str] = set()
     any_item: set[str] = set()
     for m in mods.values():
-        if m.get("domain") != "item":
+        if m.get("domain") != "item" and not _is_jewel_mod(m):
             continue
         is_affix = m.get("generation_type") in ("prefix", "suffix")
         for s in m.get("stats", []):
@@ -158,9 +178,15 @@ def index_mods(mods: dict):
 
 
 def game_base_names(base_items: dict) -> set[str]:
-    """Every real base-item name in the game's own item table."""
+    """Every real base-item name in the game's own item table.
+
+    Jewel bases (Ruby / Emerald / Sapphire) are domain "misc", not "item" —
+    same split as their affixes — so they are matched on item_class instead.
+    Without this the three jewel bases read as "isn't in the game at all"
+    (2026-07-30) while sitting in the item table and in NeverSink's drop list."""
     return {v["name"] for v in base_items.values()
-            if v.get("domain") == "item" and v.get("name")}
+            if v.get("name")
+            and (v.get("domain") == "item" or v.get("item_class") == "Jewel")}
 
 
 def neversink_bases(ns_text: str) -> set[str]:

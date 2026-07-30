@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.56.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.56.0 for Windows" src="https://img.shields.io/badge/Download-v4.56.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.57.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.57.0 for Windows" src="https://img.shields.io/badge/Download-v4.57.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.56.0">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.57.0">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.56.0/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.57.0/SHA256SUMS.txt).
 
 ### Three important usage notes
 
@@ -121,9 +121,17 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.56.0
+## Current release: v4.57.0
 
-### Gems priced as they drop, and a pill that stops lying
+### Jewels join Magic & Rare
+
+- **Rare jewels are now scored like every other slot.** Magic & Rare gains an 18th slot, **Jewel**, covering the three droppable bases — Sapphire, Emerald and Ruby — with a 14-stat WeightedSum: max Energy Shield, Triggered Spell Damage, Elemental / Spell / Lightning / Projectile Damage, Ailment Magnitude, Projectile Speed, Crit Damage Bonus, Spell Crit Damage, chance to Pierce, Crit Chance, Spell Crit Chance and Cast Speed. It answers the strictness dial like every other slot — **Looser 200, Balanced 250, Strict 312, Very strict 375** — globally or per-slot.
+- **Every id and roll came from the live game data, not a wiki.** Two ids that a hand-written jewel rule commonly carries score zero forever: `projectile_speed_+%` does not exist in the game (the real one is `base_projectile_speed_+%`), and `recover_%_maximum_mana_on_kill` is real but never rolls on a jewel. Generated rules use the correct ids.
+- **Jewels carry no `[ItemTier]`, so the Jewel rules write no tier gate.** Every other slot gates on `[ItemTier] >= "4"`; writing that against a property the item does not have is the silent way to produce a rule that never matches.
+- **The game-data health check was blind to jewels entirely.** Jewel affixes and jewel bases live in the game's `misc` domain and the check only read `item`, so it called Sapphire, Emerald and Ruby "not in the game at all" and flagged two ordinary jewel prefixes as removed. Twelve more stat ids had been passing only because the same id also rolls on equipment.
+- **The embedded syntax guide now explains `[UniqueName]`** — including the disenchant idiom from Exiled Bot's own `default.ipd`, where a deliberately impossible name picks up every unique so anything no other rule keeps is left to disenchant for Chance Shards.
+
+### v4.56.0 — Gems priced as they drop, and a pill that stops lying
 
 - **Skill gems were priced at their best variant, not what drops.** poe.ninja lists a gem once per level/quality/corrupted combination, dearest first, and we kept the first row — so Frostblink was written as `7853.00` (a level-20 quality-20 **corrupted** one) when the gem that falls on the ground is worth 1. **666 of 810 gems** were overstated by 10x or more; Heavy Strike of Trarthus, 2c on the ground, was written as 36,810c.
 - **That made your floor useless for gems** — every gem cleared any floor on the strength of a variant it will never be, so the bot took all 810. They are now priced from the row a dropped gem matches, best roll still noted. At a 20 ex floor: **68 gems, not 810**.
@@ -311,7 +319,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.56.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.56.0) · [full changelog](CHANGELOG.md)
+[Read the complete v4.57.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.57.0) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

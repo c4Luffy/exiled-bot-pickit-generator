@@ -233,6 +233,12 @@ _ACCESSORY_BASES: frozenset = frozenset({
     "Coral Amulet", "Paua Amulet", "Amber Amulet", "Jade Amulet",
     "Lapis Amulet", "Gold Amulet", "Agate Amulet", "Citrine Amulet",
     "Turquoise Amulet", "Onyx Amulet", "Solar Amulet", "Stellar Amulet",
+    # Jewels — the three droppable rare jewel bases (item_class "Jewel"),
+    # added 2026-07-30 for the Jewel rare-gear recipe. Verified against the
+    # GGPK base-item dump: Ruby=strjewel, Emerald=dexjewel, Sapphire=intjewel.
+    # Diamond / Timeless / Time-Lost are all not_for_sale (never drop as a
+    # normal rare) and are deliberately NOT listed.
+    "Ruby", "Emerald", "Sapphire",
 })
 
 VALID_EQUIPMENT_BASES: frozenset = (

@@ -6,7 +6,8 @@ Each slot spec carries:
                    T1 max-roll from Craft of Exile (normalisation, so every
                    stat contributes ~100 points at a perfect roll).
   - ``threshold``: the WeightedSum cutoff (strictness dial).
-  - ``item_tier``: minimum [ItemTier] gate.
+  - ``item_tier``: minimum [ItemTier] gate, or None for slots whose items have
+                   no tier property (Jewels) — then no gate is written.
 
 Every stat id is verified in the bot's ModsList; every base is a real craft
 base (see generator._CRAFT_BEST_BASES). Nothing here is guessed — the comments
@@ -84,6 +85,12 @@ STAT_LABELS = {
     "allies_in_presence_critical_strike_chance_+%": "Allies in Presence crit chance %",
     "minion_maximum_life_+%": "Minion maximum Life %",
     "local_spirit_+%": "% increased Spirit (local)",
+    "maximum_energy_shield_+%": "% maximum Energy Shield (global)",
+    "triggered_spell_spell_damage_+%": "% Triggered Spell damage",
+    "elemental_damage_+%": "% Elemental damage",
+    "projectile_damage_+%": "% Projectile damage",
+    "ailment_effect_+%": "Ailment Magnitude %",
+    "base_chance_to_pierce_%": "chance to Pierce %",
 }
 
 RARE_GEAR = {
@@ -534,6 +541,50 @@ RARE_GEAR = {
         "threshold": "250",
         "item_tier": "4",
     },
+    # Jewel — added 2026-07-30. The stat list is owner-picked (the 14 mods the
+    # owner asked for, no more). Every id and every T1 max below was read from
+    # the live GGPK mod dump (repoe-fork poe2/mods.min.json, the same source
+    # tools/check_game_data.py uses) filtered to domain "misc" + the three
+    # jewel spawn tags — NOT from a wiki, which is how the owner's own draft
+    # rule ended up carrying two ids that score zero forever:
+    #   projectile_speed_+%          -> does not exist; real id is base_projectile_speed_+%
+    #   recover_%_maximum_mana_on_kill -> real id, but never rolls on a jewel
+    # Both are corrected here. Jewels carry no [ItemTier] property, so this is
+    # the one slot with no tier gate (item_tier None).
+    #
+    # Which base can roll what (GGPK spawn tags, 2026-07-30):
+    #   Sapphire (intjewel) — every stat except lightning/projectile/pierce
+    #   Emerald  (dexjewel) — lightning, projectile dmg/speed, ailment, elemental, pierce
+    #   Ruby     (strjewel) — elemental damage ONLY, so a Ruby tops out at 100
+    #                         points and can never clear 250. It is listed
+    #                         because the owner asked for all three bases; the
+    #                         fix if that matters is to add Ruby's own stats
+    #                         (melee_damage_+%, physical_damage_+%,
+    #                         warcry_damage_+%, base_maximum_fire_damage_resistance_%)
+    #                         or drop the base — owner call, not ours.
+    "Jewel": {
+        "bases": ["Sapphire", "Emerald", "Ruby"],
+        "weights": {
+            # prefixes
+            "maximum_energy_shield_+%": 5.0,             # T1 max 20 (Sapphire)
+            "triggered_spell_spell_damage_+%": 5.56,     # T1 max 18 (Sapphire)
+            "elemental_damage_+%": 6.67,                 # T1 max 15 (all three)
+            "spell_damage_+%": 6.67,                     # T1 max 15 (Sapphire)
+            "lightning_damage_+%": 6.67,                 # T1 max 15 (Emerald)
+            "projectile_damage_+%": 6.67,                # T1 max 15 (Emerald)
+            "ailment_effect_+%": 6.67,                   # T1 max 15 (Emerald/Sapphire)
+            "base_projectile_speed_+%": 12.5,            # T1 max 8 (Emerald)
+            # suffixes
+            "base_critical_strike_multiplier_+": 5.0,    # T1 max 20 (Sapphire)
+            "base_spell_critical_strike_multiplier_+": 5.0,  # T1 max 20 (Sapphire)
+            "base_chance_to_pierce_%": 5.0,              # T1 max 20 (Emerald)
+            "critical_strike_chance_+%": 6.67,           # T1 max 15 (Sapphire)
+            "spell_critical_strike_chance_+%": 6.67,     # T1 max 15 (Sapphire)
+            "base_cast_speed_+%": 25.0,                  # T1 max 4 (Sapphire)
+        },
+        "threshold": "250",
+        "item_tier": None,
+    },
 }
 
 
@@ -565,14 +616,21 @@ def _slot_lines(spec: dict, mult: float = 1.0) -> list:
 
     Post-# order: hard gates (required minimums) first, then the WeightedSum
     over the remaining stats, then the pickup action. ``mult`` is the strictness
-    dial — it scales only the cutoff, never the weights or gates."""
+    dial — it scales only the cutoff, never the weights or gates.
+
+    ``item_tier`` may be None for a slot whose items carry no [ItemTier]
+    property at all (Jewels). Emitting the gate anyway would compare against a
+    property the item does not have, which is the silent way to write a rule
+    that never matches — so the gate is omitted entirely instead."""
     terms = ",".join(f"{sid}:{w}" for sid, w in spec["weights"].items())
     gates = "".join(f'[{sid}] >= "{v}" && '
                     for sid, v in spec.get("gates", {}).items())
     cutoff = scaled_threshold(spec, mult)
+    tier = spec.get("item_tier")
+    tier_gate = f'[ItemTier] >= "{tier}" && ' if tier else ""
     return [
-        f'[Type] == "{base}" && [ItemTier] >= "{spec["item_tier"]}" '
-        f'&& [Rarity] == "Rare" # {gates}[WeightedSum({terms})] >= '
+        f'[Type] == "{base}" && {tier_gate}'
+        f'[Rarity] == "Rare" # {gates}[WeightedSum({terms})] >= '
         f'"{cutoff}" && [StashItem] == "true"'
         for base in spec["bases"]
     ]
