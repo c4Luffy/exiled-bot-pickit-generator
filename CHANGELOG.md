@@ -6,7 +6,7 @@ download lives.
 
 ---
 
-## [v4.57.1] — 2026-07-30 — The slot count stops saying seventeen
+## [v4.57.1] — 2026-08-08 — The slot count stops saying seventeen
 
 - **Magic & Rare told you it had 17 slot recipes while listing 18.** Adding the
   Jewel slot in v4.57.0 left the count hardcoded in six places — three code
@@ -16,7 +16,7 @@ download lives.
   markup, so the nineteenth slot cannot reintroduce this. The number in the
   HTML is only the pre-script fallback.
 
-## [v4.57.0] — 2026-07-30 — Jewels join Magic & Rare
+## [v4.57.0] — 2026-08-08 — Jewels join Magic & Rare
 
 - **Rare jewels are now scored like every other slot.** Magic & Rare gains an
   18th slot, **Jewel**, covering the three droppable bases — Sapphire, Emerald
