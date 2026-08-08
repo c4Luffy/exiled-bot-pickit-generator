@@ -2772,7 +2772,7 @@ class AppApi:
             out += craft_lines
             out += asm.fracture_pickit_section(snap)
             out += gen.build_magic_rare_rules(snap.get("magic_rare_flasks", True))
-            # Rare-gear WeightedSum recipes (17 slots) live INSIDE the Magic & Rare
+            # Rare-gear WeightedSum recipes (18 slots) live INSIDE the Magic & Rare
             # section, not in one of their own: both are managed from the Magic &
             # Rare tab, and a standalone 2-rule "Magic & Rare" section next to a
             # 51-rule "Rare Gear" one just looked broken in the Preview sidebar.

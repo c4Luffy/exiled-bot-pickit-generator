@@ -1623,7 +1623,7 @@
   <div class="card" style="margin-top:14px">
     <div style="display:flex;align-items:center;gap:12px">
       <div style="flex:1"><b>Rare-gear rules in your pickit</b>
-        <div class="hint" style="margin-top:2px">All 17 slot recipes below are written into every generated pickit. Turn off to generate without them.</div></div>
+        <div class="hint" id="rareMasterHint" style="margin-top:2px">All 18 slot recipes below are written into every generated pickit. Turn off to generate without them.</div></div>
       <div class="switch" id="swRareGear"><i></i></div>
     </div>
     <div style="display:flex;align-items:center;gap:14px;margin-top:13px;padding-top:13px;border-top:1px solid var(--border)">
@@ -1645,7 +1645,7 @@
           <h2 id="rareTitle" style="margin:0">Pick a slot</h2>
           <button type="button" class="ghost mini" id="rareCopyAll" style="font-size:11px;padding:4px 11px">Copy all rules</button>
         </div>
-        <div class="hint">Rare-gear WeightedSum rules — every stat verified against the bot's mod list, weights from live max-rolls. All 17 slots are written into every generated pickit (toggle above to turn the whole set off).</div>
+        <div class="hint" id="rareListHint">Rare-gear WeightedSum rules — every stat verified against the bot's mod list, weights from live max-rolls. All 18 slots are written into every generated pickit (toggle above to turn the whole set off).</div>
         <div id="rareList"></div>
       </div>
     </div>
@@ -4192,6 +4192,14 @@ async function loadRare(){
     window.rareStrict=(rrsp&&rrsp.strictness)||"balanced";
   }catch(e){window.rareRecipes={};window.rareGearOn=true;window.rareStrict="balanced";}  // default matches config (on) so the switch never reads OFF while rules still generate
   $("swRareGear").classList.toggle("on",!!window.rareGearOn);
+  // Slot count comes from the API, not the markup — the two hints below said
+  // "17 slots" for a whole release after the 18th (Jewel) was wired in.
+  const nSlots=Object.keys(window.rareRecipes||{}).length;
+  if(nSlots){
+    const mh=$("rareMasterHint"),lh=$("rareListHint");
+    if(mh)mh.textContent=`All ${nSlots} slot recipes below are written into every generated pickit. Turn off to generate without them.`;
+    if(lh)lh.textContent=`Rare-gear WeightedSum rules — every stat verified against the bot's mod list, weights from live max-rolls. All ${nSlots} slots are written into every generated pickit (toggle above to turn the whole set off).`;
+  }
   paintStrict();
   renderRare();
   const _ca=$("rareCopyAll");

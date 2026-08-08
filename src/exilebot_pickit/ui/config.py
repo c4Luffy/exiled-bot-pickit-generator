@@ -101,7 +101,7 @@ DEFAULT_CONFIG = {
 
     "theme": "dark",
     "magic_rare_flasks": True,
-    # Master switch for the rare-gear WeightedSum recipes (17 slots).
+    # Master switch for the rare-gear WeightedSum recipes (18 slots).
     "rare_gear_enabled": True,
     # Strictness dial for those recipes: looser/balanced/strict/very_strict —
     # scales every slot's WeightedSum cutoff. balanced = the tuned defaults.

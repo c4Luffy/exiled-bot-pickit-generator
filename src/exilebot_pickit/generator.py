@@ -1671,7 +1671,7 @@ def main():
     # ── Magic & Rare (flask rules + rare-gear WeightedSum recipes) ────────────
     # These emit the same sections a default GUI generate does (headless has no
     # per-item/per-slot config, so everything is on). build_magic_rare_rules
-    # writes the "Magic & Rare" header + flask rules; rare_gear_body's 17 slot
+    # writes the "Magic & Rare" header + flask rules; rare_gear_body's 18 slot
     # recipes live inside that same section, exactly as in the GUI.
     from .data.rare.rules import rare_gear_body
     output_lines.extend(build_magic_rare_rules())

@@ -6,6 +6,16 @@ download lives.
 
 ---
 
+## [v4.57.1] — 2026-07-30 — The slot count stops saying seventeen
+
+- **Magic & Rare told you it had 17 slot recipes while listing 18.** Adding the
+  Jewel slot in v4.57.0 left the count hardcoded in six places — three code
+  comments, the README feature list, and two hints on the Magic & Rare page
+  itself, one of them directly above the rail that now shows eighteen entries.
+- **The two in-app hints now read the count from the API** instead of the
+  markup, so the nineteenth slot cannot reintroduce this. The number in the
+  HTML is only the pre-script fallback.
+
 ## [v4.57.0] — 2026-07-30 — Jewels join Magic & Rare
 
 - **Rare jewels are now scored like every other slot.** Magic & Rare gains an
