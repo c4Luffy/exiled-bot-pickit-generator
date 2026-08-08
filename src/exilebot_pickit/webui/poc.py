@@ -17,6 +17,72 @@ import webview
 
 from exilebot_pickit.webui.api import AppApi
 
+WEBVIEW2_URL = "https://developer.microsoft.com/microsoft-edge/webview2/"
+
+
+def _fatal(msg: str) -> None:
+    """Show a blocking error box (and echo to stderr, for a console/CI run).
+
+    The window may not exist yet, so this is the only way the user hears
+    anything at all — a silent exit reads as "the exe does nothing"."""
+    sys.stderr.write(msg + "\n")
+    try:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(None, msg, "Exiled Bot Pickit Generator", 0x10)
+    except Exception:
+        pass
+
+
+def _renderer():
+    """Which engine pywebview will actually use, or None if we can't tell.
+
+    Read out of pywebview rather than re-implementing its probe: winforms.py
+    picks the renderer at *import* time (its module body runs _is_chromium()
+    and binds `renderer`), and webview.start() imports that same cached module.
+    So this is the real answer and cannot drift if pywebview changes how it
+    detects the runtime."""
+    if not sys.platform.startswith("win"):
+        return None
+    try:
+        from webview.platforms import winforms
+        return getattr(winforms, "renderer", None)
+    except Exception:
+        return None      # pythonnet missing / not Windows -> let start() decide
+
+
+def _require_webview2() -> bool:
+    """Refuse to run under IE11 instead of opening a dead window.
+
+    When the Edge WebView2 runtime is missing, pywebview does NOT fail — it
+    silently falls back to MSHTML (IE11), so webview.start() *succeeds* and the
+    dialog in _run_webview never fires. The user gets a window that renders
+    app.html in a 2013 engine, which fails in two ways at once:
+
+      * no CSS custom properties, so every var(--bg) / var(--text) / var(--font)
+        resolves to nothing — the app is white, black and serif, while the plain
+        flex/padding rules still apply, so it looks half-styled rather than
+        obviously broken; and
+      * an ES5-only parser that rejects the page's arrow functions outright,
+        killing the entire <script> — which is why the league dropdown sits on
+        its hardcoded "Loading…" option forever and the version label is blank.
+
+    Note this is not the same as "WebView2 is broken": it is simply absent.
+    Windows 11 ships it; on Windows 10 it normally arrives with Microsoft Edge
+    but is missing on fresh, LTSC, N and debloated installs — a real, reported
+    state, which is exactly how this shipped unnoticed."""
+    if _renderer() != "mshtml":
+        return True
+    _fatal(
+        "This app needs the Microsoft Edge WebView2 runtime, and it is not\n"
+        "installed on this PC.\n\n"
+        "Install it free — about 2 MB, no reboot — from:\n"
+        f"{WEBVIEW2_URL}\n\n"
+        'Download the "Evergreen Bootstrapper", run it, then start the app\n'
+        "again.\n\n"
+        "Windows 11 already includes WebView2. On Windows 10 it usually comes\n"
+        "with Microsoft Edge, but not on every install.")
+    return False
+
 
 def _start_freeze_watchdog():
     """Dump every thread's exact stack to <config dir>/watchdog.log every 15s,
@@ -106,6 +172,10 @@ def _saved_position(geo):
 def main():
     if not _single_instance():
         return
+    # Before anything else: an IE11 fallback can only produce a dead window, so
+    # say so and stop rather than spend a config load and a worker thread on it.
+    if not _require_webview2():
+        return
     _start_freeze_watchdog()
     api = AppApi()
     geo = api.cfg.get("window_geometry_web") or {}
@@ -188,25 +258,22 @@ def _run_webview(window, api):
         else:
             webview.start()
     except Exception:
-        # No fallback UI exists, so diagnose the two known causes honestly
-        # instead of always blaming a missing WebView2 runtime.
-        try:
-            import ctypes
-            ctypes.windll.user32.MessageBoxW(
-                None,
-                "The app couldn't start its window.\n\n"
-                "Most common causes, in order:\n\n"
-                "1. An older copy of the app is still running — check the\n"
-                "   Task Manager for\n"
-                "   ExileBot2PickitGenerator, close it, then start again.\n\n"
-                "2. The Microsoft WebView2 runtime is missing (rare on\n"
-                "   updated Windows). Install it free from:\n"
-                "   https://developer.microsoft.com/microsoft-edge/webview2/\n\n"
-                "3. The app folder isn't writable — move the .exe to a\n"
-                "   normal folder like Documents and run it from there.",
-                "Exiled Bot Pickit Generator", 0x10)
-        except Exception:
-            pass
+        # No fallback UI exists, so diagnose the known causes honestly instead
+        # of always blaming a missing WebView2 runtime. A *missing* runtime can
+        # no longer reach this point — _require_webview2() stops that case up
+        # front with its own instructions — so the remaining runtime cause is
+        # one that is installed but won't start.
+        _fatal(
+            "The app couldn't start its window.\n\n"
+            "Most common causes, in order:\n\n"
+            "1. An older copy of the app is still running — check the\n"
+            "   Task Manager for\n"
+            "   ExileBot2PickitGenerator, close it, then start again.\n\n"
+            "2. The app folder isn't writable — move the .exe to a\n"
+            "   normal folder like Documents and run it from there.\n\n"
+            "3. The Microsoft WebView2 runtime is installed but failed to\n"
+            "   start. Repair Microsoft Edge from Settings > Apps, or\n"
+            f"   reinstall the runtime from:\n   {WEBVIEW2_URL}")
         raise
 
 

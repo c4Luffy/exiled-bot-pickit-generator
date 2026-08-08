@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.57.1/ExileBot2PickitGenerator.exe"><img alt="Download v4.57.1 for Windows" src="https://img.shields.io/badge/Download-v4.57.1-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.57.2/ExileBot2PickitGenerator.exe"><img alt="Download v4.57.2 for Windows" src="https://img.shields.io/badge/Download-v4.57.2-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.57.1">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.57.2">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,9 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.57.1/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.57.2/SHA256SUMS.txt).
+
+**What it needs:** Windows 10 or 11, and the free [Microsoft Edge WebView2 runtime](https://developer.microsoft.com/microsoft-edge/webview2/) that draws the window. Windows 11 already includes it, and on Windows 10 it normally arrives with Microsoft Edge — but not on every install. If it is missing, the app says so and links the download rather than opening a blank window.
 
 ### Three important usage notes
 
@@ -121,11 +123,18 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.57.1
+## Current release: v4.57.2
 
-### Jewels join Magic & Rare
+### A missing WebView2 runtime says so instead of opening a dead window
 
-- **v4.57.1 — the slot count stops saying seventeen.** Adding the Jewel slot left "17 slot recipes" hardcoded in six places, including two hints on the Magic & Rare page above a rail that now lists eighteen. Those two now read the count from the API, so the nineteenth slot cannot reintroduce it.
+- **On a PC without the Edge WebView2 runtime, the app opened, drew, and did nothing — with no error at all.** The window library does not fail when WebView2 is absent; it quietly falls back to Internet Explorer 11 and reports success, so nothing was ever shown. The app then rendered in a 2013 engine, which is why it appeared white and serif and why the league dropdown sat on "Loading…" forever.
+- **The app now checks which engine it is about to get, before it opens the window.** If the answer is Internet Explorer it shows the actual fix — install the WebView2 runtime, with the link — and exits. An engine it does not recognise is always allowed to start, so the check can only ever stop the one case it can positively identify.
+- **This was a Windows 10 problem.** Windows 11 includes WebView2. On Windows 10 it normally arrives with Microsoft Edge, but it is missing on fresh, LTSC, N and debloated installs — so people whose PCs were perfectly fine were seeing a blank app and needed a 2 MB runtime nobody told them about.
+- **The start-failure dialog stopped misleading people.** It called a missing WebView2 runtime "rare on updated Windows", which is backwards for exactly the people reading it. That case now has its own message.
+
+### v4.57.1 — Jewels join Magic & Rare
+
+- **The slot count stops saying seventeen.** Adding the Jewel slot left "17 slot recipes" hardcoded in six places, including two hints on the Magic & Rare page above a rail that now lists eighteen. Those two now read the count from the API, so the nineteenth slot cannot reintroduce it.
 - **Rare jewels are now scored like every other slot.** Magic & Rare gains an 18th slot, **Jewel**, covering the three droppable bases — Sapphire, Emerald and Ruby — with a 14-stat WeightedSum: max Energy Shield, Triggered Spell Damage, Elemental / Spell / Lightning / Projectile Damage, Ailment Magnitude, Projectile Speed, Crit Damage Bonus, Spell Crit Damage, chance to Pierce, Crit Chance, Spell Crit Chance and Cast Speed. It answers the strictness dial like every other slot — **Looser 200, Balanced 250, Strict 312, Very strict 375** — globally or per-slot.
 - **Every id and roll came from the live game data, not a wiki.** Two ids that a hand-written jewel rule commonly carries score zero forever: `projectile_speed_+%` does not exist in the game (the real one is `base_projectile_speed_+%`), and `recover_%_maximum_mana_on_kill` is real but never rolls on a jewel. Generated rules use the correct ids.
 - **Jewels carry no `[ItemTier]`, so the Jewel rules write no tier gate.** Every other slot gates on `[ItemTier] >= "4"`; writing that against a property the item does not have is the silent way to produce a rule that never matches.
@@ -320,7 +329,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.57.1 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.57.1) · [full changelog](CHANGELOG.md)
+[Read the complete v4.57.2 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.57.2) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>
@@ -340,7 +349,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 <details>
 <summary><strong>Build from source</strong></summary>
 
-Requirements: Windows 10 or 11 and Python 3.10 or newer.
+Requirements: Windows 10 or 11, Python 3.10 or newer, and the [Microsoft Edge WebView2 runtime](https://developer.microsoft.com/microsoft-edge/webview2/) (bundled with Windows 11; usually installed alongside Microsoft Edge on Windows 10).
 
 ```powershell
 git clone https://github.com/c4Luffy/exiled-bot-pickit-generator.git
