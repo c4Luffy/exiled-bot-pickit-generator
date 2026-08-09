@@ -26,9 +26,9 @@
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
 </p>
 
-![Real Exiled Bot Pickit Generator v4.47.0 — Path of Exile 1 Generate screen](docs/shots/poe1-01-generate-v4470.png)
+![Real Exiled Bot Pickit Generator v4.57.2 — Path of Exile 1 Generate screen](docs/shots/poe1-01-generate-v4572.png)
 
-<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.47.0 · <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/#top">see all 22 tabs of both games</a></sub></p>
+<p align="center"><sub>Real running-app capture · Path of Exile 1 · Generate · captured on v4.57.2 · <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/#top">see all 22 tabs of both games</a></sub></p>
 
 ## Start here
 
