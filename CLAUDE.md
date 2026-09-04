@@ -117,7 +117,7 @@ folder next to the exe when frozen, or `%APPDATA%/exilebot-pickit` in dev. It is
 ```bash
 pip install -e .                 # install
 python -m exilebot_pickit        # run the GUI (needs a display / Windows WebView2)
-python -m exilebot_pickit --cli --league "Fate of the Vaal"   # headless generate
+python -m exilebot_pickit --cli --league "Runes of Aldur"   # headless generate
 python -m exilebot_pickit --cli --list-leagues
 
 pip install pytest "ruff==0.15.20"

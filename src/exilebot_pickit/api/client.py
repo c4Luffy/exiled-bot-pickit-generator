@@ -286,8 +286,6 @@ def fetch_live_leagues(game=None) -> list:
     leagues = []
     for item in data.get("economyLeagues", []):
         leagues.append((item.get("name", ""), item.get("url", ""), item.get("displayName", item.get("name", ""))))
-    for item in data.get("oldEconomyLeagues", []):
-        leagues.append((item.get("name", ""), item.get("url", ""), item.get("displayName", item.get("name", "")) + " (old)"))
     return [l for l in leagues if l[0] and l[1]]
 
 

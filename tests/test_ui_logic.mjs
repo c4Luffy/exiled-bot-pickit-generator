@@ -229,7 +229,7 @@ function test(label, fn) {
 {
   const run = async (poll) => {
     const els = {}, liveTimers = new Set();
-    els.league = mkEl(); els.league.value = "Fate of the Vaal";
+    els.league = mkEl(); els.league.value = "Runes of Aldur";
     const ctx = vm.createContext({
       Math, $: (id) => (els[id] ||= mkEl()), eco: null, ecoCat: null, ecoUnit: "ex", chaosEx: 0,
       GAME_UNITS: "ex", esc: (x) => String(x),

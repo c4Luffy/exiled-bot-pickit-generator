@@ -440,8 +440,9 @@ def test_craft_base_rules_custom_ilvl_in_rule():
 def test_cli_version_flag():
     """python -m exilebot_pickit.generator --version must print version and exit 0."""
     import subprocess
+    import sys
     r = subprocess.run(
-        ["python", "-m", "exilebot_pickit.generator", "--version"],
+        [sys.executable, "-m", "exilebot_pickit.generator", "--version"],
         capture_output=True, text=True
     )
     assert r.returncode == 0

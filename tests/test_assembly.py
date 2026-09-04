@@ -34,10 +34,10 @@ def _unique_payload(rows, rate=1.0):
 
 def test_header_banner_carries_league_and_id():
     ts = datetime.datetime(2026, 6, 28, 16, 37, 44)
-    out = asm.build_header_lines("Fate of the Vaal", ts, "20260628_163744", 7.0, 50.0)
+    out = asm.build_header_lines("Runes of Aldur", ts, "20260628_163744", 7.0, 50.0)
     text = "\n".join(out)
     assert "ID: 20260628_163744" in out[1]
-    assert "Fate of the Vaal" in text
+    assert "Runes of Aldur" in text
     assert out[0] == "/" * gen._W           # opening border
     assert "2026-06-28 16:37:44" in text    # generated timestamp
 

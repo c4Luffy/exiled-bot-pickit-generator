@@ -63,3 +63,11 @@ def test_oversized_response_rejected(monkeypatch):
                            return_value=_resp(200, body=b"x" * 100)):
         with pytest.raises(ValueError):
             client.fetch_json("https://x", {})
+
+
+def test_live_leagues_excludes_finished_leagues(monkeypatch):
+    monkeypatch.setattr(client, "_request_with_retry", lambda *a, **k: {
+        "economyLeagues": [{"name": "Runes of Aldur", "url": "runesofaldur"}],
+        "oldEconomyLeagues": [{"name": "Fate of the Vaal", "url": "vaal"}],
+    })
+    assert client.fetch_live_leagues() == [("Runes of Aldur", "runesofaldur", "Runes of Aldur")]

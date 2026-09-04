@@ -293,11 +293,8 @@ class AppApi:
 
     def leagues(self):
         try:
-            # current leagues only — finished ones come suffixed "(old)"
-            # from the client and just clutter the dropdown
             return [{"name": n, "display": d}
-                    for n, _, d in gen.fetch_live_leagues(self._game())
-                    if not d.endswith("(old)")]
+                    for n, _, d in gen.fetch_live_leagues(self._game())]
         except Exception as e:
             return {"error": str(e)}
 

@@ -4,7 +4,7 @@ Usage:
     python -m exilebot_pickit                     # Launch the GUI
     python -m exilebot_pickit --cli               # CLI generator (defaults)
     python -m exilebot_pickit --regenerate        # rebuild from SAVED settings, no window
-    python -m exilebot_pickit --regenerate --league "Fate of the Vaal"
+    python -m exilebot_pickit --regenerate --league "Runes of Aldur"
 """
 import sys as _sys
 

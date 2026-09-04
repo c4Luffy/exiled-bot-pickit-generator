@@ -13,7 +13,7 @@ the community project this used to cite is old and abandoned by its author):
   - Unique items:    https://poe.ninja/poe2/api/economy/stash/current/item/overview
 
 Usage:
-    python -m exilebot_pickit --cli --league "Fate of the Vaal"
+    python -m exilebot_pickit --cli --league "Runes of Aldur"
     python -m exilebot_pickit --cli --list-leagues
 """
 
