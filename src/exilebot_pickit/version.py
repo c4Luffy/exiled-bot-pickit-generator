@@ -1,29 +1,23 @@
 """Single source of truth for the app version."""
-VERSION = "4.57.2"
+VERSION = "4.57.3"
 # Shown by the in-app "What's new" dialog. Lives HERE so it ships inside the
 # exe and works offline / while GitHub is unreachable — the dialog used to
 # show only "See the release page for details." whenever the release fetch
 # failed. Update together with VERSION on every release.
 HIGHLIGHTS = """\
-• On a PC without the Edge WebView2 runtime, the app opened a dead window instead of saying so. pywebview does not fail when WebView2 is missing — it quietly falls back to Internet Explorer 11, and starting succeeds, so no error was ever shown. The app then rendered in a 2013 engine: white and serif because IE11 has no CSS variables, with the whole script rejected at the first arrow function, which is why the league dropdown sat on "Loading…" forever and the version label was blank.
+• Cards and controls fit the window more cleanly. Generate presets use an even grid; Craft, Settings, and the rule category rails give their content more room at the normal window size. The Preview rule viewer and Magic & Rare strictness controls stack when the window narrows.
 
-• It now checks the renderer before building the window and, if it would be IE11, shows the actual fix — install the WebView2 runtime, with the link — and exits. Windows 11 already includes WebView2; on Windows 10 it normally arrives with Microsoft Edge but is absent on fresh, LTSC, N and debloated installs, which is who this was happening to.
+• Economy rows are readable again. An HTML price fragment was inserted into the “under floor” button's tooltip, breaking its shape and spilling text across the table. The tooltip now uses plain text; narrow layouts also give item names and values more space.
 
-• The start-failure dialog stopped misleading people too. It listed a missing WebView2 runtime as "rare on updated Windows" — backwards for exactly the users hitting it. A missing runtime now has its own message, so that dialog covers only the causes it can still be.
+• These are presentation changes. Generated pickit rules and saved settings are unchanged.
 
-Also in 4.57.1:
+Also in 4.57.2:
 
-• Magic & Rare told you it had 17 slot recipes while listing 18. Adding the Jewel slot in v4.57.0 left the count hardcoded in six places — three code comments, the README feature list, and two hints on the Magic & Rare page itself, one of them directly above the rail that now shows eighteen entries.
+• Without the Edge WebView2 runtime the app opened, drew, and did nothing — with no error at all. pywebview does not fail when WebView2 is absent: it falls back to MSHTML (Internet Explorer 11), so webview.start() succeeds and the existing "couldn't start its window" dialog never fired. The app then rendered app.html in a 2013 engine, which broke it two ways at once. IE11 has no CSS custom properties, so every var(--bg) / var(--text) / var(--font) resolved to nothing — a white, black and serif window whose plain flex and padding rules still applied, so it looked half-styled rather than obviously broken. And IE11's ES5-only parser rejects the page's arrow functions outright, killing the entire script — which is why the league dropdown sat on its hardcoded "Loading…" option forever and the version label stayed blank.
 
-• The two in-app hints now read the count from the API instead of the markup, so the nineteenth slot cannot reintroduce this. The number in the HTML is only the pre-script fallback.
+• The app now checks which renderer pywebview will use before it builds the window. If the answer is IE11 it shows the real fix — install the WebView2 runtime, with the download link — and exits, instead of spending a config load and a watchdog thread on a launch that cannot work. The check reads the renderer out of pywebview itself rather than re-implementing its registry probe, so it cannot drift from the decision it is predicting, and it acts only on a positive MSHTML identification — an unrecognised renderer is always allowed to start.
 
-Also in 4.57.0:
+• Who this was hitting: Windows 10. Windows 11 bundles WebView2. On Windows 10 it normally arrives with Microsoft Edge, but it is missing on fresh, LTSC, N and debloated installs — so the app was reported as "just showing a white page" by users whose PCs were fine and only needed a 2 MB runtime.
 
-• Rare jewels are now scored like every other slot. Magic & Rare gains an 18th slot, Jewel, covering the three droppable bases — Sapphire, Emerald and Ruby — with a 14-stat WeightedSum: max Energy Shield, Triggered Spell Damage, Elemental / Spell / Lightning / Projectile Damage, Ailment Magnitude, Projectile Speed, Crit Damage Bonus, Spell Crit Damage, chance to Pierce, Crit Chance, Spell Crit Chance and Cast Speed. Every id and every T1 max-roll was read from the live GGPK mod dump, not a wiki.
-
-• Jewels carry no [ItemTier], so the Jewel slot writes no tier gate. Every other slot gates on [ItemTier] >= "4"; emitting that against a property the item does not have is the silent way to write a rule that never matches, so item_tier is now optional and the tab shows "—" for it.
-
-• Two dead stat ids corrected on the way in: projectile_speed_+% does not exist in the game (the real id is base_projectile_speed_+%), and recover_%_maximum_mana_on_kill is real but never rolls on a jewel. Both score zero forever with no error — the exact failure mode this repo's checker exists to catch.
-
-• The embedded syntax guide now documents [UniqueName], including the disenchant idiom from Exiled Bot's own default.ipd, where a deliberately impossible name picks up every unique so anything no other rule keeps is left to disenchant for Chance Shards.
+• The start-failure dialog stopped misleading people. It described a missing WebView2 runtime as "rare on updated Windows" — precisely backwards for the people reading it. A missing runtime now has its own message, so that dialog is left with the causes it can still be: an old copy still running, an unwritable folder, or a runtime that is installed but won't start.
 """

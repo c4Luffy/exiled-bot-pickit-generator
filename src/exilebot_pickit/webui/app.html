@@ -102,8 +102,8 @@
   .presets{margin:0 0 16px}
   .presets-head{display:flex;align-items:baseline;gap:10px;margin-bottom:9px;flex-wrap:wrap}
   .presets-head b{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold)}
-  .preset-row{display:flex;gap:10px;flex-wrap:wrap}
-  .pcard{flex:1;min-width:148px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  .preset-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+  .pcard{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
     background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:11px 13px;
     cursor:pointer;color:var(--text);text-align:left;font-family:inherit;
     transition:background .13s,border-color .13s,transform .13s}
@@ -604,7 +604,8 @@
   /* Economy has ~two dozen categories — pack the rail tighter so the whole list
      fits without scrolling (scoped to #ecoChips; the Craft/Exceptional rails that
      share .cside-btn keep their roomier spacing). */
-  #ecoChips{gap:1.5px}
+  #ecoChips{width:195px;flex:0 0 195px;position:sticky;top:6px;
+    max-height:calc(90.9vh - 24px);overflow-y:auto;gap:1.5px}
   #ecoChips .cside-btn{padding:3.5px 10px;font-size:12.5px;border-radius:6px}
   #ecoChips .cside-btn .n{font-size:11.5px}
   /* group headers (GENERAL / EQUIPMENT / ATLAS / ALWAYS PICK) — bigger & bold so
@@ -620,12 +621,23 @@
   #ecoChips .csgrp-n{margin-left:auto;font-size:10px;font-weight:700;color:var(--dim);
     letter-spacing:0;opacity:.7}
   #ecoChips .csgrp-body{display:flex;flex-direction:column;gap:1.5px}
-  @media (max-width:1060px){ /* rail eats 238px — collapse sooner than the old top-nav layout */
+  @media (max-width:1240px){
     .craft-layout{flex-direction:column}
-    .craft-side{position:static;flex:0 0 auto;flex-direction:row;flex-wrap:wrap;
+    .craft-layout .craft-side{position:static;flex:0 0 auto;flex-direction:row;flex-wrap:wrap;
       gap:4px;width:100%;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:6px}
-    .craft-side .csgrp{width:100%;margin:6px 4px 1px}
-    .cside-btn{width:auto}}
+    .craft-layout .craft-side .csgrp{width:100%;margin:6px 4px 1px}
+    .craft-layout .cside-btn{width:auto}
+    .craft-layout .grid,.craft-layout>#excGrid,.craft-layout .set-sec{width:100%}
+    #craftGrid{grid-template-columns:1fr}}
+  @media (max-width:1240px){
+    .rare-strict-row{flex-wrap:wrap}
+    .rare-strict-row .seg{flex:1 1 100%!important;min-width:0!important}
+    .pv-content{flex-direction:column}
+    #pvNav{width:100%!important;flex:0 0 auto!important;max-height:160px!important;
+      flex-direction:row;flex-wrap:wrap;gap:4px}
+    #pvNav .cside-btn{width:auto}
+    #prevBox{width:100%}
+  }
   .hrow{cursor:pointer}
   .hrow:hover{background:var(--bg3)}
   .hcar{display:inline-block;color:var(--gold);font-size:10px;width:11px}
@@ -813,6 +825,7 @@
   /* the rail narrows the table — pin the columns so the copy button can never
      be pushed off-screen, and ellipsise a long item name instead */
   #p-eco table{width:100%;table-layout:fixed}
+  #p-eco th:first-child{width:34%}
   /* Long names (unique tablets carry a base pill too) wrap to a second line
      instead of vanishing behind an ellipsis — nobody should have to hover to
      learn which unique dropped. */
@@ -842,7 +855,13 @@
   .eco-hover.docked .hc-close{display:none}
   .eco-dock .eco-empty{padding:16px 14px;border:1px dashed var(--border);border-radius:13px;
     color:var(--dim);font-size:11.5px;line-height:1.6;text-align:center}
-  @media (max-width:1240px){.eco-dock{display:none}}
+  @media (max-width:1240px){
+    .eco-dock{display:none}
+    #ecoSearch,#ecoInfo{flex:1 0 100%}
+    #ecoChips{width:172px;flex-basis:172px}
+    #p-eco th:nth-child(3),#p-eco td:nth-child(3){display:none}
+    #p-eco th:first-child{width:42%}
+  }
   /* Economy hover card: rich detail without leaving the table — art, price,
      7-day trend, keep/skip, and the real pickit rule (fetched lazily). */
   .eco-hover{position:fixed;z-index:120;width:280px;pointer-events:none;opacity:0;transform:translateY(6px);
@@ -926,7 +945,17 @@
   .field .ctl{display:flex;align-items:center;gap:8px}
   .field .ctl select{flex:1;min-width:0}
   .workspace{display:grid;grid-template-columns:1.55fr 1fr;gap:16px;align-items:start}
-  @media(max-width:1000px){.workspace{grid-template-columns:1fr}}
+  @media(max-width:1240px){
+    .workspace{grid-template-columns:1fr}
+    .context .field:last-child{flex-basis:100%}
+    .preset-row{grid-template-columns:repeat(3,minmax(0,1fr))}
+  }
+  @media(max-width:900px){
+    .preset-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .preset-row .pcard:last-child{grid-column:span 2}
+    #profSel{max-width:none!important;flex-basis:100%!important}
+    #ecoChips{width:140px;flex-basis:140px}
+  }
   .panel{background:linear-gradient(180deg,var(--bg2),color-mix(in srgb,var(--bg2) 86%,#000));
     border:1px solid var(--border);border-radius:13px;padding:20px 22px}
   .panel-head{display:flex;align-items:center;gap:10px;font-size:11.5px;font-weight:700;
@@ -1399,12 +1428,12 @@
   </div>
 
   <div style="display:flex;gap:12px;align-items:flex-start">
-    <div id="ecoChips" class="craft-side" style="width:195px;flex:0 0 195px;position:sticky;top:6px;max-height:calc(90.9vh - 24px);overflow-y:auto"></div>
+    <div id="ecoChips" class="craft-side"></div>
     <!-- The detail card lives HERE, not over the table. See .eco-hover.docked. -->
     <div id="ecoDock" class="eco-dock"></div>
     <div class="card" style="padding:8px 6px;flex:1;min-width:0">
       <table><thead><tr>
-        <th data-s="name" style="width:34%">Item<span class="s-ind"></span></th>
+        <th data-s="name">Item<span class="s-ind"></span></th>
         <th data-s="ex" style="text-align:right">Value<span class="s-ind"></span></th>
         <th data-s="chg" style="text-align:right;width:116px" title="7-day trend and total change (poe.ninja)">7d Δ<span class="s-ind"></span></th>
         <th style="text-align:center;width:96px" title="Click the keep/skip button in a row to include or exclude that rule">In pickit<div style="font-size:8px;font-weight:400;letter-spacing:.06em;text-transform:none;color:var(--dim);opacity:.8;margin-top:1px">click to toggle</div></th>
@@ -1626,7 +1655,7 @@
         <div class="hint" id="rareMasterHint" style="margin-top:2px">All 18 slot recipes below are written into every generated pickit. Turn off to generate without them.</div></div>
       <div class="switch" id="swRareGear"><i></i></div>
     </div>
-    <div style="display:flex;align-items:center;gap:14px;margin-top:13px;padding-top:13px;border-top:1px solid var(--border)">
+    <div class="rare-strict-row" style="display:flex;align-items:center;gap:14px;margin-top:13px;padding-top:13px;border-top:1px solid var(--border)">
       <div style="flex:1"><b style="font-size:12.5px">Strictness</b>
         <div class="hint" style="margin-top:2px">How high a rare must score to be kept — a stat at a perfect roll ≈ 100 points. <b>Balanced</b> is the tuned default; stricter keeps fewer, better rares. The recipes don't change — only the bar they clear.<br><span style="color:var(--dim)">Example — Body Armour cutoff: Looser <b>200</b> · Balanced <b>250</b> · Strict <b>312</b> · Very strict <b>375</b> (≈ 2–4 perfect stats). Each slot can override this below.</span></div></div>
       <div class="seg" id="rareStrict" style="flex:0 0 auto;min-width:300px">
@@ -1838,7 +1867,7 @@
     <div id="pvCmpOut" style="margin-top:8px"></div>
   </div>
   <div id="pvExplain" style="position:fixed;display:none;z-index:80;max-width:440px;background:var(--bg3);border:1px solid var(--gold-dim);border-radius:10px;padding:10px 14px;font-size:12.5px;box-shadow:0 10px 30px rgba(0,0,0,.5)"></div>
-  <div style="display:flex;gap:12px;align-items:flex-start">
+  <div class="pv-content" style="display:flex;gap:12px;align-items:flex-start">
     <div id="pvNav" class="craft-side" style="width:215px;flex:0 0 215px;position:static;max-height:calc(90.9vh - 265px);overflow-y:auto"></div>
     <pre id="prevBox" style="user-select:text;cursor:text;flex:1;max-height:calc(90.9vh - 265px);white-space:pre-wrap;word-break:break-word;overflow-x:hidden;min-width:0">Generate first.</pre>
   </div>
@@ -3318,6 +3347,10 @@ function fmtVal(ex){
   if(ecoUnit==="div"&&divRate>1)return (ex/divRate).toFixed(2)+'<span class="u">div</span>';
   if(ecoUnit==="chaos"&&chaosEx>0)return _valCell(Math.round(ex/chaosEx),"c");
   return _valCell(ex,"ex");}
+function fmtValPlain(ex){
+  if(ecoUnit==="div"&&divRate>1)return (ex/divRate).toFixed(2)+" div";
+  if(ecoUnit==="chaos"&&chaosEx>0)return Math.round(ex/chaosEx).toLocaleString()+" c";
+  return ex.toLocaleString()+" ex";}
 document.querySelectorAll("#unitChips .chip").forEach(c=>c.onclick=()=>{
   document.querySelectorAll("#unitChips .chip").forEach(x=>x.classList.remove("on"));
   c.classList.add("on");ecoUnit=c.dataset.u;eco&&renderEco();});
@@ -3460,7 +3493,7 @@ function pillFor(it,cat){
   if(belowFloor(it,cat)){
     const f=cat.floor;
     return '<button type="button" class="pilltog pill under" title="Kept, but '
-      +fmtVal(it.ex)+' is under your '+fmtVal(f)+' floor — this rule is written '
+      +fmtValPlain(it.ex)+' is under your '+fmtValPlain(f)+' floor — this rule is written '
       +'COMMENTED OUT, so the bot will not pick it up. Lower the floor on Generate '
       +'to include it.">under floor</button>';
   }
@@ -4293,7 +4326,7 @@ function renderRare(){
        <div style="flex:1;min-width:220px"><div style="color:var(--dim);font-size:10.5px;letter-spacing:.7px">BASES (ONE RULE EACH)</div>
          <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${r.bases.map(b=>`<span class="pill">${esc(b)}</span>`).join("")}</div></div>
      </div>
-     <div style="display:flex;align-items:center;gap:14px;margin:0 0 6px;${slotOn?"":"opacity:.5"}">
+     <div class="rare-strict-row" style="display:flex;align-items:center;gap:14px;margin:0 0 6px;${slotOn?"":"opacity:.5"}">
        <div style="flex:0 0 auto"><div style="color:var(--dim);font-size:10.5px;letter-spacing:.7px">STRICTNESS · THIS SLOT</div>
          <div class="hint" style="margin-top:2px;max-width:220px">Overrides the global dial just for ${esc(rareSel)}.</div></div>
        <div class="seg rare-slot-strict" style="flex:1;min-width:300px">

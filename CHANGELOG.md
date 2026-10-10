@@ -6,6 +6,12 @@ download lives.
 
 ---
 
+## [v4.57.3] — 2026-10-10 — Clearer layout across both games
+
+- **Cards and controls fit the window more cleanly.** Generate presets use an even grid; Craft, Settings, and the rule category rails give their content more room at the normal window size. The Preview rule viewer and Magic & Rare strictness controls stack when the window narrows.
+- **Economy rows are readable again.** An HTML price fragment was inserted into the “under floor” button's tooltip, breaking its shape and spilling text across the table. The tooltip now uses plain text; narrow layouts also give item names and values more space.
+- These are presentation changes. Generated pickit rules and saved settings are unchanged.
+
 ## [v4.57.2] — 2026-08-09 — A missing WebView2 runtime says so instead of opening a dead window
 
 - **Without the Edge WebView2 runtime the app opened, drew, and did nothing —
@@ -3015,6 +3021,7 @@ element id was preserved — **no feature was removed**.
 
 ---
 
+[v4.57.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.57.3
 [v4.42.4]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.4
 [v4.42.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.3
 [v4.42.2]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.2

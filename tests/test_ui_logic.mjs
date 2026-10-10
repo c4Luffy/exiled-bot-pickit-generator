@@ -182,6 +182,18 @@ function test(label, fn) {
   });
 }
 
+// ── Economy: tooltip text must not break the keep/skip button markup ──────────────────────
+{
+  const c = load(["fmtValPlain", "belowFloor", "pillFor"],
+    { ecoUnit: "ex", divRate: 759.5, chaosEx: 0.1 });
+  test("under-floor tooltip keeps price markup out of its HTML attribute", () => {
+    const button = c.pillFor({ enabled: true, static: false, ex: 15.65 }, { floor: 20 });
+    assert.match(button, /title="Kept, but 15\.65 ex is under your 20 ex floor[^"]*"/);
+    assert.ok(button.endsWith(">under floor</button>"));
+    assert.ok(!button.includes("<span"));
+  });
+}
+
 // ── TAB_ORDER: Ctrl+1..0 must select the tab at that position in the sidebar ─────────────
 {
   const navOrder = [...html.matchAll(/class="nav-btn[^"]*"\s+data-p="([a-z]+)"/g)].map(m => m[1]);
