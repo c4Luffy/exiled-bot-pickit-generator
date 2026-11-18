@@ -40,7 +40,7 @@ EXCHANGE_CATEGORIES = [
     # walked past. Every one is StackableCurrency (ordinary drops), and the value
     # floor filters the sub-1 ex tail on its own.
     ("verisium",            "Verisium",           "Verisium",             False),
-    ("waystones",           "Waystones",          "Waystones",            False),
+    ("waystones",           "",                   "Waystones",            False),
     # Tablets — added 2026-07-23. poe.ninja now prices regular precursor tablets
     # (Overseer/Abyss/Breach/Ritual/Irradiated/Temple/Delirium), one row per
     # (type, rarity) pair — 7 types x 3 rarities = 21 rows — under the STASH
@@ -324,6 +324,9 @@ def _normalize_poe1_payload(payload: dict, is_unique: bool) -> dict:
 
 
 def fetch_category(league: str, key: str, ninja_type: str, is_unique: bool, game=None) -> dict:
+    if key == "waystones":
+        # These are locally generated rules and have no poe.ninja price feed.
+        return {}
     endpoint = "stash/current/item/overview" if is_unique else "exchange/current/overview"
     base = game.base_url if game else BASE_URL
     payload = _request_with_retry(f"{base}/{endpoint}", {"league": league, "type": ninja_type})
@@ -349,6 +352,9 @@ def fetch_all_payloads(league: str, categories: list, *, game=None, max_workers:
     to_fetch = []
 
     for key, ninja_type, label, is_unique in categories:
+        if key == "waystones":
+            results[key] = {}
+            continue
         if use_cache:
             cached = _cache_get(league, key, gid)
             if cached is not None:

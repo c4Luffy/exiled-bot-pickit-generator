@@ -57,6 +57,19 @@ def test_suggest_floors_counts(api):
     assert r["unique"] > 0 and r["gear"] > 0
 
 
+def test_poe1_auto_floor_counts_stash_drops_as_market_items(api, monkeypatch):
+    api.cfg["active_game"] = "poe1"
+    payloads = {
+        "currency": FAKE["currency"],
+        "viscera": _payload([("Greater Maven's Viscera", 250)], unique=True),
+        "unique_weapons": _payload([("Big Sword", 900)], unique=True),
+    }
+    monkeypatch.setattr(gen, "fetch_all_payloads", lambda *args, **kwargs: payloads)
+    result = api.suggest_floors("Covens", 40)
+    assert result["total_gear"] == 4
+    assert result["total_unique"] == 1
+
+
 def test_generate_writes_files_and_history(api, tmp_path):
     api._generate("L", 5, 20)
     d = api._status["done"]

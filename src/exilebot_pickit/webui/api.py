@@ -337,6 +337,10 @@ class AppApi:
             out = []
             priced = set()      # names shown in priced categories (dedupe)
             for key, _t, label, is_unique in g.all_categories:
+                p = payloads.get(key)
+                # Incubators still trade in Standard, but no longer drop.
+                if key == "incubators" and isinstance(p, dict) and not p.get("lines"):
+                    continue
                 if key == "waystones":
                     # poe.ninja doesn't price waystones — show the three
                     # pickup rules as toggleable rows instead of an empty list
@@ -348,7 +352,6 @@ class AppApi:
                                            "enabled": ws.get(nm, {}).get("enabled", True)}
                                           for nm in gen.WAYSTONE_TOGGLE_NAMES.values()]})
                     continue
-                p = payloads.get(key)
                 if not isinstance(p, dict):
                     out.append({"key": key, "label": label, "unique": is_unique,
                                 "error": str(p) if p else "no data", "items": []})
@@ -2410,15 +2413,15 @@ class AppApi:
             g = self._game()
             payloads = gen.fetch_all_payloads(league, g.all_categories, game=g)
             uniq_vals, gear_vals = [], []
-            for key, _t, _l, is_unique in g.all_categories:
+            for key, _t, _l, _stash in g.all_categories:
                 p = payloads.get(key)
-                if not isinstance(p, dict) or key in gen.PICK_ALL_CATEGORIES:
+                if not isinstance(p, dict) or (not g.economy_only and key in gen.PICK_ALL_CATEGORIES):
                     continue
                 r = gen.exalted_rate(p)
                 for line in p.get("lines", []):
                     ev = float(line.get("primaryValue") or 0.0) * (r or 1.0)
                     if ev > 0:
-                        (uniq_vals if is_unique else gear_vals).append(ev)
+                        (uniq_vals if asm.is_unique_category(key) else gear_vals).append(ev)
 
             def pct_floor(vals):
                 if not vals or keep >= 100:   # keep everything → no floor

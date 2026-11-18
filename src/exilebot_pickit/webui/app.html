@@ -1951,7 +1951,7 @@
   <div id="guidePoe1" style="display:none">
     <div class="sub">Point Exiled Bot at your Path of Exile 1 pickit — a couple of minutes, once. Step 3c is the one people miss.</div>
     <div class="card" style="border-color:var(--gold-dim)"><h2>What this does (PoE 1)</h2>
-      <div class="hint">It reads what items are <b>worth Chaos on poe.ninja right now</b> for Path of Exile 1 and writes a <b>pickit</b> — a <code>.ipd</code> file (<code>poe1_pickit.ipd</code>) that tells <b>Exiled Bot</b> what to grab. Economy only: currency, fragments, scarabs, fossils, essences, div cards, uniques and the rest.</div>
+      <div class="hint">It reads what items are <b>worth Chaos on poe.ninja right now</b> for Path of Exile 1 and writes a <b>pickit</b> — a <code>.ipd</code> file (<code>poe1_pickit.ipd</code>) that tells <b>Exiled Bot</b> what to grab. Economy only: currency, fragments, threads, fossils, essences, div cards, uniques and the rest.</div>
     </div>
     <div class="card"><h2>1 &middot; Pick your league</h2>
       <div class="hint">On the <b>⚡ Generate</b> tab. Prices come from poe.ninja's PoE1 economy — <b>Standard</b> is the safe default (it always has prices). If a league shows an empty Economy, poe.ninja isn't pricing it — switch to Standard.</div>
@@ -1976,7 +1976,7 @@
     </div>
     <div class="card"><h2>The two value floors (in Chaos)</h2>
       <div class="set-row"><div class="lab"><b>Currency &amp; items floor</b>
-        <span>Gates currency, fragments, scarabs, fossils, essences, div cards and gems — everything except uniques. Anything under the floor is written but commented out.</span></div></div>
+        <span>Gates currency, fragments, threads, fossils, essences, div cards and gems — everything except uniques. Anything under the floor is written but commented out.</span></div></div>
       <div class="set-row"><div class="lab"><b>Unique floor</b>
         <span>Gates unique weapons, armours, accessories, flasks, jewels, maps and relics.</span></div></div>
       <div class="hint" style="margin-top:6px"><b>Auto-floor</b> recomputes both floors from live prices each run ("keep the top N%").</div>
@@ -2370,7 +2370,7 @@ function applyGameUI(i){
   const lw=$("lrWhere"); if(lw) lw.textContent=ECON_ONLY?".ipd":".ipd + .filter";
   // Floor descriptions: PoE1 has no runes/rare-gear/charms
   const gf=$("gfDesc"); if(gf) gf.textContent=ECON_ONLY
-    ? "Currency, fragments, scarabs, fossils, essences, div cards, gems and other market items — everything except uniques."
+    ? "Currency, fragments, threads, fossils, essences, div cards, gems and other market items — everything except uniques."
     : "Currency, essences, runes, fragments, gems — everything except uniques. Rare-gear rules are scored, not priced, so this never affects them.";
   const uf=$("ufDesc"); if(uf) uf.textContent=ECON_ONLY
     ? "Unique weapons, armours, accessories, flasks, jewels, maps, relics"
@@ -3328,7 +3328,8 @@ async function _loadEco(){
     $("ecoRate").style.display="none";
     return;
   }
-  if(!ecoCat&&eco.cats&&eco.cats.length)ecoCat=eco.cats[0].key;   // empty cats would crash
+  if(ecoCat!=="_movers_"&&ecoCat!=="_keys_"&&!eco.cats?.some(c=>c.key===ecoCat))
+    ecoCat=eco.cats?.find(c=>!c.hidden&&c.items?.length)?.key||null;
   renderChips();renderEco();
   $("ecoInfo").textContent="";   // rate lives in the top-right badge only — it was shown twice
   $("ecoRateV").textContent=`${eco.divine_rate} ${GAME_UNITS}`;$("ecoRate").style.display="flex";}
@@ -3595,11 +3596,14 @@ function ecoHoverMove(e){
   top=Math.max(pad,Math.min(top,vh-ch-pad));
   ecoHover.style.left=left+"px";ecoHover.style.top=top+"px";
 }
-function ecoHoverHide(){clearTimeout(ecoShowTimer);
+function ecoHoverHide(reset=false){clearTimeout(ecoShowTimer);
   // Docked, the card is a panel, not a tooltip: leaving a row keeps the last
   // item visible rather than flashing the column empty on every mouse move.
-  if(ecoDocked){ecoPinned=false;ecoHover.classList.remove("pinned");return;}
-  ecoHover.classList.remove("on","pinned");ecoHoverTok++;ecoOpen=false;ecoPinned=false;}
+  if(ecoDocked&&!reset){ecoPinned=false;ecoHover.classList.remove("pinned");return;}
+  clearTimeout(ecoHoverTimer);
+  ecoHover.classList.remove("on","pinned");ecoHoverTok++;ecoOpen=false;ecoPinned=false;
+  ecoHoverRow=null;ecoHoverRule="";
+  if(ecoDocked)ecoEmpty.style.display="";}
 function ecoHoverHideSoon(){if(ecoPinned)return;clearTimeout(ecoHoverTimer);ecoHoverTimer=setTimeout(ecoHoverHide,220);}
 // Unpinned, the card is a pure INFO tooltip (pointer-events:none in CSS): the
 // mouse passes straight through to the row's keep/copy buttons, so it can never
@@ -3680,7 +3684,7 @@ function ecoHoverShow(cat,it,e,tr){
   }).catch(()=>{});
 }
 function renderEco(){
-  ecoHoverHide();                // a re-render destroys the hovered row; drop any open card
+  ecoHoverHide(true);            // a re-render destroys the hovered row
   if(!eco)return;                // guard every entry: eco is null between league switches
   const q=($("ecoSearch").value||"").toLowerCase();
   const body=$("ecoBody");body.innerHTML="";
@@ -3775,9 +3779,11 @@ function renderEco(){
   // A blank table looks identical to a failed load or a broken app — say which.
   if(!rows.length&&ecoCat!=="_movers_"){const tr=document.createElement("tr");
     const q=($("ecoSearch").value||"").trim();
+    const cat=eco.cats.find(c=>c.key===ecoCat);
     tr.innerHTML=`<td colspan="5" style="text-align:center;color:var(--dim);padding:14px 0">`+
       (q?`No items match <b>${esc(q)}</b> — check the spelling, or clear the search to see everything.`
-        :"Nothing to show in this category.")+`</td>`;
+        :cat?.error?"Couldn't load prices for this category. Refresh prices to retry."
+        :"poe.ninja has no priced items for this category in the selected league.")+`</td>`;
     body.appendChild(tr);}
   if(!rows.length&&ecoCat==="_movers_"){const tr=document.createElement("tr");
     tr.innerHTML='<td colspan="5" style="text-align:center;color:var(--dim);padding:14px 0">No 7-day price moves to show yet — poe.ninja hasn\'t reported trend data for this league.</td>';
