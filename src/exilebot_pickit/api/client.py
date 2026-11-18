@@ -40,7 +40,8 @@ EXCHANGE_CATEGORIES = [
     # walked past. Every one is StackableCurrency (ordinary drops), and the value
     # floor filters the sub-1 ex tail on its own.
     ("verisium",            "Verisium",           "Verisium",             False),
-    ("waystones",           "",                   "Waystones",            False),
+    # Local rules. fetch_category() handles this key before building an API URL.
+    ("waystones",           "Waystones",          "Waystones",            False),
     # Tablets — added 2026-07-23. poe.ninja now prices regular precursor tablets
     # (Overseer/Abyss/Breach/Ritual/Irradiated/Temple/Delirium), one row per
     # (type, rarity) pair — 7 types x 3 rarities = 21 rows — under the STASH
