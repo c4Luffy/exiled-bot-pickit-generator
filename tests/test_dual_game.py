@@ -38,8 +38,43 @@ def test_game_specs_differ_where_they_should():
 def test_poe1_categories_have_the_verified_types():
     types = {t for _k, t, _l, _u in games.POE1.all_categories}
     # a sample of the live-verified type strings (see project memory)
-    for t in ("Currency", "Scarab", "Fossil", "DivinationCard", "UniqueWeapon"):
+    for t in ("Currency", "Thread", "Astrolabe", "Ducat", "EnshroudingCrystal",
+              "Fossil", "DivinationCard", "UniqueWeapon", "Incubator", "Viscera"):
         assert t in types
+    assert types.isdisjoint({"Scarab", "Vial"})
+
+
+def test_poe2_waystones_do_not_request_prices_or_use_old_cache(monkeypatch):
+    def unexpected_fetch(*args, **kwargs):
+        pytest.fail("Waystone rules must not request prices")
+
+    monkeypatch.setattr(client, "_request_with_retry", unexpected_fetch)
+    monkeypatch.setattr(client, "_cache_get", unexpected_fetch)
+    category = next(c for c in games.POE2.all_categories if c[0] == "waystones")
+    assert client.fetch_category("League", category[0], category[1], category[3], games.POE2) == {}
+    payloads = client.fetch_all_payloads("League", [category], game=games.POE2)
+    assert payloads == {"waystones": {}}
+    rules = asm.build_category_lines("waystones", False, payloads["waystones"], 1, 0, 0, None)
+    assert any('[Category] == "Waystone"' in line for line in rules)
+
+
+def test_poe1_covens_items_use_market_floor():
+    items = {"threads": "Abyss Thread", "viscera": "Greater Maven's Viscera"}
+    categories = [c for c in games.POE1.all_categories if c[0] in items]
+    payloads = {
+        "threads": {
+            "items": [{"id": "abyss-thread", "name": items["threads"]}],
+            "lines": [{"id": "abyss-thread", "primaryValue": 8}],
+        },
+        "viscera": {"lines": [{"name": items["viscera"], "primaryValue": 250}]},
+    }
+    lines, count = asm.build_poe1_economy_lines(
+        "Covens", categories, payloads, 200, True,
+        {"min_exalt_gear": 5, "min_exalt_unique": 1000},
+    )
+    assert count >= 2  # Charts are also emitted as local pickup rules.
+    for name in items.values():
+        assert any(line.startswith(f'[Type] == "{name}" # [StashItem]') for line in lines)
 
 
 # ── Game-aware client: cache isolation + PoE1 normalize ───────────────────────

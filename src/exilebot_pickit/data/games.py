@@ -84,7 +84,8 @@ _POE1_EXCHANGE = (
     # (key,               ninja_type,       label,             is_unique)
     ("currency",          "Currency",       "Currency",          False),
     ("fragments",         "Fragment",       "Fragments",         False),
-    ("scarabs",           "Scarab",         "Scarabs",           False),
+    ("threads",           "Thread",         "Threads",           False),
+    ("astrolabes",        "Astrolabe",      "Astrolabes",        False),
     ("fossils",           "Fossil",         "Fossils",           False),
     ("resonators",        "Resonator",      "Resonators",        False),
     ("essences",          "Essence",        "Essences",          False),
@@ -92,6 +93,8 @@ _POE1_EXCHANGE = (
     ("divination_cards",  "DivinationCard", "Divination Cards",  False),
     ("artifacts",         "Artifact",       "Artifacts",         False),
     ("omens",             "Omen",           "Omens",             False),
+    ("ducats",            "Ducat",          "Ducats",            False),
+    ("enshrouding_crystals", "EnshroudingCrystal", "Enshrouding Crystals", False),
     ("tattoos",           "Tattoo",         "Tattoos",           False),
     ("allflame_embers",   "AllflameEmber",  "Allflame Embers",   False),
     ("delirium_orbs",     "DeliriumOrb",    "Delirium Orbs",     False),
@@ -103,7 +106,7 @@ _POE1_EXCHANGE = (
 )
 _POE1_UNIQUE = (
     ("incubators",        "Incubator",      "Incubators",        True),
-    ("vials",             "Vial",           "Vials",             True),
+    ("viscera",           "Viscera",        "Viscera",           True),
     ("beasts",            "Beast",          "Beasts",            True),
     ("cluster_jewels",    "ClusterJewel",   "Cluster Jewels",    True),
     ("skill_gems",        "SkillGem",       "Skill Gems",        True),

@@ -190,11 +190,13 @@ class AppApi:
         in and out (see ui.config.switch_game), so the two never overwrite each
         other."""
         from exilebot_pickit.ui import config as _c
-        _c.switch_game(self.cfg, game_id)
-        save_config(self.cfg)
-        g = self._game()
-        # Cached UI state that belonged to the previous game must not bleed over.
-        self._last_lines = []
+        with self._lock:
+            if self._status["running"]:
+                return {"error": "Wait for generation to finish before switching games."}
+            _c.switch_game(self.cfg, game_id)
+            save_config(self.cfg)
+            g = self._game()
+            self._last_lines = []
         return {"ok": True, "game": g.id, "short": g.short, "label": g.label,
                 "unit": g.unit, "unit_short": g.unit_short,
                 "economy_only": g.economy_only}
@@ -337,6 +339,10 @@ class AppApi:
             out = []
             priced = set()      # names shown in priced categories (dedupe)
             for key, _t, label, is_unique in g.all_categories:
+                p = payloads.get(key)
+                # Incubators still trade in Standard, but no longer drop.
+                if key == "incubators" and isinstance(p, dict) and not p.get("lines"):
+                    continue
                 if key == "waystones":
                     # poe.ninja doesn't price waystones — show the three
                     # pickup rules as toggleable rows instead of an empty list
@@ -348,7 +354,6 @@ class AppApi:
                                            "enabled": ws.get(nm, {}).get("enabled", True)}
                                           for nm in gen.WAYSTONE_TOGGLE_NAMES.values()]})
                     continue
-                p = payloads.get(key)
                 if not isinstance(p, dict):
                     out.append({"key": key, "label": label, "unique": is_unique,
                                 "error": str(p) if p else "no data", "items": []})
@@ -1623,17 +1628,19 @@ class AppApi:
             r = requests.get(VERSION_URL, timeout=8,
                              headers={"User-Agent": f"poe2-pickit/{VERSION}",
                                       "Accept": "application/vnd.github+json"})
-            if r.status_code != 200:
-                return {"update": False}
+            r.raise_for_status()
             data = r.json() or {}
             remote = str(data.get("tag_name") or "").lstrip("v").strip()
+            if AutoUpdateMixin._ver_tuple(remote) == (0,):
+                raise ValueError("Invalid release version")
             if AutoUpdateMixin._should_offer_update(remote, VERSION):
                 notes = str(data.get("body") or "").strip()
                 return {"update": True, "version": remote, "url": RELEASES_URL,
                         "notes": notes[:4000], "current": VERSION}
             return {"update": False, "current": VERSION}
-        except Exception:
-            return {"update": False, "current": VERSION}
+        except (requests.RequestException, ValueError, AttributeError):
+            return {"update": False, "current": VERSION,
+                    "error": "Could not verify the latest GitHub release. Try again later."}
 
     # ── Game-data health check ────────────────────────────────────────────────
     # PoE2 renames stats and removes bases every patch. When it does, our rules
@@ -1759,33 +1766,36 @@ class AppApi:
         # folder, and any value that broke app_info() left the UI dead for the
         # rest of the session with the bad config persisted.
         import copy as _copy
-        cand = _copy.deepcopy(self.cfg)
-        applied = 0
-        for k, v in data.items():
-            if k in DEFAULT_CONFIG and k != "window_geometry_web":
-                cand[k] = v
-                applied += 1
-        _coerce_types(cand)
-        # _coerce_types only checks TYPES; a backup can carry a str theme the
-        # engine doesn't know — normalize so cfg and the dropdown agree.
-        cand["filter_theme"] = _theme_or_default(cand.get("filter_theme"))
-        # output_base is a filename, not a path — _coerce_types can't see this.
-        cand["output_base"] = _sanitize_output_base(cand.get("output_base")
-                                                    or "poe2_pickit")
-        cand["min_exalt"] = cand.get("min_exalt_gear", 0.0)
-        saved_cfg, self.cfg = self.cfg, cand
-        try:
-            info = self.app_info()          # proves the candidate is usable
-        except Exception as e:
+        with self._lock:
+            if self._status["running"]:
+                return {"error": "Wait for generation to finish before replacing settings."}
+            cand = _copy.deepcopy(self.cfg)
+            applied = 0
+            for k, v in data.items():
+                if k in DEFAULT_CONFIG and k != "window_geometry_web":
+                    cand[k] = v
+                    applied += 1
+            _coerce_types(cand)
+            # _coerce_types only checks TYPES; a backup can carry a str theme the
+            # engine doesn't know — normalize so cfg and the dropdown agree.
+            cand["filter_theme"] = _theme_or_default(cand.get("filter_theme"))
+            # output_base is a filename, not a path — _coerce_types can't see this.
+            cand["output_base"] = _sanitize_output_base(cand.get("output_base")
+                                                        or "poe2_pickit")
+            cand["min_exalt"] = cand.get("min_exalt_gear", 0.0)
+            saved_cfg, self.cfg = self.cfg, cand
+            try:
+                info = self.app_info()          # proves the candidate is usable
+            except Exception as e:
+                self.cfg = saved_cfg
+                log_exc("import_settings")
+                return {"error": f"That backup has values this version can't use ({e}). "
+                                 "Nothing was changed."}
+            # Same dict object as before, so anything holding a reference stays live.
             self.cfg = saved_cfg
-            log_exc("import_settings")
-            return {"error": f"That backup has values this version can't use ({e}). "
-                             "Nothing was changed."}
-        # Same dict object as before, so anything holding a reference stays live.
-        self.cfg = saved_cfg
-        self.cfg.clear()
-        self.cfg.update(cand)
-        return _save(self.cfg, applied=applied, info=info)
+            self.cfg.clear()
+            self.cfg.update(cand)
+            return _save(self.cfg, applied=applied, info=info)
 
     # ── From my pickit: any .ipd → matching in-game loot filter ──────────────
 
@@ -2170,17 +2180,20 @@ class AppApi:
         price snapshot, window size, current league and the chosen theme
         (owner decision 2026-07-21 — a reset shouldn't repaint the app)."""
         from exilebot_pickit.ui.config import DEFAULT_CONFIG
-        keep = {k: self.cfg.get(k) for k in
-                ("history", "profiles", "last_gen_prices",
-                 "window_geometry_web", "league", "theme")}
-        import copy
-        self.cfg.clear()
-        # deepcopy: plain update() shares DEFAULT_CONFIG's nested dicts, and
-        # set_item() then mutates the DEFAULTS in place — the next reset
-        # "restores" those stale toggles (the reported reset-didn't-reset bug).
-        self.cfg.update(copy.deepcopy(DEFAULT_CONFIG))
-        self.cfg.update({k: v for k, v in keep.items() if v is not None})
-        return _save(self.cfg, info=self.app_info())
+        with self._lock:
+            if self._status["running"]:
+                return {"error": "Wait for generation to finish before replacing settings."}
+            keep = {k: self.cfg.get(k) for k in
+                    ("history", "profiles", "last_gen_prices",
+                     "window_geometry_web", "league", "theme")}
+            import copy
+            self.cfg.clear()
+            # deepcopy: plain update() shares DEFAULT_CONFIG's nested dicts, and
+            # set_item() then mutates the DEFAULTS in place — the next reset
+            # "restores" those stale toggles (the reported reset-didn't-reset bug).
+            self.cfg.update(copy.deepcopy(DEFAULT_CONFIG))
+            self.cfg.update({k: v for k, v in keep.items() if v is not None})
+            return _save(self.cfg, info=self.app_info())
 
     def set_item(self, cat_key, name, enabled):
         """Toggle one item (also used for '_chance' pseudo-category)."""
@@ -2410,15 +2423,15 @@ class AppApi:
             g = self._game()
             payloads = gen.fetch_all_payloads(league, g.all_categories, game=g)
             uniq_vals, gear_vals = [], []
-            for key, _t, _l, is_unique in g.all_categories:
+            for key, _t, _l, _stash in g.all_categories:
                 p = payloads.get(key)
-                if not isinstance(p, dict) or key in gen.PICK_ALL_CATEGORIES:
+                if not isinstance(p, dict) or (not g.economy_only and key in gen.PICK_ALL_CATEGORIES):
                     continue
                 r = gen.exalted_rate(p)
                 for line in p.get("lines", []):
                     ev = float(line.get("primaryValue") or 0.0) * (r or 1.0)
                     if ev > 0:
-                        (uniq_vals if is_unique else gear_vals).append(ev)
+                        (uniq_vals if asm.is_unique_category(key) else gear_vals).append(ev)
 
             def pct_floor(vals):
                 if not vals or keep >= 100:   # keep everything → no floor
@@ -2501,6 +2514,15 @@ class AppApi:
             "rare_strictness_slots": dict(self.cfg.get("rare_strictness_slots", {}) or {}),
         }
 
+    def _generation_prices(self, league, game, cats, stale):
+        # Currency supplies the conversion rate even with its pickup rules off.
+        requested = list(cats)
+        if not any(key == "currency" for key, *_ in cats):
+            requested.append(next(c for c in game.exchange_categories if c[0] == "currency"))
+        payloads = gen.fetch_all_payloads(league, requested, game=game, stale_out=stale)
+        gen.require_price_payloads(requested, payloads)
+        return {key: payloads[key] for key, *_ in cats}, payloads["currency"]
+
     def _generate_poe1(self, league, min_gear, min_unique, t0):
         """Economy-only generate for PoE 1.
 
@@ -2533,11 +2555,8 @@ class AppApi:
             }
             self._log(f"Fetching live PoE1 prices for {league}…")
             stale: set = set()
-            payloads = gen.fetch_all_payloads(league, cats, game=g, stale_out=stale)
-            cur = payloads.get("currency")
-            if not isinstance(cur, dict):
-                raise RuntimeError("poe.ninja unreachable and no cached prices for this league")
-            div_rate, div_found, _rate = asm.compute_divine_rate(cur)
+            payloads, cur = self._generation_prices(league, g, cats, stale)
+            div_rate, div_found, _ = asm.compute_divine_rate(cur)
 
             out, _active = asm.build_poe1_economy_lines(
                 league, cats, payloads, div_rate, div_found, snap)
@@ -2695,11 +2714,8 @@ class AppApi:
             self._log(f"Fetching live prices for {league}…")
             stale = set()
             cats = [c for c in gen.ALL_CATEGORIES if snap["cat_enabled"].get(c[0], True)]
-            payloads = gen.fetch_all_payloads(league, cats, stale_out=stale)
-            cur = payloads.get("currency")
-            if not isinstance(cur, dict):
-                raise RuntimeError("poe.ninja unreachable and no cached prices for this league")
-            div_rate, div_found, _rate = asm.compute_divine_rate(cur)
+            payloads, cur = self._generation_prices(league, self._game(), cats, stale)
+            div_rate, div_found, _ = asm.compute_divine_rate(cur)
 
             W = gen._W
             out = ["/" * W,

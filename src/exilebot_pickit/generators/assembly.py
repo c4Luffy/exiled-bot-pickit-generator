@@ -277,11 +277,8 @@ def is_unique_category(key: str) -> bool:
     """Is this category REAL uniques, as opposed to stash-endpoint routing?
 
     ``is_unique`` on a category tuple answers "which poe.ninja endpoint", not
-    "is this a unique item". Eight categories are fetched from the stash
-    endpoint while being perfectly ordinary drops — Precursor Tablets, skill
-    gems, beasts, incubators, vials, cluster jewels, invitations and maps — and
-    the tablets entry says so in its own comment ("purely for endpoint routing:
-    this is not a real unique category").
+    "is this a unique item". Stash-priced items such as Precursor Tablets, skill
+    gems, Viscera, beasts, cluster jewels and maps use the regular market floor.
 
     The naming convention is the honest signal, and the PoE 1 rule writer
     already relies on it to choose ``[UniqueName]`` over ``[Type]``.
