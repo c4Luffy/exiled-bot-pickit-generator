@@ -41,6 +41,7 @@ def api(tmp_path, monkeypatch):
     a._lock = threading.Lock()
     a._status = {"running": False, "log": [], "done": None}
     a._last_lines = []
+    a._eco = {"running": False, "result": None}
     a.cfg = {"output_base": "t", "history": [], "item_states": {},
              "category_enabled": {}, "backup_count": 0}
     # save_config now REPORTS success (bool). A stub returning None reads as a
@@ -1677,7 +1678,7 @@ def test_headless_regenerate_league_override_and_no_league(tmp_path, monkeypatch
     _headless_env(tmp_path, monkeypatch, {
         "output_base": "t", "history": [], "item_states": {},
         "category_enabled": {}, "backup_count": 0})               # no saved league
-    monkeypatch.setattr(webapi.gen, "fetch_live_leagues", lambda: [])
+    monkeypatch.setattr(webapi.gen, "fetch_live_leagues", lambda game: [])
     assert webapi.headless_regenerate() == 2                       # nothing to run
     assert webapi.headless_regenerate("L") == 0                    # explicit override works
     assert os.path.isfile(os.path.join(str(tmp_path), "t.ipd"))
@@ -1695,3 +1696,42 @@ def test_generated_ipd_carries_the_syntax_guide(api, tmp_path):
     assert "Configuration Guide for Path of Exile 2" in text
     assert "[WeightedSum(stat:weight" in text
     assert "[IgnoreRitual]" in text
+
+@pytest.mark.parametrize("game", ["poe1", "poe2"])
+def test_currency_disabled_still_prices_other_categories(api, tmp_path, game, monkeypatch):
+    monkeypatch.setitem(FAKE, "currency", _payload([("Audit Currency", 100)]))
+    api.cfg.update(active_game=game, category_enabled={"currency": False})
+    api._generate("L", 1, 1)
+    assert api._status["done"]["ok"], api._status["done"]
+    text = (tmp_path / "t.ipd").read_text(encoding="utf-8")
+    assert "Essence of Battle" in text
+    assert "Audit Currency" not in text
+
+
+def test_in_progress_run_keeps_its_game(api):
+    api._status["running"] = True
+    assert "error" in api.set_game("poe1")
+    assert api._game().id == "poe2"
+
+
+def test_failed_game_switch_keeps_current_game(api, monkeypatch):
+    monkeypatch.setattr(webapi, "save_config", lambda cfg: False)
+    assert "error" in api.set_game("poe1")
+    assert api._game().id == "poe2"
+
+
+def test_headless_detects_league_for_active_game(tmp_path, monkeypatch, capsys):
+    _headless_env(tmp_path, monkeypatch, {"active_game": "poe1", "output_base": "t"})
+    monkeypatch.setattr(webapi.gen, "fetch_live_leagues",
+                        lambda game: [(game.id + " league", "", "")])
+    existing = tmp_path / "latest.ipd"
+    existing.write_bytes(b"user pickit")
+    assert webapi.headless_regenerate() == 0
+    assert "poe1 league  (gear >= 0 c" in capsys.readouterr().out
+    assert existing.read_bytes() == b"user pickit"
+
+
+@pytest.mark.parametrize("floor", ["NaN", float("inf"), float("-inf")])
+def test_generate_rejects_nonfinite_floors(api, floor):
+    assert api.generate("Standard", floor, 0) == {"error": "floors must be finite numbers"}
+    assert api.status()["running"] is False

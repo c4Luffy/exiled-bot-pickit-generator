@@ -226,12 +226,14 @@ def _store_game_section(cfg: dict, game_id: str):
 def _apply_game_section(cfg: dict, game_id: str):
     """Lift cfg['games'][game_id] up into the flat top-level keys."""
     games = _games_copy(cfg)
-    if not isinstance(games.get(game_id), dict):
-        games[game_id] = _game_section_defaults(game_id)
+    defaults = _game_section_defaults(game_id)
+    saved = games.get(game_id)
+    section = copy.deepcopy(saved) if isinstance(saved, dict) else {}
+    _coerce_types(section, defaults)
+    games[game_id] = section
     cfg["games"] = games
-    sect = games[game_id]
-    for k in GAME_KEYS:
-        cfg[k] = copy.deepcopy(sect[k]) if k in sect else copy.deepcopy(DEFAULT_CONFIG[k])
+    for key in GAME_KEYS:
+        cfg[key] = copy.deepcopy(section[key])
 
 
 def _ensure_game_sections(cfg: dict):
@@ -335,7 +337,7 @@ PRESET_KEYS = ("min_exalt_gear", "min_exalt_unique", "auto_floor",
 CONFIG_LOAD_ERROR = ""
 
 
-def _coerce_types(cfg):
+def _coerce_types(cfg, defaults=None):
     """Drop config values whose type disagrees with DEFAULT_CONFIG.
 
     Guards startup against hand-edited or cross-version configs — a list where
@@ -345,14 +347,14 @@ def _coerce_types(cfg):
     ``null`` is a mismatch too — defaults are merged before this runs, so a None
     here can only come from the file, and letting it through persisted a config
     that crashed dict/list consumers on every launch."""
-    for key, default in DEFAULT_CONFIG.items():
+    for key, default in (DEFAULT_CONFIG if defaults is None else defaults).items():
         v = cfg.get(key)
         if v is not None and (isinstance(default, type(v)) or isinstance(v, type(default))):
             continue
         if isinstance(default, (int, float)) and isinstance(v, (int, float)) \
                 and not isinstance(v, bool):
             continue
-        cfg[key] = default if not isinstance(default, (dict, list)) else type(default)()
+        cfg[key] = copy.deepcopy(default)
     return cfg
 
 
@@ -391,6 +393,10 @@ def load_config():
     try:
         cfg = copy.deepcopy(DEFAULT_CONFIG)
         cfg.update(data)
+        legacy_tier = data.get("poe1_map_tier")
+        if "poe1_map_tiers" not in data and type(legacy_tier) is int:
+            from exilebot_pickit.generators.assembly import normalise_map_tiers
+            cfg["poe1_map_tiers"] = normalise_map_tiers(legacy_tier)
         _coerce_types(cfg)
         if cfg.get("base_min_level") == 75:
             cfg["base_min_level"] = 82

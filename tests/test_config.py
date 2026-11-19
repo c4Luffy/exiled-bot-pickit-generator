@@ -266,3 +266,23 @@ def test_an_existing_users_gates_are_never_reset_to_the_new_defaults(tmp_path, m
     cfg = cfgmod.load_config()
     assert cfg["base_quality"] == 24 and cfg["base_min_level"] == 82
     assert cfg["min_exalt_gear"] == 200.0 and cfg["auto_floor"] is True
+
+
+def test_partial_sections_restore_game_specific_defaults(tmp_config):
+    tmp_config.write_text(json.dumps({"active_game": "poe2", "games": {
+        "poe2": {"history": None}, "poe1": {"league": "Standard", "item_states": []}}}))
+    cfg = cfgmod.load_config()
+    assert cfg["history"] == []
+    cfgmod.switch_game(cfg, "poe1")
+    assert cfg["output_base"] == "poe1_pickit"
+    assert cfg["item_states"] == {}
+    assert cfg["league"] == "Standard"
+
+
+def test_old_poe1_map_floor_survives_load_and_save(tmp_config):
+    tmp_config.write_text(json.dumps({"poe1_map_tier": 14}))
+    cfg = cfgmod.load_config()
+    assert cfg["poe1_map_tiers"] == [14, 15, 16]
+    cfg["poe1_map_tiers"] = []
+    assert cfgmod.save_config(cfg)
+    assert cfgmod.load_config()["poe1_map_tiers"] == []

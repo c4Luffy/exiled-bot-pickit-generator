@@ -159,16 +159,6 @@ class AppApi:
         self.cfg = load_config()
         gen.set_disk_cache_dir(PRICE_CACHE_DIR)
         gen.prune_disk_cache(max_age_days=60)
-        # latest.ipd was an always-same-name duplicate of the output pickit that
-        # nothing ever read — users opening the folder couldn't tell which file
-        # their bot needed. We stopped writing it; remove any stale copy.
-        # UNLESS the user's own output name is "latest" — then latest.ipd IS
-        # their real pickit and deleting it here would destroy it every launch.
-        if (self.cfg.get("output_base") or "").strip().lower() != "latest":
-            try:
-                os.remove(os.path.join(OUTPUT_DIR, "latest.ipd"))
-            except OSError:
-                pass
         # Self-updating game data (new bases / unique categories from the repo):
         # cached copy synchronously, fresh copy in the background — same as Tk.
         try:
@@ -190,9 +180,16 @@ class AppApi:
         in and out (see ui.config.switch_game), so the two never overwrite each
         other."""
         from exilebot_pickit.ui import config as _c
-        _c.switch_game(self.cfg, game_id)
-        save_config(self.cfg)
-        g = self._game()
+        with self._lock:
+            if self._status["running"] or self._eco.get("running"):
+                return {"error": "Wait for the current run or price lookup to finish before switching games."}
+            previous = self.cfg.get("active_game", "poe2")
+            _c.switch_game(self.cfg, game_id)
+            if not save_config(self.cfg):
+                _c.switch_game(self.cfg, previous)
+                return {"error": "Couldn't save the game selection."}
+            self._eco = {"running": False, "result": None}
+            g = self._game()
         # Cached UI state that belonged to the previous game must not bleed over.
         self._last_lines = []
         return {"ok": True, "game": g.id, "short": g.short, "label": g.label,
@@ -547,7 +544,12 @@ class AppApi:
             if self._eco.get("running"):
                 return {"error": "already running"}
             self._eco = {"running": True, "result": None}
-        threading.Thread(target=self._economy_worker, args=(league,), daemon=True).start()
+        try:
+            threading.Thread(target=self._economy_worker, args=(league,), daemon=True).start()
+        except RuntimeError as exc:
+            with self._lock:
+                self._eco = {"running": False, "result": {"error": str(exc)}}
+            return {"error": str(exc)}
         return {"ok": True}
 
     def _economy_worker(self, league):
@@ -2459,8 +2461,10 @@ class AppApi:
         # every later Generate answered "already running" until an app restart.
         try:
             g, u = float(min_gear or 0), float(min_unique or 0)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             return {"error": "floors must be numbers"}
+        if not (math.isfinite(g) and math.isfinite(u)):
+            return {"error": "floors must be finite numbers"}
         with self._lock:
             if self._status["running"]:
                 return {"error": "already running"}
@@ -2533,7 +2537,8 @@ class AppApi:
             }
             self._log(f"Fetching live PoE1 prices for {league}…")
             stale: set = set()
-            payloads = gen.fetch_all_payloads(league, cats, game=g, stale_out=stale)
+            prices = [c for c in g.all_categories if c[0] == "currency" or c in cats]
+            payloads = gen.fetch_all_payloads(league, prices, game=g, stale_out=stale)
             cur = payloads.get("currency")
             if not isinstance(cur, dict):
                 raise RuntimeError("poe.ninja unreachable and no cached prices for this league")
@@ -2695,7 +2700,8 @@ class AppApi:
             self._log(f"Fetching live prices for {league}…")
             stale = set()
             cats = [c for c in gen.ALL_CATEGORIES if snap["cat_enabled"].get(c[0], True)]
-            payloads = gen.fetch_all_payloads(league, cats, stale_out=stale)
+            prices = [c for c in gen.ALL_CATEGORIES if c[0] == "currency" or c in cats]
+            payloads = gen.fetch_all_payloads(league, prices, stale_out=stale)
             cur = payloads.get("currency")
             if not isinstance(cur, dict):
                 raise RuntimeError("poe.ninja unreachable and no cached prices for this league")
@@ -2754,7 +2760,8 @@ class AppApi:
             # dedupe: items poe.ninja prices already got a force-kept rule in
             # their own category above — don't write a second static rule
             priced = set()
-            for _p in payloads.values():
+            for key, *_ in cats:
+                _p = payloads.get(key)
                 if isinstance(_p, dict):
                     priced.update(
                         gen.ITEM_NAME_CORRECTIONS.get(i["name"], i["name"])
@@ -4484,7 +4491,7 @@ def headless_regenerate(league: str | None = None) -> int:
     lg = (league or api.cfg.get("league") or "").strip()
     if not lg:
         try:
-            leagues = gen.fetch_live_leagues()
+            leagues = gen.fetch_live_leagues(api._game())
             lg = (leagues[0][0] if leagues else "")
         except Exception:
             lg = ""
@@ -4496,7 +4503,8 @@ def headless_regenerate(league: str | None = None) -> int:
         mu = float(api.cfg.get("min_exalt_unique", 0) or 0)
     except (TypeError, ValueError):
         mg = mu = 0.0
-    print(f"Regenerating pickit for {lg}  (gear >= {mg:g} ex · uniques >= {mu:g} ex)")
+    unit = api._game().unit_short
+    print(f"Regenerating pickit for {lg}  (gear >= {mg:g} {unit} · uniques >= {mu:g} {unit})")
     # tee the run log to stdout so a scheduled run leaves a readable trace
     _orig_log = api._log
     api._log = lambda msg: (_orig_log(msg), print("  " + msg))[0]

@@ -239,14 +239,14 @@ function test(label, fn) {
 // The old loop awaited the bridge BEFORE clearInterval, so one bad poll orphaned the timer
 // AND hung the promise: "Loading prices…" forever, plus a new immortal timer per visit.
 {
-  const run = async (poll) => {
+  const run = async (poll, start = async () => ({ ok: true })) => {
     const els = {}, liveTimers = new Set();
     els.league = mkEl(); els.league.value = "Runes of Aldur";
     const ctx = vm.createContext({
       Math, $: (id) => (els[id] ||= mkEl()), eco: null, ecoCat: null, ecoUnit: "ex", chaosEx: 0,
       GAME_UNITS: "ex", esc: (x) => String(x),
       setDivRate() {}, renderChips() {}, renderEco() {},
-      api: () => ({ economy_start: async () => ({ ok: true }), economy_poll: poll,
+      api: () => ({ economy_start: start, economy_poll: poll,
         chaos_ex: async () => ({ ex: 0 }) }),
       setInterval: (fn, ms) => { const h = setInterval(fn, ms); liveTimers.add(h); return h; },
       clearInterval: (h) => { liveTimers.delete(h); clearInterval(h); } });
@@ -283,6 +283,13 @@ function test(label, fn) {
     assert.ok(empty.els.ecoInfo.textContent.startsWith("✗"));
   });
 
+  const startFailed = await run(undefined, async () => { throw new Error("start failed"); });
+  test("a rejected economy_start replaces the skeleton and offers retry", () => {
+    assert.equal(startFailed.liveTimers.size, 0);
+    assert.match(startFailed.els.ecoBody.innerHTML, /start failed/);
+    assert.match(startFailed.els.ecoBody.innerHTML, /Retry/);
+  });
+
   const noResult = await run(async () => ({ running: false, result: null }));
   test("a finished-but-empty price load still ends the loop with an error", () => {
     assert.equal(noResult.liveTimers.size, 0);
@@ -300,6 +307,46 @@ function test(label, fn) {
     for (const o of opts)
       assert.ok(/\bdisabled\b/.test(o[1]),
         "the placeholder must be disabled — selecting it did nothing and snapped back");
+  });
+}
+
+{
+  const run = async (generate, status) => {
+    const elements = {};
+    const messages = [];
+    const $ = (id) => (elements[id] ||= mkEl());
+    $("league").value = "Standard";
+    let polls = 0;
+    const ctx = vm.createContext({
+      $, running: false, gEx: () => 0, uEx: () => 0,
+      toast: (message) => messages.push(message), setSeal() {}, logLine() {},
+      api: () => ({ generate, status: async () => { polls++; return status(); } }),
+    });
+    for (const fn of ["finishGenerate", "poll", "doGenerate"])
+      vm.runInContext(pullFn(fn), ctx);
+    await ctx.doGenerate();
+    assert.equal(ctx.running, false);
+    assert.equal($("go").disabled, false);
+    assert.equal($("bar").classList.contains("on"), false);
+    return { messages, polls };
+  };
+
+  const rejected = await run(async () => { throw new Error("bridge disconnected"); });
+  test("a rejected Generate request restores controls and displays the error", () => {
+    assert.equal(rejected.polls, 0);
+    assert.match(rejected.messages.at(-1), /bridge disconnected/);
+  });
+
+  const refused = await run(async () => ({ error: "floors must be finite numbers" }));
+  test("a refused Generate request skips polling an earlier run", () => {
+    assert.equal(refused.polls, 0);
+    assert.match(refused.messages.at(-1), /floors must be finite numbers/);
+  });
+
+  const disconnected = await run(async () => ({ ok: true }), async () => undefined);
+  test("a missing generation status restores controls for retry", () => {
+    assert.equal(disconnected.polls, 1);
+    assert.match(disconnected.messages.at(-1), /did not return a generation status/);
   });
 }
 

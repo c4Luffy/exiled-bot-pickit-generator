@@ -1,5 +1,7 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
+cd /d "%~dp0" || exit /b 1
+set "PYTHONPATH=%CD%\src;%PYTHONPATH%"
 title ExileBot 2 Pickit - EXE Builder
 
 echo ================================================

@@ -2423,7 +2423,7 @@ function resetRunPanel(){
 async function setGame(id){
   if(id===ACTIVE_GAME)return;
   const r=await api().set_game(id);
-  if(r&&r.error){toast("Couldn't switch game");return;}
+  if(r&&r.error){toast(r.error);return;}
   // Refresh IN PLACE — NOT location.reload(): under pywebview a reload can fail
   // to re-inject window.pywebview.api / re-fire pywebviewready, which left the
   // league dropdown stuck on "Loading…" and broke every bridge call.
@@ -3008,11 +3008,30 @@ $("wnDl").onclick=()=>{$("wnModal").classList.remove("on");startDownload();};
 $("wnModal").onclick=e=>{if(e.target.id==="wnModal")wnDismiss();};
 
 /* ── generate ── */
+function finishGenerate(error){
+  running=false;
+  $("go").disabled=false;
+  $("bar").classList.remove("on");
+  if(error){
+    setSeal("err","Run failed",error);
+    logLine(error,"err");
+    toast("Generate failed: "+error);
+  }
+}
 async function poll(){
-  const st=await api().status();
+  let st;
+  try{
+    st=await api().status();
+    if(!st||!Array.isArray(st.log)||typeof st.running!=="boolean"){
+      throw new Error("The app did not return a generation status.");
+    }
+  }catch(err){
+    finishGenerate(err?.message||String(err));
+    return;
+  }
   for(const m of st.log)logLine(m);
   if(st.running)return setTimeout(poll,400);
-  running=false;$("go").disabled=false;$("bar").classList.remove("on");
+  finishGenerate();
   const d=st.done||{};
   if(d.ok){if(d.divine_rate)setDivRate(d.divine_rate);$("okPanel").classList.add("on");renderSparks();sideMark(true);
     _freshAt=Date.now();updFresh();
@@ -3082,7 +3101,18 @@ async function doGenerate(){
   running=true;$("go").disabled=true;$("bar").classList.add("on");
   toast("⏳ Generating pickit…");   // clear feedback the moment a run starts
   setSeal("run","Building pickit…","Fetching prices, assembling and validating rules");
-  await api().generate(league,gEx(),uEx());poll();}
+  try{
+    const result=await api().generate(league,gEx(),uEx());
+    if(!result?.ok){
+      finishGenerate(result?.error||"The app did not confirm that generation started.");
+      return;
+    }
+  }catch(err){
+    finishGenerate(err?.message||String(err));
+    return;
+  }
+  return poll();
+}
 function setSeal(state,title,sub){
   const seal=$("statSeal");if(!seal)return;
   seal.textContent=state==="ok"?"✓":state==="err"?"✗":"◷";
@@ -3277,11 +3307,18 @@ async function _loadEco(){
   // Skeleton only when there is nothing to look at. A REFRESH keeps the old
   // rows on screen — replacing a readable table with grey bars is a downgrade.
   if(!eco)skelRows($("ecoBody"),5,10);
-  const started=await api().economy_start($("league").value);
-  if(started&&started.error&&started.error!=="already running"){
-    $("ecoInfo").textContent="✗ "+started.error;
+  let started;
+  try{
+    started=await api().economy_start($("league").value);
+  }catch(err){
+    started={error:err?.message||String(err)};
+  }
+  if(!started?.ok&&started?.error!=="already running"){
+    const error=started?.error||"The app did not confirm that prices were loading.";
+    $("ecoInfo").textContent="✗ "+error;
     $("ecoBody").innerHTML='<tr><td colspan="5">'+emptyState("\u26a0",
-      "Couldn't start the price load",esc(started.error))+"</td></tr>";
+      "Couldn't start the price load",esc(error),
+      '<button class="ghost mini" onclick="loadEco()">Retry</button>')+"</td></tr>";
     return;}
   /* The interval MUST die on EVERY exit path. This used to await the bridge
      BEFORE clearInterval, so a single rejected or undefined poll aborted the

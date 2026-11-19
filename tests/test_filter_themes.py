@@ -203,7 +203,7 @@ def test_missing_divine_header_falls_back_to_the_default_rate():
 
 
 def test_exvalue_survives_a_minus_sign_and_scientific_notation():
-    """Third-party and hand-edited pickits don't use our f"{v:.2f}" formatting.
+    r"""Third-party and hand-edited pickits don't use our f"{v:.2f}" formatting.
     The old [\d,.]+ pattern matched neither shape, and both misread the value:
     "-5.00" found no number at all so the rule fell through to section styling
     instead of quiet, and "1e3" matched just the "1" — painting a 1000 ex item

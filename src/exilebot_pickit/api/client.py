@@ -262,8 +262,10 @@ def load_payload_from_disk(league: str, key: str, game_id: str = "poe2"):
     try:
         with open(_disk_cache_file(league, key, game_id), encoding="utf-8") as f:
             data = json.load(f)
-        return data.get("payload"), time.time() - float(data.get("ts", 0))
-    except (OSError, ValueError):
+        if not isinstance(data, dict) or not isinstance(data.get("payload"), dict):
+            return None, None
+        return data["payload"], time.time() - float(data.get("ts", 0))
+    except (OSError, TypeError, ValueError, OverflowError):
         return None, None
 
 

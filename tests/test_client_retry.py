@@ -71,3 +71,11 @@ def test_live_leagues_excludes_finished_leagues(monkeypatch):
         "oldEconomyLeagues": [{"name": "Fate of the Vaal", "url": "vaal"}],
     })
     assert client.fetch_live_leagues() == [("Runes of Aldur", "runesofaldur", "Runes of Aldur")]
+
+
+def test_malformed_offline_cache_is_ignored(tmp_path, monkeypatch):
+    monkeypatch.setattr(client, "_DISK_CACHE_DIR", str(tmp_path))
+    cache_file = tmp_path / "poe1__Standard__currency.json"
+    for malformed in ('[]', '{"payload": []}', '{"payload": {}, "ts": null}'):
+        cache_file.write_text(malformed, encoding="utf-8")
+        assert client.load_payload_from_disk("Standard", "currency", "poe1") == (None, None)

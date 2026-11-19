@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "exilebot-pickit"
 dynamic = ["version"]
-description = "Generate Exiled Bot 2 pickit rules from live Path of Exile 2 economy prices"
+description = "Generate Exiled Bot 2 pickit rules from live Path of Exile 1 and 2 economy prices"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -15,6 +15,9 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+exilebot_pickit = ["webui/app.html", "resources/*.ico", "resources/*.png"]
 
 # Tooling config for the ExileBot 2 Pickit Generator.
 # (The project ships as a single PyInstaller .exe; this file is dev-only — it does
