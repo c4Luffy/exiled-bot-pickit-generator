@@ -5026,6 +5026,7 @@ $("resetBtn").onclick=async()=>{
     "Reset all settings to defaults?<br>This turns every item toggle back <b>ON</b>. History, saved profiles and your theme are kept.",
     {ok:"Reset",danger:true}))return;
   const r=await api().reset_defaults();
+  if(r.error)return toast(r.error);
   if(r.ok){info=r.info;applyInfo(info);
     // drop cached tab data so the item tabs re-fetch with the reset (all-on)
     // state next time they're opened — otherwise stale toggles would linger.

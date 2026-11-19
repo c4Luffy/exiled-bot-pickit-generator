@@ -1709,6 +1709,7 @@ def test_generated_ipd_carries_the_syntax_guide(api, tmp_path):
     assert "[WeightedSum(stat:weight" in text
     assert "[IgnoreRitual]" in text
 
+
 @pytest.mark.parametrize("game", ["poe1", "poe2"])
 def test_failed_feed_preserves_working_pickit(api, tmp_path, monkeypatch, game):
     bot = tmp_path / "bot"
@@ -1747,6 +1748,7 @@ def test_switch_game_waits_for_generation(api):
     api.cfg["active_game"] = "poe2"
     api._status["running"] = True
     assert "error" in api.set_game("poe1")
+    assert "error" in api.reset_defaults()
     assert api._game().id == "poe2"
     api._status["running"] = False
     assert api.set_game("poe1")["game"] == "poe1"

@@ -1766,33 +1766,36 @@ class AppApi:
         # folder, and any value that broke app_info() left the UI dead for the
         # rest of the session with the bad config persisted.
         import copy as _copy
-        cand = _copy.deepcopy(self.cfg)
-        applied = 0
-        for k, v in data.items():
-            if k in DEFAULT_CONFIG and k != "window_geometry_web":
-                cand[k] = v
-                applied += 1
-        _coerce_types(cand)
-        # _coerce_types only checks TYPES; a backup can carry a str theme the
-        # engine doesn't know — normalize so cfg and the dropdown agree.
-        cand["filter_theme"] = _theme_or_default(cand.get("filter_theme"))
-        # output_base is a filename, not a path — _coerce_types can't see this.
-        cand["output_base"] = _sanitize_output_base(cand.get("output_base")
-                                                    or "poe2_pickit")
-        cand["min_exalt"] = cand.get("min_exalt_gear", 0.0)
-        saved_cfg, self.cfg = self.cfg, cand
-        try:
-            info = self.app_info()          # proves the candidate is usable
-        except Exception as e:
+        with self._lock:
+            if self._status["running"]:
+                return {"error": "Wait for generation to finish before replacing settings."}
+            cand = _copy.deepcopy(self.cfg)
+            applied = 0
+            for k, v in data.items():
+                if k in DEFAULT_CONFIG and k != "window_geometry_web":
+                    cand[k] = v
+                    applied += 1
+            _coerce_types(cand)
+            # _coerce_types only checks TYPES; a backup can carry a str theme the
+            # engine doesn't know — normalize so cfg and the dropdown agree.
+            cand["filter_theme"] = _theme_or_default(cand.get("filter_theme"))
+            # output_base is a filename, not a path — _coerce_types can't see this.
+            cand["output_base"] = _sanitize_output_base(cand.get("output_base")
+                                                        or "poe2_pickit")
+            cand["min_exalt"] = cand.get("min_exalt_gear", 0.0)
+            saved_cfg, self.cfg = self.cfg, cand
+            try:
+                info = self.app_info()          # proves the candidate is usable
+            except Exception as e:
+                self.cfg = saved_cfg
+                log_exc("import_settings")
+                return {"error": f"That backup has values this version can't use ({e}). "
+                                 "Nothing was changed."}
+            # Same dict object as before, so anything holding a reference stays live.
             self.cfg = saved_cfg
-            log_exc("import_settings")
-            return {"error": f"That backup has values this version can't use ({e}). "
-                             "Nothing was changed."}
-        # Same dict object as before, so anything holding a reference stays live.
-        self.cfg = saved_cfg
-        self.cfg.clear()
-        self.cfg.update(cand)
-        return _save(self.cfg, applied=applied, info=info)
+            self.cfg.clear()
+            self.cfg.update(cand)
+            return _save(self.cfg, applied=applied, info=info)
 
     # ── From my pickit: any .ipd → matching in-game loot filter ──────────────
 
@@ -2177,17 +2180,20 @@ class AppApi:
         price snapshot, window size, current league and the chosen theme
         (owner decision 2026-07-21 — a reset shouldn't repaint the app)."""
         from exilebot_pickit.ui.config import DEFAULT_CONFIG
-        keep = {k: self.cfg.get(k) for k in
-                ("history", "profiles", "last_gen_prices",
-                 "window_geometry_web", "league", "theme")}
-        import copy
-        self.cfg.clear()
-        # deepcopy: plain update() shares DEFAULT_CONFIG's nested dicts, and
-        # set_item() then mutates the DEFAULTS in place — the next reset
-        # "restores" those stale toggles (the reported reset-didn't-reset bug).
-        self.cfg.update(copy.deepcopy(DEFAULT_CONFIG))
-        self.cfg.update({k: v for k, v in keep.items() if v is not None})
-        return _save(self.cfg, info=self.app_info())
+        with self._lock:
+            if self._status["running"]:
+                return {"error": "Wait for generation to finish before replacing settings."}
+            keep = {k: self.cfg.get(k) for k in
+                    ("history", "profiles", "last_gen_prices",
+                     "window_geometry_web", "league", "theme")}
+            import copy
+            self.cfg.clear()
+            # deepcopy: plain update() shares DEFAULT_CONFIG's nested dicts, and
+            # set_item() then mutates the DEFAULTS in place — the next reset
+            # "restores" those stale toggles (the reported reset-didn't-reset bug).
+            self.cfg.update(copy.deepcopy(DEFAULT_CONFIG))
+            self.cfg.update({k: v for k, v in keep.items() if v is not None})
+            return _save(self.cfg, info=self.app_info())
 
     def set_item(self, cat_key, name, enabled):
         """Toggle one item (also used for '_chance' pseudo-category)."""
@@ -2510,7 +2516,9 @@ class AppApi:
 
     def _generation_prices(self, league, game, cats, stale):
         # Currency supplies the conversion rate even with its pickup rules off.
-        requested = [c for c in game.all_categories if c[0] == "currency" or c in cats]
+        requested = list(cats)
+        if not any(key == "currency" for key, *_ in cats):
+            requested.append(next(c for c in game.exchange_categories if c[0] == "currency"))
         payloads = gen.fetch_all_payloads(league, requested, game=game, stale_out=stale)
         gen.require_price_payloads(requested, payloads)
         return {key: payloads[key] for key, *_ in cats}, payloads["currency"]
