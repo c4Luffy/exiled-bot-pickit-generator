@@ -190,11 +190,13 @@ class AppApi:
         in and out (see ui.config.switch_game), so the two never overwrite each
         other."""
         from exilebot_pickit.ui import config as _c
-        _c.switch_game(self.cfg, game_id)
-        save_config(self.cfg)
-        g = self._game()
-        # Cached UI state that belonged to the previous game must not bleed over.
-        self._last_lines = []
+        with self._lock:
+            if self._status["running"]:
+                return {"error": "Wait for generation to finish before switching games."}
+            _c.switch_game(self.cfg, game_id)
+            save_config(self.cfg)
+            g = self._game()
+            self._last_lines = []
         return {"ok": True, "game": g.id, "short": g.short, "label": g.label,
                 "unit": g.unit, "unit_short": g.unit_short,
                 "economy_only": g.economy_only}
@@ -1626,17 +1628,19 @@ class AppApi:
             r = requests.get(VERSION_URL, timeout=8,
                              headers={"User-Agent": f"poe2-pickit/{VERSION}",
                                       "Accept": "application/vnd.github+json"})
-            if r.status_code != 200:
-                return {"update": False}
+            r.raise_for_status()
             data = r.json() or {}
             remote = str(data.get("tag_name") or "").lstrip("v").strip()
+            if AutoUpdateMixin._ver_tuple(remote) == (0,):
+                raise ValueError("Invalid release version")
             if AutoUpdateMixin._should_offer_update(remote, VERSION):
                 notes = str(data.get("body") or "").strip()
                 return {"update": True, "version": remote, "url": RELEASES_URL,
                         "notes": notes[:4000], "current": VERSION}
             return {"update": False, "current": VERSION}
-        except Exception:
-            return {"update": False, "current": VERSION}
+        except (requests.RequestException, ValueError, AttributeError):
+            return {"update": False, "current": VERSION,
+                    "error": "Could not verify the latest GitHub release. Try again later."}
 
     # ── Game-data health check ────────────────────────────────────────────────
     # PoE2 renames stats and removes bases every patch. When it does, our rules
@@ -2504,6 +2508,13 @@ class AppApi:
             "rare_strictness_slots": dict(self.cfg.get("rare_strictness_slots", {}) or {}),
         }
 
+    def _generation_prices(self, league, game, cats, stale):
+        # Currency supplies the conversion rate even with its pickup rules off.
+        requested = [c for c in game.all_categories if c[0] == "currency" or c in cats]
+        payloads = gen.fetch_all_payloads(league, requested, game=game, stale_out=stale)
+        gen.require_price_payloads(requested, payloads)
+        return {key: payloads[key] for key, *_ in cats}, payloads["currency"]
+
     def _generate_poe1(self, league, min_gear, min_unique, t0):
         """Economy-only generate for PoE 1.
 
@@ -2536,11 +2547,8 @@ class AppApi:
             }
             self._log(f"Fetching live PoE1 prices for {league}…")
             stale: set = set()
-            payloads = gen.fetch_all_payloads(league, cats, game=g, stale_out=stale)
-            cur = payloads.get("currency")
-            if not isinstance(cur, dict):
-                raise RuntimeError("poe.ninja unreachable and no cached prices for this league")
-            div_rate, div_found, _rate = asm.compute_divine_rate(cur)
+            payloads, cur = self._generation_prices(league, g, cats, stale)
+            div_rate, div_found, _ = asm.compute_divine_rate(cur)
 
             out, _active = asm.build_poe1_economy_lines(
                 league, cats, payloads, div_rate, div_found, snap)
@@ -2698,11 +2706,8 @@ class AppApi:
             self._log(f"Fetching live prices for {league}…")
             stale = set()
             cats = [c for c in gen.ALL_CATEGORIES if snap["cat_enabled"].get(c[0], True)]
-            payloads = gen.fetch_all_payloads(league, cats, stale_out=stale)
-            cur = payloads.get("currency")
-            if not isinstance(cur, dict):
-                raise RuntimeError("poe.ninja unreachable and no cached prices for this league")
-            div_rate, div_found, _rate = asm.compute_divine_rate(cur)
+            payloads, cur = self._generation_prices(league, self._game(), cats, stale)
+            div_rate, div_found, _ = asm.compute_divine_rate(cur)
 
             W = gen._W
             out = ["/" * W,

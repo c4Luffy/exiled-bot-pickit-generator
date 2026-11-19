@@ -799,6 +799,15 @@ def _lf_show_blocks(names, extra_lines, chunk: int = _LF_CHUNK,
     return out
 
 
+def require_price_payloads(categories, payloads):
+    """Stop generation before replacing files if any requested feed failed."""
+    missing = [label for key, _, label, _ in categories
+               if not isinstance(payloads.get(key), dict)]
+    if missing:
+        raise RuntimeError("Price data unavailable for " + ", ".join(missing)
+                           + ". Retry to generate the pickit.")
+
+
 def build_loot_filter(ipd_lines, generated_iso: str | None = None,
                       theme: str | None = None) -> list:
     """Parse generated .ipd rule lines and return PoE2 client loot-filter lines.
@@ -1491,6 +1500,7 @@ def main():
         stale: set = set()
         print(f"Fetching {len(cats)} PoE1 categories…")
         payloads = fetch_all_payloads(league, cats, game=game, stale_out=stale)
+        require_price_payloads(cats, payloads)
         currency_payload = payloads.get("currency")
         divine_rate, divine_found, _rate = (1.0, False, 0.0)
         if isinstance(currency_payload, dict):
@@ -1578,6 +1588,7 @@ def main():
     # "today's prices" with nothing printed at all. The GUI already passes this.
     stale: set = set()
     all_payloads = fetch_all_payloads(league, non_currency_cats, stale_out=stale)
+    require_price_payloads(non_currency_cats, all_payloads)
     all_payloads["currency"] = currency_payload
     if stale:
         print(f"Warning: poe.ninja unreachable for {len(stale)} categor"

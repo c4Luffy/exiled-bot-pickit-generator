@@ -2423,7 +2423,7 @@ function resetRunPanel(){
 async function setGame(id){
   if(id===ACTIVE_GAME)return;
   const r=await api().set_game(id);
-  if(r&&r.error){toast("Couldn't switch game");return;}
+  if(r&&r.error){toast(r.error);return;}
   // Refresh IN PLACE — NOT location.reload(): under pywebview a reload can fail
   // to re-inject window.pywebview.api / re-fire pywebviewready, which left the
   // league dropdown stuck on "Loading…" and broke every bridge call.
@@ -2926,7 +2926,12 @@ function uState(state){                          // available|downloading|instal
   }
 }
 async function checkForUpdate(silent){
-  upd=await api().check_update();
+  try{upd=await api().check_update();}
+  catch{upd=null;}
+  if(!upd||upd.error){
+    if(!silent)toast(upd?.error||"Update check failed. Try again later.");
+    return null;
+  }
   if(upd&&upd.update){uState("available");uShow();return true;}
   if(!silent)toast("✓ You're up to date (v"+((upd&&upd.current)||info.version)+")");
   return false;
@@ -5552,6 +5557,7 @@ $("fltBrowse").onclick=async()=>{const r=await api().browse_folder();
   if(r.path){$("fltDirLbl").textContent=r.path;await api().set_setting("poe2_filter_dir",r.path);toast("Saved");}};
 $("updCheck").onclick=async()=>{$("updLbl").textContent="Checking…";
   const found=await checkForUpdate(false);
+  if(found===null){$("updLbl").textContent=upd?.error||"Update check failed. Try again later.";return;}
   $("updLbl").textContent=found?`⬆ v${upd.version} available — see the banner on Generate`
                                :"✓ You're up to date.";};
 $("updManual").onclick=()=>api().open_url("https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/latest");

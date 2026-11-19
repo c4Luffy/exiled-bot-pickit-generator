@@ -291,18 +291,19 @@ def fetch_live_leagues(game=None) -> list:
 
 
 def detect_current_league(game=None) -> str:
+    fallback = getattr(game, "default_league", "") or "Standard"
     try:
         data = _request_with_retry(game.index_url if game else INDEX_STATE_URL, {})
         active = data.get("economyLeagues", [])
         for item in active:
             name = item.get("name", "")
-            if name.lower() not in ("standard", "hardcore"):
+            if name and name.lower() not in ("standard", "hardcore"):
                 return name
         if active:
-            return active[0].get("name", "Mercenaries")
+            return active[0].get("name") or fallback
     except (requests.RequestException, ValueError, KeyError) as e:
-        print(f"Warning: could not auto-detect league ({e}); falling back to 'Mercenaries'")
-    return "Mercenaries"
+        print(f"Warning: could not auto-detect league ({e}); falling back to '{fallback}'")
+    return fallback
 
 
 def _normalize_poe1_payload(payload: dict, is_unique: bool) -> dict:

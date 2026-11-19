@@ -1708,3 +1708,55 @@ def test_generated_ipd_carries_the_syntax_guide(api, tmp_path):
     assert "Configuration Guide for Path of Exile 2" in text
     assert "[WeightedSum(stat:weight" in text
     assert "[IgnoreRitual]" in text
+
+@pytest.mark.parametrize("game", ["poe1", "poe2"])
+def test_failed_feed_preserves_working_pickit(api, tmp_path, monkeypatch, game):
+    bot = tmp_path / "bot"
+    bot.mkdir()
+    api.cfg.update(active_game=game, bot_folder=str(bot), auto_copy=True)
+    files = [tmp_path / "t.ipd", bot / "t.ipd", tmp_path / "t.filter"]
+    for path in files:
+        path.write_bytes(b"previous")
+    fetch = gen.fetch_all_payloads
+
+    def partial(*args, **kwargs):
+        payloads = fetch(*args, **kwargs)
+        payloads["essences"] = TimeoutError()
+        return payloads
+
+    monkeypatch.setattr(gen, "fetch_all_payloads", partial)
+    api._generate("L", 0, 0)
+    done = api._status["done"]
+    assert not done["ok"] and "Essences" in done["error"]
+    assert all(path.read_bytes() == b"previous" for path in files)
+    assert not api.cfg["history"]
+
+
+@pytest.mark.parametrize("game", ["poe1", "poe2"])
+def test_currency_disabled_still_uses_rate(api, tmp_path, game):
+    api.cfg.update(active_game=game, category_enabled={"currency": False})
+    api._generate("L", 0, 0)
+    done = api._status["done"]
+    assert done["ok"] and done["divine_rate"] == 700
+    lines = (tmp_path / "t.ipd").read_text(encoding="utf-8").splitlines()
+    assert any('"Essence of Battle"' in line for line in lines)
+    assert not any('[Type] == "Divine Orb"' in line for line in lines)
+
+
+def test_switch_game_waits_for_generation(api):
+    api.cfg["active_game"] = "poe2"
+    api._status["running"] = True
+    assert "error" in api.set_game("poe1")
+    assert api._game().id == "poe2"
+    api._status["running"] = False
+    assert api.set_game("poe1")["game"] == "poe1"
+
+
+def test_update_check_reports_connection_failure(api, monkeypatch):
+    import requests
+
+    def timeout(*args, **kwargs):
+        raise requests.Timeout()
+
+    monkeypatch.setattr(requests, "get", timeout)
+    assert api.check_update()["error"]
