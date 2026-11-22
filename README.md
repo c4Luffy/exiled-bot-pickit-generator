@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.58.0/ExileBot2PickitGenerator.exe"><img alt="Download v4.58.0 for Windows" src="https://img.shields.io/badge/Download-v4.58.0-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.58.1/ExileBot2PickitGenerator.exe"><img alt="Download v4.58.1 for Windows" src="https://img.shields.io/badge/Download-v4.58.1-c99a4a?style=for-the-badge&labelColor=171411&logo=windows11&logoColor=e8e0d3"></a>
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases"><img alt="Total downloads" src="https://img.shields.io/github/downloads/c4Luffy/exiled-bot-pickit-generator/total?style=for-the-badge&label=Downloads&labelColor=171411&color=829d78"></a>
 </p>
 
@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://c4luffy.github.io/exiled-bot-pickit-generator/">Website</a> ·
-  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.58.0">Release notes</a> ·
+  <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.58.1">Release notes</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="https://discord.gg/T7DU3Afve6">Discord</a> ·
   <a href="https://github.com/c4Luffy/exiled-bot-pickit-generator/issues">Issues</a>
@@ -113,7 +113,7 @@ Rare gear stays honest. If no recipe covers the base or its slot is disabled, th
 - Unusual item-name characters are excluded and reported instead of disappearing silently.
 - The app never asks for your Path of Exile account.
 
-Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.58.0/SHA256SUMS.txt).
+Windows SmartScreen may ask for confirmation because this free community executable is not code-signed. You can verify the release with its [published SHA-256 checksum](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/download/v4.58.1/SHA256SUMS.txt).
 
 **What it needs:** Windows 10 or 11, and the free [Microsoft Edge WebView2 runtime](https://developer.microsoft.com/microsoft-edge/webview2/) that draws the window. Windows 11 already includes it, and on Windows 10 it normally arrives with Microsoft Edge — but not on every install. If it is missing, the app says so and links the download rather than opening a blank window.
 
@@ -123,9 +123,13 @@ Windows SmartScreen may ask for confirmation because this free community executa
 2. **Reselect the optional game filter after every save or regeneration.** Choose it again under **Options → Game → Filters**. Exiled Bot reads the `.ipd`, not the `.filter`.
 3. **Turn Hide everything else off while botting.** Hidden ground labels can stall pickup.
 
-## Current release: v4.58.0
+## Current release: v4.58.1
 
-### Path of Exile 1 picks up 14 more poe.ninja categories
+### Charts leave Path of Exile 1 pickits
+
+- Charts (Fathomless Depths) were removed from Path of Exile 1, so generated PoE 1 pickits no longer write always-pick rules for them, and the Economy tab's PoE 1 Charts group is gone. PoE 2 is unchanged.
+
+### v4.58.0 — Path of Exile 1 picks up 14 more poe.ninja categories
 
 - Generated PoE 1 pickits now cover Djinn Coins, Ducats, Enshrouding Crystals, Astrolabes, Threads, Wombgifts, Corpses, Viscera, Temples, Memories, Scrying Orbs, Forbidden Jewels, Shrine Belts and Unique Tinctures. None of them had a rule before.
 - Temples, Scrying Orbs, Forbidden Jewels, Viscera, Wombgifts and Shrine Belts are priced per version the bot cannot tell apart, so each gets one rule at the median price of its versions. The Economy tab shows the same names and prices.
@@ -341,7 +345,7 @@ Older releases than these are in the [changelog](CHANGELOG.md).
 
 </details>
 
-[Read the complete v4.58.0 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.58.0) · [full changelog](CHANGELOG.md)
+[Read the complete v4.58.1 release notes](https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.58.1) · [full changelog](CHANGELOG.md)
 
 <details>
 <summary><strong>Everything included</strong></summary>

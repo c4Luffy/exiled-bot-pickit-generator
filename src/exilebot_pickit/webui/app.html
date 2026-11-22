@@ -3415,11 +3415,7 @@ function renderChips(){
     kb.title="Every boss key, reliquary key and invitation, wherever poe.ninja files it";
     kb.onclick=()=>{ecoCat="_keys_";renderChips();renderEco();};
     c.appendChild(kb);}
-  // "_charts" is an always-pick group like the "_ap_*" ones — it just predates
-  // that prefix. Without it here the key fell through to "General" and Charts
-  // sat 22nd in the longest group, below the fold of the rail, while the
-  // section it belongs to ("Always pick") did not exist for PoE 1 at all.
-  const group=k=>(k.startsWith("_ap_")||k==="waystones"||k==="_charts")?"Always pick"
+  const group=k=>(k.startsWith("_ap_")||k==="waystones")?"Always pick"
     // Waystones isn't a poe.ninja category at all — it has no price, no floor,
     // every tier is always kept (build_waystone_lines ignores the payload
     // entirely) — same deal as Wombgifts/Exotic Bases, so it belongs with them,

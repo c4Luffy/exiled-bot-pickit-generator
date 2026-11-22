@@ -956,41 +956,11 @@ def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
         lines += cat_lines
         lines.append("")
 
-    chart_dis = {n for n, st in (snapshot.get("item_states", {}).get("_charts", {}) or {}).items()
-                 if not st.get("enabled", True)}
-    lines += [gen.header_sub("Charts"), ""] + build_poe1_chart_lines(chart_dis) + [""]
+    # Charts (Fathomless Depths) used to be always-picked here. They were
+    # removed from Path of Exile 1, so no rule is written for them any more.
 
     active = sum(1 for l in lines if is_rule_line(l) and not l.lstrip().startswith("//"))
     return lines, active
-
-
-# Charts — Path of Exile 1's Fathomless Depths mechanic. Item class
-# "DeepwaterChart": brought to Valerie to explore the Depths, and combined on
-# the Voyage Board for a Voyage. poe.ninja does NOT price this category (no
-# Chart type on its PoE 1 economy API, and none of the categories we fetch
-# contains one), so unlike every other section here these cannot be valued or
-# floored — they are picked up on sight. Verified drop-enabled in the game's
-# own item table; the moment poe.ninja prices them this should become a normal
-# priced category and this block should go.
-CHART_BASES = (
-    "Coral Forest Chart",
-    "Coral Reef Chart",
-    "Sandy Seabed Chart",
-)
-
-
-def build_poe1_chart_lines(disabled: set | None = None) -> list[str]:
-    """Always-pick rules for Charts, since no price exists to floor them by."""
-    dis = set(disabled or ())
-    lines = [
-        "// Charts (Fathomless Depths). poe.ninja does not price these, so there",
-        "// is no value to compare against your floor — they are taken on sight.",
-        "// Comment a line out to stop picking that chart up.",
-    ]
-    for base in CHART_BASES:
-        rule = f'[Type] == "{gen._quote_ipd(base)}" # [StashItem] == "true"'
-        lines.append(rule if base not in dis else f"//{rule}")
-    return lines
 
 
 # ── Price-move alerts ─────────────────────────────────────────────────────────

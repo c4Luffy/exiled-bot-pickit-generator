@@ -6,6 +6,13 @@ download lives.
 
 ---
 
+## [v4.58.1] — 2026-11-23 — Charts leave Path of Exile 1 pickits
+
+- **Charts are no longer always picked.** Coral Forest, Coral Reef and Sandy
+  Seabed Charts (Fathomless Depths) were removed from Path of Exile 1, so
+  generated PoE 1 pickits no longer write rules for them, and the Economy
+  tab's PoE 1 "Always pick → Charts" group is gone. PoE 2 is unchanged.
+
 ## [v4.58.0] — 2026-11-23 — Path of Exile 1 fetches 14 more poe.ninja categories
 
 - **Fourteen priced PoE 1 categories were never fetched.** Checked against
@@ -3052,6 +3059,7 @@ element id was preserved — **no feature was removed**.
 
 ---
 
+[v4.58.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.58.1
 [v4.58.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.58.0
 [v4.57.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.57.3
 [v4.42.4]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.42.4

@@ -314,11 +314,8 @@ class AppApi:
             prev = self.cfg.get("last_gen_prices", {}).get(league, {})
             # name → icon URL: poe2db art for the always-pick items, plus
             # anything the fetched payloads carry
-            from exilebot_pickit.data.icons import CHART_ICONS, STATIC_ICONS
+            from exilebot_pickit.data.icons import STATIC_ICONS
             icon_idx = dict(STATIC_ICONS)
-            # poe.ninja has no Chart category, so no payload can supply this art
-            # and the rows fell back to a generic emoji.
-            icon_idx.update(CHART_ICONS)
             for _p in payloads.values():
                 if not isinstance(_p, dict):
                     continue
@@ -509,9 +506,7 @@ class AppApi:
             # because they're map juice/valuable bases, not exchange value).
             # Each group is its own sidebar entry with its own toggles.
             _emj = {"_ap_tablets": "🗿", "_ap_splinters": "🧩",
-                    "_ap_wombgifts": "🥚", "_ap_keys": "🗝️", "_ap_exotic": "🧿",
-                    # a compass, not a map — the Maps tab already owns 🗺️
-                    "_charts": "🧭"}
+                    "_ap_wombgifts": "🥚", "_ap_keys": "🗝️", "_ap_exotic": "🧿"}
             # Always-pick synthetic groups are PoE2-only content; an economy-only
             # game (PoE1) shows just its priced categories.
             for key, label, rows in self._ap_groups_for_game():
@@ -586,15 +581,11 @@ class AppApi:
     def _ap_groups_for_game(self):
         """Always-pick groups for the ACTIVE game.
 
-        The PoE 2 groups below are PoE 2 content. Path of Exile 1 has exactly
-        one: Charts. poe.ninja publishes no price for them, so they can never
-        appear as an ordinary priced row — but "no price" is a poor reason for
-        "invisible", which is how they shipped in v4.55.0: three rules in the
-        file with nowhere in the app to see or switch them.
+        The groups below are PoE 2 content. Path of Exile 1 has none: its one
+        group, Charts, went when Charts were removed from the game.
         """
         if self._game().economy_only:
-            return [("_charts", "Charts",
-                     [(n, "Fathomless Depths", "") for n in asm.CHART_BASES])]
+            return []
         return self._ap_groups()
 
     @staticmethod
