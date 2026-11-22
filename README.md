@@ -55,6 +55,8 @@ Drop any Exiled Bot `.ipd` into the window—a hand-made file, a friend's pickit
 
 ## Create your filter
 
+Select **PoE 1** or **PoE 2** before opening an `.ipd`. The save dialog starts in that game's filter folder. In PoE 1, unique-name rules use the underlying base at Unique rarity, so a rule can show several uniques that share the same base. The report counts those rules as **Shown wider** and lists any unique it could not resolve.
+
 **Create your filter** reads any Exiled Bot pickit and translates its rules into an in-game loot filter. When Path of Exile's filter language cannot represent a bot-only condition, the conversion report says exactly what happened.
 
 - **Converted:** represented directly in the game filter.

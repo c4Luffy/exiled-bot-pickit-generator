@@ -1,4 +1,4 @@
-"""Convert ANY Exiled Bot 2 pickit (.ipd) into a PoE2 in-game loot filter.
+"""Convert Exiled Bot pickits (.ipd) into in-game loot filters.
 
 The engine already turns the pickits *we* generate into a matching `.filter`
 (``generator.build_loot_filter``). This module is the user-facing sibling: it
@@ -28,6 +28,7 @@ from exilebot_pickit.generators.filter_classification import (
     classify_rule, extract_divine_rate, section_from_comment,
     threshold_summary, visual_report, visual_sort_key,
 )
+from exilebot_pickit.generators.poe1_filter_rules import pickup_conditions
 
 # Pickup-side conditions the converter can express in a loot filter. Anything
 # else found before the `#` (ItemTier, GemLevel, TotalResistances, …) is a
@@ -183,7 +184,8 @@ def _parse_rule(cond_part: str):
 
 def convert_pickit_text(text: str, hide_rest: bool = False,
                         source_name: str = "",
-                        theme: str = gen.DEFAULT_FILTER_THEME) -> dict:
+                        theme: str = gen.DEFAULT_FILTER_THEME, *,
+                        game_id: str = "poe2", unique_bases=None) -> dict:
     """Parse pickit text and return ``{"ok", "filter_lines", "report"}``.
 
     Never raises on bad input — unreadable lines are counted and listed, and
@@ -193,7 +195,11 @@ def convert_pickit_text(text: str, hide_rest: bool = False,
     """
     # (visual kind, rarity, quality, sockets, ilvl, wtier) -> names — exact.
     named_groups: dict = {}
+    poe1_groups: dict = {}
     generic: list = []        # (visual kind, conditions)
+    poe1 = game_id == "poe1"
+    unique_bases = unique_bases or {}
+    unit = "c" if poe1 else "ex"
 
     rules = converted = widened = disabled = assumed_pickup = 0
     untranslatable: list = []
@@ -218,7 +224,7 @@ def convert_pickit_text(text: str, hide_rest: bool = False,
     if not isinstance(text, str):
         text = ""
     text_lines = text.splitlines()
-    divine_rate = extract_divine_rate(text_lines)
+    divine_rate = extract_divine_rate(text_lines, game_id)
     section = None
     # The #1 real-world misuse: an in-game .filter renamed to .ipd (players
     # try to convert FilterBlade filters INTO pickits — this page goes the
@@ -247,7 +253,8 @@ def convert_pickit_text(text: str, hide_rest: bool = False,
             # when nothing was switched off. Those are documentation, not rules.
             if (not _is_guide_line(line)
                     and (gen._LF_ACTION_RE.search(line)
-                         or gen._LF_TYPE_RE.search(line))):
+                         or gen._LF_TYPE_RE.search(line)
+                         or (poe1 and re.match(r"^/+\s*\[", line)))):
                 disabled += 1
             continue
         rules += 1
@@ -256,8 +263,21 @@ def convert_pickit_text(text: str, hide_rest: bool = False,
             # No recognised action — include it anyway. Showing an extra item
             # is harmless; hiding one the bot wanted is not.
             assumed_pickup += 1
-        r = _parse_rule(cond_part)
         kind = classify_rule(line, section, divine_rate)
+        if poe1:
+            names, conds, wide, reason = pickup_conditions(line, cond_part, unique_bases)
+            if reason or not (names or conds):
+                _flag(no, line, reason or "no conditions a filter can express")
+                continue
+            if names:
+                poe1_groups.setdefault((kind, tuple(conds)), []).extend(names)
+            else:
+                generic.append((kind, conds))
+            _record_visual(kind, names or conds[:1])
+            converted += 1
+            widened += wide
+            continue
+        r = _parse_rule(cond_part)
         # "wide": a check was dropped, so the filter shows MORE than the rule.
         # Counted only for rules that actually make it into the filter.
         # "unparsed" matters as much as "unknown": a condition we recognise but
@@ -321,7 +341,7 @@ def convert_pickit_text(text: str, hide_rest: bool = False,
 
     # ok = something actually made it into the filter (a partially-translated
     # rule can emit sibling names without counting as converted).
-    ok = bool(named_groups or generic)
+    ok = bool(named_groups or poe1_groups or generic)
     # Hide means hide (owner's call): when requested it is always applied.
     # If rules couldn't be translated, their items may be hidden in game even
     # though the bot still picks them up — that risk is surfaced loudly in the
@@ -331,19 +351,18 @@ def convert_pickit_text(text: str, hide_rest: bool = False,
 
     src = source_name or "pickit"
     out: list = [
-        f"# Path of Exile 2 filter — made from {src} by ExileBot 2 Pickit Generator",
-        "# Shows every item the pickit could take (pickup conditions only).",
-        "# Bot-only checks (mods, tiers, values) can't exist in a filter, so",
-        "# those rules are shown a little wider — never narrower.",
+        f"# Path of Exile {1 if poe1 else 2} filter — made from {src} by Exiled Bot Pickit Generator",
+        "# Uses pickup conditions. See the conversion report for skipped rules.",
+        "# Some rules match extra drops when a condition has no filter equivalent.",
         "# Appearance tiers are filter-only; they never change what the bot picks.",
         f"# Generated on: {time.strftime('%Y-%m-%dT%H:%M:%S')}",
         "",
     ]
     th = threshold_summary(divine_rate)
     out += [
-        f"# Value ladder: Mythic >= {th['mythic']:.2f} ex | "
-        f"Jackpot >= {th['jackpot']:.2f} ex | High >= {th['high']:.2f} ex | "
-        f"Useful >= {th['useful']:.2f} ex | Quiet below that",
+        f"# Value ladder: Mythic >= {th['mythic']:.2f} {unit} | "
+        f"Jackpot >= {th['jackpot']:.2f} {unit} | High >= {th['high']:.2f} {unit} | "
+        f"Useful >= {th['useful']:.2f} {unit} | Quiet below that",
         "",
     ]
     # Named rules translate EXACTLY: every recognised condition on the line
@@ -370,6 +389,17 @@ def convert_pickit_text(text: str, hide_rest: bool = False,
             extra.append(wt)
         style = gen.filter_theme_style(theme, kind)
         out += gen._lf_show_blocks(named_groups[key], extra, style_lines=style)
+    if poe1:
+        # Keep the highest visual tier first even when a broad class rule
+        # overlaps a named rule. Within a tier, prefer specific names.
+        for kind in sorted({kind for kind, _ in [*poe1_groups, *generic]}, key=visual_sort_key):
+            style = gen.filter_theme_style(theme, kind)
+            for (rule_kind, conds), names in poe1_groups.items():
+                if rule_kind == kind:
+                    out += gen._lf_show_blocks(names, list(conds), style_lines=style)
+            for conds in dict.fromkeys(tuple(conds) for rule_kind, conds in generic if rule_kind == kind):
+                out += gen._lf_styled_block(conds, style)
+        generic.clear()
     seen_generic = set()
     for kind, conds in sorted(generic, key=lambda row: visual_sort_key(row[0])):
         key = kind, tuple(conds)
@@ -406,5 +436,6 @@ def convert_pickit_text(text: str, hide_rest: bool = False,
             "hide_risky": hide_risky,
             "visual_tiers": visual_report(visual_counts, visual_examples),
             "visual_thresholds": th,
+            "price_unit": unit,
         },
     }

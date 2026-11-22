@@ -1187,7 +1187,7 @@
   <div class="nav-btn on" data-p="gen">⚡ Generate</div>
   <div class="nav-btn" data-p="prev">📜 Preview</div>
   <div class="nav-btn g2only" data-p="item">🔍 Item Check</div>
-  <div class="nav-btn g2only" data-p="mypk">📥 Create your filter</div>
+  <div class="nav-btn" data-p="mypk">📥 Create your filter</div>
   <div class="nav-btn" data-p="hist">🕰️ History</div>
   <div class="nav-btn" data-p="bot">🤖 Bot Activity</div>
   </div>
@@ -1897,7 +1897,7 @@
 <!-- ══ FROM MY PICKIT ══ -->
 <div class="page" id="p-mypk">
   <h1>Create your filter</h1>
-  <div class="sub">Turn any Exiled Bot pickit into a matching in-game loot filter — yours, a friend's, hand-made. The pickit is only read, never changed.</div>
+  <div class="sub">Turn an Exiled Bot pickit into a <b id="mypkGame">PoE 2</b> loot filter. The app reads the source file and saves a separate .filter file.</div>
   <div class="banner warn" id="mypkStale" style="display:none"></div>
 
   <div class="card">
@@ -1912,7 +1912,7 @@
 
   <div class="card" style="margin-top:14px">
     <h2>Ground labels</h2>
-    <div class="hint">Both filters the app writes — the one generated next to every pickit <i>and</i> the one converted on this page — use the same community color scheme, so drops read like your own filter.</div>
+    <div class="hint">The converted filter uses the app's community color scheme.</div>
   </div>
 
   <div class="card" id="mypkResult" style="margin-top:14px;display:none">
@@ -1923,7 +1923,7 @@
       <div class="stat"><b id="mypkWide">–</b><span>shown wider</span></div>
       <div class="stat"><b id="mypkSkip">–</b><span>can't translate</span></div>
     </div>
-    <div class="hint" id="mypkWideHint" style="display:none">“Shown wider” rules check things only the bot can see (mods, tiers, values). The filter still shows those items — just without that check — so nothing the pickit wants is ever missing a label.</div>
+    <div class="hint" id="mypkWideHint" style="display:none">“Shown wider” means a rule can show extra drops. For example, several unique items can share one base type.</div>
     <div class="banner warn" id="mypkWarn" style="display:none;cursor:default"></div>
     <div id="mypkSkipList" style="display:none"></div>
     <div id="mypkTiers" style="display:none"></div>
@@ -1935,7 +1935,7 @@
       <button class="ghost mini" id="mypkOpenDir" title="Open the folder with the saved filter" style="display:none">📂 Open folder</button>
       <span class="hint" style="margin:0;user-select:text" id="mypkSaved"></span>
     </div>
-    <div class="hint" style="margin-top:8px">Last step is in the game: <b>Options → Game → Filters</b> → pick your new filter. The game only reads a filter after you select it.</div>
+    <div class="hint" style="margin-top:8px">Select your new filter in the game's Item Filter settings.</div>
   </div>
 
   <div class="card" style="margin-top:14px;display:none" id="mypkPrevCard">
@@ -2226,7 +2226,7 @@ async function copyText(t){
 let info={}, divRate=0, eco=null, ecoCat=null, ecoSort="ex", ecoDir=-1, running=false;
 // Dual-game (PoE1 / PoE2). ECON_ONLY hides the rare-gear pages; G2_ONLY lists them.
 let ACTIVE_GAME="poe2", ECON_ONLY=false, GAME_UNIT="Exalt", GAME_UNITS="ex";
-const G2_ONLY=new Set(["mypk","chance","craft","exc","fracture","rare","item"]);
+const G2_ONLY=new Set(["chance","craft","exc","fracture","rare","item"]);
 // Rewrite the "ex" unit in static preset/summary text to the active game's unit
 // ("ex" for PoE2 — no change; "c" for PoE1). GAME_UNITS is set in applyGameUI.
 const funit=s=>String(s).replace(/ ex\b/g," "+GAME_UNITS);
@@ -2348,6 +2348,7 @@ document.querySelectorAll(".nav-grp").forEach(gp=>gp.onclick=()=>openPage(_lastT
 function applyGameUI(i){
   ACTIVE_GAME=i.active_game||"poe2";
   ECON_ONLY=!!i.economy_only;
+  $("mypkGame").textContent=ECON_ONLY?"PoE 1":"PoE 2";
   GAME_UNIT=i.unit||"Exalt"; GAME_UNITS=i.unit_short||"ex";
   document.body.classList.toggle("econ-only",ECON_ONLY);
   // g1only = PoE1-only content (the inverse of g2only)
@@ -2422,6 +2423,7 @@ function resetRunPanel(){
 }
 async function setGame(id){
   if(id===ACTIVE_GAME)return;
+  if(mypkBusy){toast("Wait for the filter conversion to finish.");return;}
   const r=await api().set_game(id);
   if(r&&r.error){toast(r.error);return;}
   // Refresh IN PLACE — NOT location.reload(): under pywebview a reload can fail
@@ -2429,6 +2431,7 @@ async function setGame(id){
   // league dropdown stuck on "Loading…" and broke every bridge call.
   info=await api().app_info();
   applyInfo(info);applyGameUI(info);
+  resetPickitImport();
   eco=null;ecoCat=null;                       // drop the other game's economy cache
   resetRunPanel();                            // ...and its run summary
   if(PRESETS.length)renderPresets(info.active_preset||"");
@@ -5371,6 +5374,14 @@ $("prevFilter").addEventListener("input",renderPreview);
 /* ── settings ── */
 /* ── From my pickit: any .ipd → matching loot filter ── */
 let mypkPath="",mypkBusy=false;
+function resetPickitImport(){
+  mypkPath="";
+  $("mypkFile").textContent="No file loaded.";
+  $("mypkSaved").textContent="";
+  for(const id of ["mypkResult","mypkPrevCard","mypkStale","mypkOpenDir"]){
+    $(id).style.display="none";
+  }
+}
 /* Label-theme preview: renders fake ground labels straight from the Python
    THEMES table (shipped via app_info), so the preview can never lie about
    what the filter will write. */
@@ -5435,7 +5446,7 @@ async function _mypkConvert(){
     vt.style.display="";
     const th=rep.visual_thresholds||{};
     vt.innerHTML="<div class='hint' style='margin-top:10px'>What gets which look"
-      +(th.divine_exalt?` (1 Divine = ${th.divine_exalt} ex in this pickit)`:"")+":</div>"
+      +(th.divine_exalt?` (1 Divine = ${th.divine_exalt} ${rep.price_unit==="c"?"c":"ex"} in this pickit)`:"")+":</div>"
       +"<div style='display:flex;flex-wrap:wrap;gap:6px;margin-top:6px'>"
       +rep.visual_tiers.map(t=>{
         const s=lfParse((FILTER_THEMES.classic||{})[t.id]);

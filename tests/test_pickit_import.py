@@ -3,6 +3,51 @@ converter. The invariant under test everywhere: the filter shows everything
 the pickit could take — equal or more, never less."""
 from exilebot_pickit.generators.pickit_import import convert_pickit_text
 
+
+def test_poe1_import_translates_native_conditions_and_unique_bases():
+    pickit = "\n".join([
+        "// Conversion: 1 Divine = 245.00 Chaos",
+        '[Type] == "Chaos Orb" # [StashItem] == "true"',
+        '[UniqueName] == "Headhunter" # [StashItem] == "true"',
+        '[Category] == "Map" && [MapTier] >= "16" # [StashItem] == "true"',
+        '[Type] == "Map (Tier 16)" # [StashItem] == "true"',
+        '[Linked] >= "6" && [Sockets] == "6" && [ItemLevel] >= "75"',
+        '[UniqueName] == "Unknown Test Unique" # [StashItem] == "true"',
+    ])
+    result = convert_pickit_text(pickit, game_id="poe1")
+    assert result["ok"]
+    report = result["report"]
+    assert report["converted"] == 5
+    assert report["widened"] == 1
+    assert report["price_unit"] == "c"
+    assert report["visual_thresholds"]["divine_exalt"] == 245
+    assert report["untranslatable_total"] == 1
+    assert report["untranslatable"][0]["line"] == 7
+    lines = result["filter_lines"]
+    assert lines[0].startswith("# Path of Exile 1 filter")
+    for expected in (
+        '"Chaos Orb"', 'BaseType == "Leather Belt"', "Rarity = Unique",
+        'Class == "Maps"', "MapTier >= 16", '"Map (Tier 16)"',
+        "LinkedSockets >= 6", "Sockets = 6", "ItemLevel >= 75",
+    ):
+        assert any(expected in line for line in lines)
+    assert "Hide" not in lines
+
+
+def test_poe1_import_reports_map_runner_actions_and_uses_cached_unique_data():
+    result = convert_pickit_text(
+        '[UniqueName] == "New drop" # [StashItem] == "true"\n'
+        '[Category] == "Map" && [MapTier] >= "10" # [RunMap] == "true"\n'
+        '[Type] == "Chaos Orb" || [Type] == "Divine Orb"',
+        game_id="poe1", unique_bases={"new drop": {"Leather Belt"}}, hide_rest=True,
+    )
+    assert result["ok"]
+    assert result["report"]["converted"] == 1
+    assert result["report"]["hide_risky"]
+    assert result["report"]["untranslatable_total"] == 2
+    assert '    BaseType == "Leather Belt"' in result["filter_lines"]
+    assert '    BaseType == "Gold"' in result["filter_lines"]
+
 SAMPLE = "\n".join([
     "// ExileBot pickit — hand-made",
     "",

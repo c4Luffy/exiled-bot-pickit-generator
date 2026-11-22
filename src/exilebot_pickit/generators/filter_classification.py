@@ -89,7 +89,7 @@ def extract_ex_value(line: str) -> float | None:
         return None
 
 
-def extract_divine_rate(lines) -> float:
+def extract_divine_rate(lines, game_id="poe2") -> float:
     """Find the Exalted value of one Divine in a complete IPD.
 
     Generated files carry it in both the banner and the Divine Orb rule.  The
@@ -97,8 +97,10 @@ def extract_divine_rate(lines) -> float:
     stable default keeps old third-party IPDs deterministic.
     """
     rows = list(lines)
+    rate_pattern = (_DIVINE_HEADER_RE if game_id != "poe1" else
+                    re.compile(r"\b1\s+Divine\s*=\s*([\d,.]+)\s+Chaos\b", re.I))
     for line in rows:
-        m = _DIVINE_HEADER_RE.search(line or "")
+        m = rate_pattern.search(line or "")
         if m:
             try:
                 value = float(m.group(1).replace(",", ""))

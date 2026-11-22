@@ -24,6 +24,7 @@ from exilebot_pickit.ui.config import (
     OUTPUT_DIR, PRESET_KEYS, PRESETS, PRICE_CACHE_DIR, load_config, log_exc, log_info,
     save_config,
     _default_poe2_filter_dir as _default_dir,
+    default_filter_dir,
 )
 from exilebot_pickit.version import VERSION
 
@@ -189,6 +190,8 @@ class AppApi:
                 _c.switch_game(self.cfg, previous)
                 return {"error": "Couldn't save the game selection."}
             self._eco = {"running": False, "result": None}
+            self._import_filter_text = ""
+            self._import_request = None
             g = self._game()
         # Cached UI state that belonged to the previous game must not bleed over.
         self._last_lines = []
@@ -1837,8 +1840,16 @@ class AppApi:
 
     def import_pickit_convert(self, path, hide_rest=False):
         """Read a pickit file and convert it to loot-filter lines + a report."""
+        from exilebot_pickit.api.client import load_payload_from_disk
         from exilebot_pickit.generators.pickit_import import convert_pickit_text
         path = str(path or "").strip()
+        request = object()
+        with self._lock:
+            game = self._game()
+            theme = _theme_or_default(self.cfg.get("filter_theme"))
+            league = self.cfg.get("league") or game.default_league
+            self._import_filter_text = ""
+            self._import_request = request
         if not path or not os.path.isfile(path):
             return {"error": "That file doesn't exist any more."}
         try:
@@ -1858,13 +1869,31 @@ class AppApi:
                 text = raw.decode("cp1252")
             except UnicodeDecodeError:
                 text = raw.decode("utf-8-sig", errors="replace")
+        declared_game = re.search(r"(?im)^//[^\r\n]*AUTO-GENERATED PICKIT\s*\|\s*PATH OF EXILE ([12])\b",
+                                  text[:2048])
+        if declared_game and game.id != "poe" + declared_game[1]:
+            return {"error": f"This pickit is for PoE {declared_game[1]}. Switch games and load it again."}
+        unique_bases = {}
+        if game.id == "poe1":
+            for key, *_ in game.unique_categories:
+                payload, _age = load_payload_from_disk(league, key, game.id)
+                rows = (payload or {}).get("lines")
+                for row in rows if isinstance(rows, list) else ():
+                    if not isinstance(row, dict):
+                        continue
+                    name, base = row.get("name"), row.get("baseType")
+                    if (isinstance(name, str) and name and isinstance(base, str)
+                            and base and not any(ch in base for ch in '#"\\\r\n')):
+                        unique_bases.setdefault(name.casefold(), set()).add(base)
         res = convert_pickit_text(text, hide_rest=bool(hide_rest),
-                                  source_name=os.path.basename(path),
-                                  theme=_theme_or_default(self.cfg.get("filter_theme")))
+                                  source_name=os.path.basename(path), theme=theme,
+                                  game_id=game.id, unique_bases=unique_bases)
         # One writer at a time: convert can be triggered from the picker, the
         # hide switch and drag&drop — without the lock a slow convert could
         # leave file A's filter stored under file B's name for Save to write.
         with self._lock:
+            if self._import_request is not request:
+                return {"error": "The selection changed. Choose the pickit again."}
             self._import_filter_text = ("\n".join(res["filter_lines"]) + "\n"
                                         if res["ok"] else "")
             self._import_filter_name = (
@@ -1878,18 +1907,21 @@ class AppApi:
         return out
 
     def import_pickit_save(self):
-        """Save the converted filter; the dialog starts in the PoE2 client
-        filter folder so the game sees it right after."""
+        """Save the converted filter in the selected client's filter folder."""
         import webview
         with self._lock:
             text = getattr(self, "_import_filter_text", "")
             fname = getattr(self, "_import_filter_name", "my_pickit.filter")
             src = getattr(self, "_import_src_path", "")
+            game_id = self._game().id
+            request = getattr(self, "_import_request", None)
+            theme = _theme_or_default(self.cfg.get("filter_theme"))
+            configured_dir = (self.cfg.get("poe2_filter_dir") or "").strip() if game_id == "poe2" else ""
         if not text:
             return {"error": "Convert a pickit first."}
         w = webview.windows[0]
-        fdir = (self.cfg.get("poe2_filter_dir") or "").strip() or _default_dir()
-        kw = {"save_filename": fname}
+        fdir = configured_dir or default_filter_dir(game_id)
+        kw = {"save_filename": fname, "file_types": ("Path of Exile loot filter (*.filter)",)}
         if fdir and os.path.isdir(fdir):
             kw["directory"] = fdir
         path = w.create_file_dialog(webview.SAVE_DIALOG, **kw)
@@ -1905,18 +1937,18 @@ class AppApi:
             return {"error": "That's your pickit file — pick a different name."}
         if path.lower().endswith(".ipd"):
             return {"error": "That would overwrite a pickit — save as .filter."}
-        try:
-            gen.write_text_atomic(path, text)
-        except OSError as e:
-            return {"error": f"Couldn't save: {e}"}
-        # Remember the conversion so the tab can warn when the source pickit
-        # changes after this save (the filter would silently drift stale).
-        # The theme rides along: switching themes later makes the saved file
-        # stale too — it still wears the old look until re-saved.
-        self.cfg["filter_from_pickit"] = {
-            "src": src, "out": path, "at": time.time(),
-            "theme": _theme_or_default(self.cfg.get("filter_theme"))}
-        save_config(self.cfg)
+        if not path.lower().endswith(".filter"):
+            return {"error": "Use a .filter extension for the saved loot filter."}
+        with self._lock:
+            if self._game().id != game_id or getattr(self, "_import_request", None) is not request:
+                return {"error": "The selection changed. Convert the pickit again before saving."}
+            try:
+                gen.write_text_atomic(path, text)
+            except OSError as e:
+                return {"error": f"Couldn't save: {e}"}
+            self.cfg["filter_from_pickit"] = {
+                "src": src, "out": path, "at": time.time(), "theme": theme}
+            save_config(self.cfg)
         self._log(f"✓ Filter created from pickit: {os.path.basename(str(path))}")
         return {"ok": True, "path": str(path)}
 

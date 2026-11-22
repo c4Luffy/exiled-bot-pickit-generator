@@ -811,6 +811,37 @@ def test_bot_connection_distinguishes_found_from_actually_connected(api, tmp_pat
     assert good["state"] == "ok", good              # only now is it true
 
 
+def test_poe1_filter_saves_to_correct_game_and_clears_on_switch(api, tmp_path, monkeypatch):
+    import sys
+    from types import SimpleNamespace
+
+    source = tmp_path / "my-pickit.ipd"
+    source_text = '[UniqueName] == "Headhunter" # [StashItem] == "true"'
+    source.write_text(source_text, encoding="utf-8")
+    output = tmp_path / "my-pickit.filter"
+    choices = {}
+
+    def dialog(*args, **kwargs):
+        choices.update(kwargs)
+        return str(output)
+
+    monkeypatch.setitem(sys.modules, "webview", SimpleNamespace(
+        windows=[SimpleNamespace(create_file_dialog=dialog)], SAVE_DIALOG=1,
+    ))
+    monkeypatch.setattr(webapi, "default_filter_dir",
+                        lambda game_id: str(tmp_path) if game_id == "poe1" else "")
+    assert api.set_game("poe1")["ok"]
+    assert api.import_pickit_convert(source)["ok"]
+    assert api.import_pickit_save()["ok"]
+    assert choices["directory"] == str(tmp_path)
+    assert 'BaseType == "Leather Belt"' in output.read_text(encoding="utf-8")
+    assert source.read_text(encoding="utf-8") == source_text
+
+    assert api.set_game("poe2")["ok"]
+    assert "error" in api.import_pickit_save()
+    assert not api.cfg.get("filter_from_pickit")
+
+
 def test_import_pickit_bot_resolves_the_file_the_bot_actually_runs(api, tmp_path):
     """Create-your-filter's 'Use the bot's pickit' button: it must load exactly
     bot_folder/<active_profile>.ipd — the file bot_connection verifies — and

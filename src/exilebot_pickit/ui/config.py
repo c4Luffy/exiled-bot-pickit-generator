@@ -59,10 +59,16 @@ for _d in (_cfg_dir, OUTPUT_DIR, ICON_DIR):
 
 def _default_poe2_filter_dir() -> str:
     """Best-guess location of the PoE2 client loot-filter folder."""
+    return default_filter_dir("poe2")
+
+
+def default_filter_dir(game_id: str) -> str:
+    """Find the selected client's filter folder on Windows."""
     home = os.path.expanduser("~")
+    folder = "Path of Exile" if game_id == "poe1" else "Path of Exile 2"
     candidates = [
-        os.path.join(home, "Documents", "My Games", "Path of Exile 2"),
-        os.path.join(home, "OneDrive", "Documents", "My Games", "Path of Exile 2"),
+        os.path.join(home, "Documents", "My Games", folder),
+        os.path.join(home, "OneDrive", "Documents", "My Games", folder),
     ]
     for c in candidates:
         if os.path.isdir(c):
