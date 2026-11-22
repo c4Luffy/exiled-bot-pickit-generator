@@ -72,6 +72,33 @@ def test_renderer_reads_pywebview_and_never_raises(monkeypatch):
     assert poc._renderer() is None, "an unimportable backend must not crash the launch"
 
 
+def test_frozen_app_restarts_once_when_dotnet_path_contains_hash(monkeypatch, tmp_path):
+    monkeypatch.setattr(poc.sys, "platform", "win32")
+    monkeypatch.setattr(poc.sys, "_MEIPASS", str(tmp_path / "#temp"), raising=False)
+    exe = "C:/Pickit/PickitGenerator.exe"
+    monkeypatch.setattr(poc.sys, "executable", exe)
+    monkeypatch.setattr(poc.sys, "argv", [exe])
+    monkeypatch.delenv("EXILED_PICKIT_TEMP_RESTARTED", raising=False)
+    launches = []
+    created = []
+    monkeypatch.setattr(poc.os, "makedirs", lambda path, **kw: created.append(path))
+    monkeypatch.setattr(poc.subprocess, "Popen", lambda cmd, env: launches.append((cmd, env)))
+    assert poc._restart_with_compatible_temp() is True
+    cmd, env = launches[0]
+    assert cmd == [exe]
+    assert env["PYINSTALLER_RESET_ENVIRONMENT"] == "1"
+    assert env["TEMP"] == env["TMP"]
+    assert "#" not in env["TEMP"]
+    assert created == [env["TEMP"]]
+
+    monkeypatch.setenv("EXILED_PICKIT_TEMP_RESTARTED", "1")
+    shown = []
+    monkeypatch.setattr(poc, "_fatal", shown.append)
+    assert poc._restart_with_compatible_temp() is True
+    assert len(launches) == 1
+    assert "path containing #" in shown[0]
+
+
 def test_main_checks_before_building_the_window(monkeypatch):
     """The guard has to run BEFORE create_window, not after.
 

@@ -10,6 +10,7 @@ auto-regenerate it existed to serve was never built.)
 """
 
 import os
+import subprocess
 import sys
 import threading
 
@@ -25,7 +26,8 @@ def _fatal(msg: str) -> None:
 
     The window may not exist yet, so this is the only way the user hears
     anything at all — a silent exit reads as "the exe does nothing"."""
-    sys.stderr.write(msg + "\n")
+    if sys.stderr is not None:
+        sys.stderr.write(msg + "\n")
     try:
         import ctypes
         ctypes.windll.user32.MessageBoxW(None, msg, "Exiled Bot Pickit Generator", 0x10)
@@ -48,6 +50,35 @@ def _renderer():
         return getattr(winforms, "renderer", None)
     except Exception:
         return None      # pythonnet missing / not Windows -> let start() decide
+
+
+def _restart_with_compatible_temp():
+    """The .NET Framework loader cannot load Python.Runtime.dll from a # path."""
+    extracted = getattr(sys, "_MEIPASS", "")
+    if not sys.platform.startswith("win") or "#" not in extracted:
+        return False
+
+    marker = "EXILED_PICKIT_TEMP_RESTARTED"
+    runtime_dir = os.path.join(os.path.dirname(sys.executable),
+                               "ExileBot2PickitGenerator_data", "runtime-temp")
+    if "#" in runtime_dir or os.environ.get(marker):
+        _fatal("Windows could not load the bundled .NET support from a path containing #.\n\n"
+               "Move the executable to a writable folder whose path has no # and try again.")
+        return True
+
+    try:
+        os.makedirs(runtime_dir, exist_ok=True)
+        env = dict(os.environ, TEMP=runtime_dir, TMP=runtime_dir,
+                   PYINSTALLER_RESET_ENVIRONMENT="1")
+        env[marker] = "1"
+        subprocess.Popen([sys.executable, *sys.argv[1:]], env=env)
+    except OSError as exc:
+        from exilebot_pickit.ui.config import LOG_PATH, log_exc
+
+        log_exc("Preparing the bundled runtime directory")
+        _fatal(f"Windows could not prepare the bundled .NET support.\n\n{exc}\n\n"
+               f"Startup log:\n{LOG_PATH}")
+    return True
 
 
 def _require_webview2() -> bool:
@@ -170,6 +201,8 @@ def _saved_position(geo):
 
 
 def main():
+    if _restart_with_compatible_temp():
+        return
     if not _single_instance():
         return
     # Before anything else: an IE11 fallback can only produce a dead window, so
@@ -257,24 +290,15 @@ def _run_webview(window, api):
             webview.start(storage_path=storage)
         else:
             webview.start()
-    except Exception:
-        # No fallback UI exists, so diagnose the known causes honestly instead
-        # of always blaming a missing WebView2 runtime. A *missing* runtime can
-        # no longer reach this point — _require_webview2() stops that case up
-        # front with its own instructions — so the remaining runtime cause is
-        # one that is installed but won't start.
+    except Exception as exc:
+        from exilebot_pickit.ui.config import LOG_PATH, log_exc
+
+        log_exc("Starting the desktop window")
         _fatal(
-            "The app couldn't start its window.\n\n"
-            "Most common causes, in order:\n\n"
-            "1. An older copy of the app is still running — check the\n"
-            "   Task Manager for\n"
-            "   ExileBot2PickitGenerator, close it, then start again.\n\n"
-            "2. The app folder isn't writable — move the .exe to a\n"
-            "   normal folder like Documents and run it from there.\n\n"
-            "3. The Microsoft WebView2 runtime is installed but failed to\n"
-            "   start. Repair Microsoft Edge from Settings > Apps, or\n"
-            f"   reinstall the runtime from:\n   {WEBVIEW2_URL}")
-        raise
+            f"The app couldn't start its window.\n\n{type(exc).__name__}: {exc}\n\n"
+            f"Startup log:\n{LOG_PATH}")
+        return False
+    return True
 
 
 if __name__ == "__main__":
