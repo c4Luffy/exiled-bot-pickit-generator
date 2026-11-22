@@ -330,6 +330,82 @@ def test_poe1_runegrafts_are_fetched():
     assert "maps" in keys
 
 
+def test_poe1_fetches_every_sidebar_category_worth_a_rule():
+    """poe.ninja's PoE 1 sidebar, checked 2026-11-23: these priced categories
+    had no rule at any floor until then (Temples alone ~160c median)."""
+    from exilebot_pickit.data.games import POE1
+    by_key = {c[0]: c for c in POE1.all_categories}
+    expected = {
+        "djinn_coins": ("DjinnCoin", False), "ducats": ("Ducat", False),
+        "enshrouding_crystals": ("EnshroudingCrystal", False),
+        "astrolabes": ("Astrolabe", False), "threads": ("Thread", False),
+        "wombgifts": ("Wombgift", True), "corpses": ("Corpse", True),
+        "viscera": ("Viscera", True), "temples": ("IncursionTemple", True),
+        "memories": ("Memory", True), "scrying_orbs": ("ScryingOrb", True),
+        "unique_forbidden_jewels": ("ForbiddenJewel", True),
+        "unique_shrine_belts": ("ShrineBelt", True),
+        "unique_tinctures": ("UniqueTincture", True),
+    }
+    for key, (ninja_type, stash) in expected.items():
+        assert key in by_key, key
+        assert by_key[key][1] == ninja_type, key
+        assert by_key[key][3] is stash, key       # routes to the right endpoint
+    assert len(by_key) == len(POE1.all_categories)   # no duplicate keys
+
+
+def test_poe1_grouped_categories_price_at_the_median_not_the_best_roll():
+    """84 temples are one "Chronicle of Atzoatl" base; the bot cannot read the
+    rooms, so ONE rule at the median — not 84 dead rules named after rooms."""
+    payload = {"lines": [
+        {"name": "Doryani's Institute (Tier 3)", "baseType": "Chronicle of Atzoatl", "primaryValue": 900.0},
+        {"name": "Locus of Corruption (Tier 3)", "baseType": "Chronicle of Atzoatl", "primaryValue": 200.0},
+        {"name": "Some Room (Tier 1)", "baseType": "Chronicle of Atzoatl", "primaryValue": 40.0},
+    ]}
+    lines = asm.build_poe1_grouped_lines(payload, 100.0, "baseType", "Type")
+    assert lines == ['[Type] == "Chronicle of Atzoatl" # [StashItem] == "true" '
+                     "// ExValue = 200.00 (median of 3; best roll 900.00)"]
+    # below the floor → written commented out, not dropped
+    low = asm.build_poe1_grouped_lines(payload, 500.0, "baseType", "Type")
+    assert low[0].startswith('//[Type] == "Chronicle of Atzoatl"')
+
+
+def test_poe1_forbidden_jewels_key_on_the_unique_not_the_passive():
+    payload = {"lines": [
+        {"name": "Profane Bloom", "baseType": "Crimson Jewel", "variant": "Forbidden Flame", "primaryValue": 5000.0},
+        {"name": "Impact", "baseType": "Crimson Jewel", "variant": "Forbidden Flame", "primaryValue": 10.0},
+        {"name": "Masterful Form", "baseType": "Cobalt Jewel", "variant": "Forbidden Flesh", "primaryValue": 300.0},
+    ]}
+    field, tag = asm.POE1_GROUPED["unique_forbidden_jewels"]
+    lines = asm.build_poe1_grouped_lines(payload, 0.0, field, tag,
+                                         disabled={"Forbidden Flesh"})
+    assert any(ln.startswith('[UniqueName] == "Forbidden Flame"') for ln in lines)
+    assert any(ln.startswith('//[UniqueName] == "Forbidden Flesh"') for ln in lines)
+    assert not any("Profane Bloom" in ln for ln in lines)
+
+
+def test_poe1_economy_routes_grouped_categories():
+    """End to end through the assembler: a grouped category is written by the
+    median builder, a plain one by the name builder, and every active rule
+    names a type or unique (a type-less rule matches everything)."""
+    snapshot = {"min_exalt_gear": 50.0, "min_exalt_unique": 50.0}
+    cats = [("temples", "IncursionTemple", "Temples", True),
+            ("corpses", "Corpse", "Corpses", True)]
+    payloads = {
+        "temples": {"lines": [
+            {"name": "A (Tier 3)", "baseType": "Chronicle of Atzoatl", "primaryValue": 160.0},
+            {"name": "B (Tier 3)", "baseType": "Chronicle of Atzoatl", "primaryValue": 120.0}]},
+        "corpses": {"lines": [{"name": "Perfect Forest Tiger", "primaryValue": 3560.0}]},
+    }
+    lines, active = asm.build_poe1_economy_lines("Covens", cats, payloads, 200.0, True, snapshot)
+    assert '[Type] == "Chronicle of Atzoatl" # [StashItem] == "true" // ExValue = 140.00 (median of 2; best roll 160.00)' in lines
+    assert any(ln.startswith('[Type] == "Perfect Forest Tiger"') for ln in lines)
+    assert not any("A (Tier 3)" in ln for ln in lines)
+    for ln in lines:
+        if ln.startswith("//") or "[StashItem]" not in ln:
+            continue
+        assert "[Type]" in ln or "[UniqueName]" in ln or "[Category]" in ln, ln
+
+
 def test_poe1_map_rules_are_never_typeless():
     """A [StashItem] rule with no [Type]/[Category] matches EVERYTHING on the
     ground — the audit's standing rule, checked here for the map builder too."""

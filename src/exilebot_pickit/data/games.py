@@ -100,6 +100,14 @@ _POE1_EXCHANGE = (
     # 450-700c), and not one of them had a rule at any floor. Same shape as the
     # Verisium miss: a category nobody asked poe.ninja for.
     ("runegrafts",        "Runegraft",      "Runegrafts",        False),
+    # Five more plain stackable categories poe.ninja lists that went unfetched
+    # until 2026-11-23 (type strings read off the live site's own API calls).
+    # Djinn Coins were empty that day but the type is the one the site asks for.
+    ("djinn_coins",       "DjinnCoin",      "Djinn Coins",       False),
+    ("ducats",            "Ducat",          "Ducats",            False),
+    ("enshrouding_crystals", "EnshroudingCrystal", "Enshrouding Crystals", False),
+    ("astrolabes",        "Astrolabe",      "Astrolabes",        False),
+    ("threads",           "Thread",         "Threads",           False),
 )
 _POE1_UNIQUE = (
     ("incubators",        "Incubator",      "Incubators",        True),
@@ -119,6 +127,28 @@ _POE1_UNIQUE = (
     # are NOT uniques: they price by map base and are picked up by TIER, so
     # build_poe1_map_lines handles them instead of the [UniqueName] builder.
     ("maps",              "Map",            "Maps",              True),
+    # Added 2026-11-23 — every one is on poe.ninja's PoE 1 sidebar and had no
+    # rule at any floor (Temples alone: 84 priced rows, median ~160c). Several
+    # are priced per VARIANT the bot cannot read (a temple's rooms, a Forbidden
+    # jewel's passive, a Viscera's mod), so those go through
+    # assembly.POE1_GROUPED and are valued at the median of their variants.
+    ("wombgifts",         "Wombgift",       "Wombgifts",         True),
+    ("corpses",           "Corpse",         "Corpses",           True),
+    ("viscera",           "Viscera",        "Viscera",           True),
+    ("temples",           "IncursionTemple","Temples",           True),
+    ("memories",          "Memory",         "Memories",          True),
+    ("scrying_orbs",      "ScryingOrb",     "Scrying Orbs",      True),
+    ("unique_forbidden_jewels", "ForbiddenJewel", "Forbidden Jewels", True),
+    ("unique_shrine_belts", "ShrineBelt",   "Shrine Belts",      True),
+    ("unique_tinctures",  "UniqueTincture", "Unique Tinctures",  True),
+    # Deliberately NOT fetched (they are on the sidebar too):
+    #   Imbued Gems — same gem name as Skill Gems (already covered there); the
+    #     imbued support is a mod the bot cannot read.
+    #   Blighted / Blight-ravaged Maps — same "Map (Tier N)" base as every map,
+    #     so the Maps tier rules already pick them up.
+    #   Valdo Maps — made from a puzzle box in your inventory, never a floor drop.
+    #   Base Types / Flasks — priced by item level and influence; one rule per
+    #     base name would pick up every white copy of that base.
 )
 POE1 = GameSpec(
     id="poe1",

@@ -422,6 +422,20 @@ class AppApi:
                                       "chg": _chg(nm, ev, line.get("sparkLine")),
                                       "spark": _spark(line.get("sparkLine")),
                                       "sec": base, "_variant": variant})
+                elif g.economy_only and key in asm.POE1_GROUPED:
+                    # Priced per variant the bot cannot read (temple rooms, a
+                    # Forbidden jewel's passive…): list the SAME names and
+                    # median prices the rules are written with, so each toggle
+                    # matches a rule and the table agrees with the .ipd.
+                    field, _tag = asm.POE1_GROUPED[key]
+                    for nm, (med, n, _best, base, icon) in asm.poe1_group_values(p, field).items():
+                        ev = med if math.isfinite(med) else 0.0
+                        items.append({"name": nm,
+                                      "base": base if n == 1 else f"median of {n}",
+                                      "ex": round(ev, 2),
+                                      "enabled": cat_states.get(nm, {}).get("enabled", True),
+                                      "icon": icon or icon_idx.get(nm, ""),
+                                      "chg": _chg(nm, ev), "spark": None})
                 elif is_unique:
                     for line in p.get("lines", []):
                         nm = line.get("name")

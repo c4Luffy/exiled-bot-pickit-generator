@@ -653,6 +653,65 @@ def build_poe1_stash_lines(payload: dict, min_exalt: float,
     return [rule for _, rule in rows]
 
 
+# PoE 1 stash categories priced per VARIANT the bot cannot tell apart. Each maps
+# to (field the rule is keyed on, Exiled Bot condition). poe.ninja lists, e.g.,
+# 84 temples that are all one "Chronicle of Atzoatl" base (the rooms differ), or
+# 165 Forbidden Flame/Flesh rows keyed by passive — a rule can only name the base
+# or the unique, so it is priced at the MEDIAN of its rows: what a random drop is
+# really worth. Taking the first (dearest) row would let every copy clear any
+# floor on the strength of one lucky roll — the skill-gem bug again.
+POE1_GROUPED = {
+    "wombgifts":               ("name",     "Type"),        # one row per drop level
+    "viscera":                 ("name",     "Type"),        # Coven Queen's Crown x295 mods
+    "temples":                 ("baseType", "Type"),        # all "Chronicle of Atzoatl"
+    "scrying_orbs":            ("baseType", "Type"),        # all "Scrying Orb"
+    "unique_forbidden_jewels": ("variant",  "UniqueName"),  # Forbidden Flame / Flesh
+    "unique_shrine_belts":     ("name",     "UniqueName"),  # one belt, many shrine rolls
+}
+
+
+def poe1_group_values(payload: dict, field: str) -> dict:
+    """group name → (median value, row count, best value, base, icon).
+
+    The one place a grouped category is priced, shared by the rule builder and
+    the Economy tab so the table can never show a price the pickit was not
+    written with. Pure.
+    """
+    rate = gen.exalted_rate(payload)
+    groups: dict[str, list] = {}
+    for line in (payload or {}).get("lines", []) or []:
+        g = (line.get(field) or "").strip()
+        if not g:
+            continue
+        pv = float(line.get("primaryValue") or 0.0)
+        groups.setdefault(g, []).append((pv * rate if rate else pv, line))
+    out = {}
+    for g, rows in groups.items():
+        vals = sorted(v for v, _ in rows)
+        first = rows[0][1]
+        out[g] = (statistics.median(vals), len(vals), vals[-1],
+                  first.get("baseType") or "", first.get("icon") or "")
+    return out
+
+
+def build_poe1_grouped_lines(payload: dict, min_exalt: float, field: str,
+                             key_tag: str = "Type",
+                             disabled: set | None = None) -> list[str]:
+    """One rule per base/unique for a category priced per variant (see
+    POE1_GROUPED), valued at the median of its variants. Pure."""
+    dis = set(disabled or ())
+    rows = []
+    for g, (med, n, best, _base, _icon) in poe1_group_values(payload, field).items():
+        note = f" // ExValue = {med:.2f}"
+        if n > 1:
+            note += f" (median of {n}; best roll {best:.2f})"
+        rule = f'[{key_tag}] == "{gen._quote_ipd(g)}" # [StashItem] == "true"{note}'
+        keep = med >= min_exalt and g not in dis
+        rows.append((med, rule if keep else f"//{rule}"))
+    rows.sort(key=lambda r: r[0], reverse=True)
+    return [rule for _, rule in rows]
+
+
 # Since Path of Exile 3.28's Atlas rework the generic map base IS literally named
 # "Map (Tier N)" — the old named bases (Strand Map, Cemetery Map, …) are gone.
 # poe.ninja reports it as the baseType, and Exiled Bot matches it by [Type].
@@ -874,6 +933,12 @@ def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
             # normal name-keyed builder wrote rules matching nothing.
             dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
             cat_lines = build_poe1_cluster_lines(payload, eff_min, dis)
+        elif key in POE1_GROUPED:
+            # Priced per variant the bot cannot read — one median-priced rule
+            # per base / unique instead of one per (dearest-first) row.
+            dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
+            field, tag = POE1_GROUPED[key]
+            cat_lines = build_poe1_grouped_lines(payload, eff_min, field, tag, dis)
         elif is_unique:
             dis = {n for n, s in cat_states.items() if not s.get("enabled", True)}
             # Stash-endpoint category. Real uniques (unique_* keys) match by
@@ -902,7 +967,7 @@ def build_poe1_economy_lines(league: str, categories: list, payloads: dict,
 # Charts — Path of Exile 1's Fathomless Depths mechanic. Item class
 # "DeepwaterChart": brought to Valerie to explore the Depths, and combined on
 # the Voyage Board for a Voyage. poe.ninja does NOT price this category (no
-# Chart type on its PoE 1 economy API, and none of the 28 categories we fetch
+# Chart type on its PoE 1 economy API, and none of the categories we fetch
 # contains one), so unlike every other section here these cannot be valued or
 # floored — they are picked up on sight. Verified drop-enabled in the game's
 # own item table; the moment poe.ninja prices them this should become a normal
