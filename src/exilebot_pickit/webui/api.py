@@ -24,6 +24,7 @@ from exilebot_pickit.ui.config import (
     OUTPUT_DIR, PRESET_KEYS, PRESETS, PRICE_CACHE_DIR, load_config, log_exc, log_info,
     save_config,
     _default_poe2_filter_dir as _default_dir,
+    default_filter_dir,
 )
 from exilebot_pickit.version import VERSION
 
@@ -1863,9 +1864,13 @@ class AppApi:
                 text = raw.decode("cp1252")
             except UnicodeDecodeError:
                 text = raw.decode("utf-8-sig", errors="replace")
+        g = self._game()
         res = convert_pickit_text(text, hide_rest=bool(hide_rest),
                                   source_name=os.path.basename(path),
-                                  theme=_theme_or_default(self.cfg.get("filter_theme")))
+                                  theme=_theme_or_default(self.cfg.get("filter_theme")),
+                                  game=g.id,
+                                  unique_bases=(self._poe1_unique_bases()
+                                                if g.id == "poe1" else None))
         # One writer at a time: convert can be triggered from the picker, the
         # hide switch and drag&drop — without the lock a slow convert could
         # leave file A's filter stored under file B's name for Save to write.
@@ -1882,9 +1887,43 @@ class AppApi:
             out["lines"] = len(res["filter_lines"])
         return out
 
+    def _poe1_unique_bases(self) -> dict:
+        """unique name → base type, for turning Exiled Bot 1's
+        ``[UniqueName] == "X"`` into a filter ``BaseType``.
+
+        Read from the SAME poe.ninja disk cache the Economy tab and every
+        generate warm — no network call, works offline. Forbidden Flame/Flesh
+        rows are keyed by passive, with the unique's own name in ``variant``.
+        Best-effort: an empty cache just means wider "every unique" labels.
+        """
+        from exilebot_pickit.api import client as _c
+        g = self._game()
+        league = (self.cfg.get("games", {}).get(g.id, {}) or {}).get("league") \
+            or self.cfg.get("league") or ""
+        out: dict = {}
+        if not league:
+            return out
+        for key, _t, _label, _u in g.all_categories:
+            if not key.startswith("unique_"):
+                continue
+            try:
+                payload = _c._cache_get(league, key, g.id)
+                if not isinstance(payload, dict):
+                    payload, _age = _c.load_payload_from_disk(league, key, g.id)
+            except Exception:
+                payload = None
+            if not isinstance(payload, dict):
+                continue
+            name_field = "variant" if key == "unique_forbidden_jewels" else "name"
+            for ln in payload.get("lines", []) or []:
+                nm, base = ln.get(name_field), ln.get("baseType")
+                if nm and base:
+                    out.setdefault(nm, base)
+        return out
+
     def import_pickit_save(self):
-        """Save the converted filter; the dialog starts in the PoE2 client
-        filter folder so the game sees it right after."""
+        """Save the converted filter; the dialog starts in the active game's
+        client filter folder so the game sees it right after."""
         import webview
         with self._lock:
             text = getattr(self, "_import_filter_text", "")
@@ -1893,7 +1932,10 @@ class AppApi:
         if not text:
             return {"error": "Convert a pickit first."}
         w = webview.windows[0]
-        fdir = (self.cfg.get("poe2_filter_dir") or "").strip() or _default_dir()
+        # poe2_filter_dir is stored per game despite its name; PoE 1 falls back
+        # to "My Games/Path of Exile", not the PoE 2 folder.
+        fdir = ((self.cfg.get("poe2_filter_dir") or "").strip()
+                or default_filter_dir(self._game().id))
         kw = {"save_filename": fname}
         if fdir and os.path.isdir(fdir):
             kw["directory"] = fdir

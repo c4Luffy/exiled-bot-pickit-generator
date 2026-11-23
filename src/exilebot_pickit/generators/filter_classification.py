@@ -30,7 +30,8 @@ TIER_SPREAD = 2.0
 # generator writes f"{v:.2f}", so this only ever bit imported files.
 _EXVALUE_RE = re.compile(r"\bExValue\s*=\s*(-?[\d,]*\.?\d+(?:[eE][-+]?\d+)?)", re.I)
 _DIVINE_HEADER_RE = re.compile(
-    r"\b1\s+Divine\s*=\s*([\d,.]+)\s+Exalted\b", re.I,
+    # "Exalted" in PoE 2 pickits, "Chaos" in PoE 1 ones — both games' base unit.
+    r"\b1\s+Divine\s*=\s*([\d,.]+)\s+(?:Exalted|Chaos)\b", re.I,
 )
 _DIVINE_RULE_RE = re.compile(r'\[Type\]\s*==\s*"Divine Orb"', re.I)
 _TYPE_RE = re.compile(r'\[Type\]\s*==\s*"((?:[^"\\]|\\.)*)"')

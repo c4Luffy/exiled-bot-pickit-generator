@@ -70,6 +70,22 @@ def _default_poe2_filter_dir() -> str:
     return candidates[0]
 
 
+def default_filter_dir(game_id: str = "poe2") -> str:
+    """Best-guess client loot-filter folder for either game. PoE 1 keeps its
+    filters in "My Games/Path of Exile", PoE 2 in "…/Path of Exile 2"."""
+    if game_id != "poe1":
+        return _default_poe2_filter_dir()
+    home = os.path.expanduser("~")
+    candidates = [
+        os.path.join(home, "Documents", "My Games", "Path of Exile"),
+        os.path.join(home, "OneDrive", "Documents", "My Games", "Path of Exile"),
+    ]
+    for c in candidates:
+        if os.path.isdir(c):
+            return c
+    return candidates[0]
+
+
 DEFAULT_CONFIG = {
     # ── Dual-game (PoE1 / PoE2) ────────────────────────────────────────────────
     # Which game is active right now. The flat game-specific keys below always

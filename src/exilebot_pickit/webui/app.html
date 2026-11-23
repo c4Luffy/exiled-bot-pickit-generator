@@ -1187,7 +1187,7 @@
   <div class="nav-btn on" data-p="gen">⚡ Generate</div>
   <div class="nav-btn" data-p="prev">📜 Preview</div>
   <div class="nav-btn g2only" data-p="item">🔍 Item Check</div>
-  <div class="nav-btn g2only" data-p="mypk">📥 Create your filter</div>
+  <div class="nav-btn" data-p="mypk">📥 Create your filter</div>
   <div class="nav-btn" data-p="hist">🕰️ History</div>
   <div class="nav-btn" data-p="bot">🤖 Bot Activity</div>
   </div>
@@ -2226,7 +2226,7 @@ async function copyText(t){
 let info={}, divRate=0, eco=null, ecoCat=null, ecoSort="ex", ecoDir=-1, running=false;
 // Dual-game (PoE1 / PoE2). ECON_ONLY hides the rare-gear pages; G2_ONLY lists them.
 let ACTIVE_GAME="poe2", ECON_ONLY=false, GAME_UNIT="Exalt", GAME_UNITS="ex";
-const G2_ONLY=new Set(["mypk","chance","craft","exc","fracture","rare","item"]);
+const G2_ONLY=new Set(["chance","craft","exc","fracture","rare","item"]);
 // Rewrite the "ex" unit in static preset/summary text to the active game's unit
 // ("ex" for PoE2 — no change; "c" for PoE1). GAME_UNITS is set in applyGameUI.
 const funit=s=>String(s).replace(/ ex\b/g," "+GAME_UNITS);
@@ -5412,6 +5412,12 @@ async function _mypkConvert(){
   $("mypkWide").textContent=rep.widened;
   $("mypkSkip").textContent=rep.untranslatable_total;
   $("mypkWideHint").style.display=rep.widened?"":"none";
+  /* PoE 1: a filter can't name a unique, only its base — and a unique whose
+     base isn't in the price cache is shown through one "every unique" label */
+  $("mypkWideHint").textContent="“Shown wider” rules check things only the bot can see (mods, tiers, values)."
+    +(rep.game==="poe1"?" In PoE 1 a unique is matched by its base type, so other uniques on that base get the label too.":"")
+    +(rep.unresolved_uniques?` ${rep.unresolved_uniques} unique(s) had no known base (generate once so prices are cached) — every unique is labelled instead.`:"")
+    +" The filter still shows those items — just without that check — so nothing the pickit wants is ever missing a label.";
   const warn=$("mypkWarn");
   if(!r.ok){warn.style.display="";warn.textContent=rep.looks_like_filter
       ?"That file is an in-game loot filter (.filter), not a pickit — this page converts the OTHER way (pickit → filter). A filter can't become a pickit: it shows far more than is worth picking up. To build a pickit, use Generate."
@@ -5431,7 +5437,7 @@ async function _mypkConvert(){
     vt.style.display="";
     const th=rep.visual_thresholds||{};
     vt.innerHTML="<div class='hint' style='margin-top:10px'>What gets which look"
-      +(th.divine_exalt?` (1 Divine = ${th.divine_exalt} ex in this pickit)`:"")+":</div>"
+      +(th.divine_exalt?` (1 Divine = ${th.divine_exalt} ${GAME_UNITS} in this pickit)`:"")+":</div>"
       +"<div style='display:flex;flex-wrap:wrap;gap:6px;margin-top:6px'>"
       +rep.visual_tiers.map(t=>{
         const s=lfParse((FILTER_THEMES.classic||{})[t.id]);

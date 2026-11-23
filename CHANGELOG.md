@@ -6,6 +6,23 @@ download lives.
 
 ---
 
+## [v4.59.0] — 2026-11-23 — Create your filter works for Path of Exile 1
+
+- **Create your filter is back in PoE 1, and now writes a real PoE 1 filter.**
+  It was hidden in v4.47.0 because the converter only spoke PoE 2. It now
+  writes Path of Exile 1's own vocabulary: PoE 1 item classes, `MapTier`
+  instead of `WaystoneTier`, and Chaos prices on the value ladder. Every class
+  and condition it can write was checked against NeverSink's live PoE 1 filter.
+- **Exiled Bot 1's `[UniqueName]` rules get a label.** A loot filter cannot
+  name a unique, only its base, so each unique is matched as `Rarity Unique` +
+  its base type, read from the cached poe.ninja prices. Other uniques on the
+  same base get the label too, and the report counts those rules as "shown
+  wider". A unique with no cached base is still shown, through one "every
+  unique" block — never dropped.
+- **Saving starts in the PoE 1 filter folder** ("My Games/Path of Exile").
+- Converting a real generated PoE 1 pickit: 2,958 of 2,958 rules translated,
+  none untranslatable, every unique's base found. PoE 2 conversion is unchanged.
+
 ## [v4.58.1] — 2026-11-23 — Charts leave Path of Exile 1 pickits
 
 - **Charts are no longer always picked.** Coral Forest, Coral Reef and Sandy
@@ -3059,6 +3076,7 @@ element id was preserved — **no feature was removed**.
 
 ---
 
+[v4.59.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.59.0
 [v4.58.1]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.58.1
 [v4.58.0]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.58.0
 [v4.57.3]: https://github.com/c4Luffy/exiled-bot-pickit-generator/releases/tag/v4.57.3
